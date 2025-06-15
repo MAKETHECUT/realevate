@@ -1,18 +1,4 @@
-(function lockSite() {
-  if (!sessionStorage.getItem("siteAccessGranted")) {
-    let authenticated = false;
-    while (!authenticated) {
-      const userInput = prompt("Enter password to access this site:");
-      if (userInput === null) continue; // prevent Cancel
-      if (userInput === "year1984") {
-        sessionStorage.setItem("siteAccessGranted", "true");
-        authenticated = true;
-      } else {
-        alert("Incorrect password. Access denied.");
-      }
-    }
-  }
-})();
+
 
 
 
