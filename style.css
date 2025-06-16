@@ -128,7 +128,7 @@ body {
 	-webkit-font-smoothing: antialiased;
 	font-size: 1vw;
 	line-height: 1;
-	font-family: var(--secondary);
+	font-family: var(--primary);
 	background: var(--lightgrey);
 	color: var(--darkgrey);
 	cursor: default;
