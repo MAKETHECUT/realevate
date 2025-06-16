@@ -1903,6 +1903,9 @@ section:not(.hero):not(:has(.footer)) {
   justify-content: space-between;
 }
 
+.footer-sitemap .spread-blocks {
+  justify-content: space-between;
+}
 .footer-sitemap .block {
 	line-height: unset;
   grid-gap: 0.4vw;
