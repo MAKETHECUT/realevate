@@ -1971,6 +1971,11 @@ section:not(.hero):not(:has(.footer)) {
 	transform-origin: 0% 0%;
 }
 
+.footer .privacy-policy {
+  display: flex;
+  grid-gap: 1.3vw;
+}
+
 
 @media (max-width: 650px) {
   .footer-sitemap {
