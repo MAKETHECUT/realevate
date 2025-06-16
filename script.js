@@ -8,8 +8,6 @@ window.addEventListener("beforeunload", () => {
 
 
 
-
-
 function initHomeVideo() {
   function resizeVimeoIframe(iframe) {
     const container = iframe.parentElement;
