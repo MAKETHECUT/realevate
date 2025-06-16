@@ -483,6 +483,7 @@ h4 {
 	font-size: 1.5vw;
 	line-height: 1.5;
     letter-spacing:-0.02vw;
+    font-weight:500;
 }
 
 h5 {
@@ -2082,6 +2083,34 @@ section:not(.hero):not(:has(.footer)) {
 .w-button:hover {
   opacity: 0.8;
 }
+
+.terms-grid {
+  grid-column: 2 / 12;
+  direction:rtl;
+  margin: auto!important;
+  align-self: center;
+  width: 62vw;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5vw;
+}
+
+.terms-grid .block {
+  display: flex;
+  flex-direction: column;
+  grid-gap: 0vw;
+}
+
+.terms-grid .w-richtext {
+  display: flex;
+  flex-direction: column;
+  grid-gap: 2vw;
+}
+
+.terms-grid h5 {
+  font-weight: 500;
+}
+
 
 .contact-grid {
   direction:rtl;
