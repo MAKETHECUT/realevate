@@ -1,7 +1,3 @@
-
-
-
-
 window.history.scrollRestoration = "manual";
 
 window.addEventListener("beforeunload", () => {
@@ -538,7 +534,7 @@ function initPageTransitions() {
             tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
             tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
             tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-            tl.to(".header .logo img, .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
+            tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
             tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
             tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
 
@@ -588,11 +584,11 @@ function initPageTransitions() {
                 attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
                 onComplete: () => {
                     gsap.set(cursor, { scale: 0 });
-                    gsap.set(".header .logo img, .menu a", { yPercent: 130 });
+                    gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
                     gsap.set(".menu-toggle", { opacity: 0 });
 
                     const inTl = gsap.timeline();
-                    inTl.to([".header .logo img", ".menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+                    inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
                     inTl.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0);
                     inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
 
@@ -689,7 +685,7 @@ function initSplitTextAnimations() {
   }
 
   const elements = document.querySelectorAll(
-    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, .footer a, label, .text-link, .link-box, form div"
+    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
   );
 
   elements.forEach((element) => {
