@@ -445,7 +445,7 @@ a:active {
        Typogoraphy
 ============================================== */
 
-h1 {
+h1, .home-container .content .number {
   font-family: var(--secondary);
 }
 
