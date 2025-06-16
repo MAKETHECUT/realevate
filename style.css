@@ -1924,8 +1924,8 @@ section:not(.hero):not(:has(.footer)) {
   color:var(--medgrey);
 }
 
-.footer .block .menu a {
-  align-self:start;
+.footer a {
+  width: fit-content;
 }
 
 .footer-sitemap .block h5, .footer-menu h5  {
