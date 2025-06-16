@@ -96,12 +96,12 @@ async function startApp() {
 
   // Show loader on all pages
   animateLoaderCounter(() => {
+    refreshbreakingpoints();
     initInteractiveCursor();
     initMegaMenu();
     initPageTransitions();
     initInfinityGallery();
     initHomeVideo();
-    refreshbreakingpoints();
     requestAnimationFrame(() => {
       initNavbarShowHide();
       initGsapAnimations();
