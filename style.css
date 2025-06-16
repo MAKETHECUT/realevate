@@ -1274,7 +1274,6 @@ section:not(.hero):not(:has(.footer)) {
 	justify-self: center;
   width: 38vw;
   margin: auto;
-  display:none;
 }
 
 .home-about .logo {
