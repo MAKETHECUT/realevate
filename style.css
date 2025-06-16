@@ -1924,6 +1924,9 @@ section:not(.hero):not(:has(.footer)) {
   color:var(--medgrey);
 }
 
+.footer .block .menu a {
+  align-self:start;
+}
 
 .footer-sitemap .block h5, .footer-menu h5  {
 	margin-bottom: 3vw;
