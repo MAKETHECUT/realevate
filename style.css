@@ -445,7 +445,9 @@ a:active {
        Typogoraphy
 ============================================== */
 
-
+h1 {
+  font-family: var(--secondary);
+}
 
 h2,
 h3,
