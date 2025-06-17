@@ -1685,9 +1685,14 @@ function animateLoaderCounter(onComplete, duration = 100) {
     if (typeof onComplete === 'function') onComplete();
     return;
   }
-    
+
+  // Create loading line
+  const loadingLine = document.createElement('div');
+  loadingLine.className = 'loading-line';
+  document.body.appendChild(loadingLine);
+      
   const target = 100;
-    
+      
   // Set initial state
   gsap.set(counter, {
     opacity: 0,
@@ -1696,15 +1701,17 @@ function animateLoaderCounter(onComplete, duration = 100) {
     textContent: 0
   });
 
+  gsap.set(loadingLine, { width: "0%" });
+  
   // Create main timeline
   const tl = gsap.timeline({
     onComplete: () => {
       // Start the functions immediately
       if (typeof onComplete === 'function') onComplete();
-        
+         
       // Create timeline for exit animation
       const exitTl = gsap.timeline();
-        
+         
       // Animate counter up and fade out
       exitTl.to(counter, {
         y: -100,
@@ -1712,7 +1719,14 @@ function animateLoaderCounter(onComplete, duration = 100) {
         duration: 0.8,
         ease: "power2.in"
       }, 0);
-        
+
+      // Animate loading line from left to right with clip-path
+      exitTl.to(loadingLine, {
+        clipPath: "inset(0 0 0 100%)",
+        duration: 0.8,
+        ease: "power2.in"
+      }, 0);
+         
       // Then animate the clip-path
       exitTl.to(loader, {
         clipPath: "inset(0 0 100% 0)", // From bottom to top
@@ -1720,6 +1734,7 @@ function animateLoaderCounter(onComplete, duration = 100) {
         ease: "expo.inOut",
         onComplete: () => {
           loader.remove();
+          loadingLine.remove();
         }
       }, 0);
     }
@@ -1741,6 +1756,13 @@ function animateLoaderCounter(onComplete, duration = 100) {
     snap: { textContent: 1 },
     ease: "none"
   });
+
+  // Animate the loading line with power4.inOut
+  tl.to(loadingLine, {
+    width: "100%",
+    duration: duration / 1000,
+    ease: "power4.inOut"
+  }, "<");
 }
 
 
