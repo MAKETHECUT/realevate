@@ -991,6 +991,7 @@ section:not(.hero):not(:has(.footer)) {
   text-align: left;
   width: 50%;
   counter-reset: h2-counter;
+  font-family: var(--secondary);
 }
 
 .mega-menu-links a {
