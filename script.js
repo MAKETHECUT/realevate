@@ -507,27 +507,10 @@ function initPageTransitions() {
         window.transitioning = true;
         isAnimating = true;
 
-        try {
-            // First fetch the next page content
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const nextWrapper = doc.querySelector('.page-wrapper');
-            
-            if (!nextWrapper) {
-                window.location.href = url;
-                return;
-            }
-
-            nextPageHTML = nextWrapper.innerHTML;
-
-            // Start the transition animation
-            const tl = gsap.timeline();
-
-            // Initial transition animation
+        // 1. Start the transition animation immediately
+        let transitionDone;
+        const transitionPromise = new Promise((resolve) => {
+            const tl = gsap.timeline({ onComplete: resolve });
             tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
             tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
             tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
@@ -535,83 +518,106 @@ function initPageTransitions() {
             tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
             tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
             tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+        });
 
-            // Keep transition visible while updating content
-            tl.call(() => {
-                const container = document.querySelector('.page-wrapper');
-                if (!container) return;
-
-                ScrollTrigger.getAll().forEach(t => t.kill());
-
-                if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
-                if (window.interactiveCursor?.destroy) window.interactiveCursor.destroy();
-                if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
-
-                document.title = doc.querySelector('title')?.textContent || document.title;
-                container.innerHTML = nextPageHTML;
-
-                window.scrollTo(0, 0);
-                document.documentElement.scrollTop = 0;
-                document.body.scrollTop = 0;
-
-                // Initialize new page content
-                initInfinityGallery();
-                initHomeVideo();
-                setTimeout(() => {
-                    initInteractiveCursor();
-                    initGsapAnimations();
-  
-                    initNavbarShowHide();
-                    ScrollTrigger.refresh(true);
-                    initCustomSmoothScrolling();
-                                   initSplitTextAnimations();
-                   initVWFontZoomSafeForGSAP();
-                }, 100);
+        // 2. Start fetching the next page in parallel
+        const fetchPromise = fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const nextWrapper = doc.querySelector('.page-wrapper');
+                if (!nextWrapper) throw new Error('No .page-wrapper found');
+                return { html, doc, nextWrapper };
             });
 
-            // Complete the transition animation
-            tl.to(swipeup, {
-                duration: 0.6,
-                ease: 'power4.in',
-                attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
-            });
-
-            tl.to(swipeup, {
-                duration: 0.4,
-                ease: 'power2',
-                attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
-                onComplete: () => {
-                    gsap.set(cursor, { scale: 0 });
-                    gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
-                    gsap.set(".menu-toggle", { opacity: 0 });
-
-                    const inTl = gsap.timeline();
-                    inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-                    inTl.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0);
-                    inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
-
-                    // Only hide transition after all animations are complete
-                    transition.style.opacity = '0';
-                    transition.style.visibility = 'hidden';
-                    isAnimating = false;
-                    window.transitioning = false;
-
-                    if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
-                        window.navbarShowHide = initNavbarShowHide();
-                    }
-
-                    if (pendingNavigation) {
-                        const { url, isPopState } = pendingNavigation;
-                        pendingNavigation = null;
-                        setTimeout(() => handleNavigation(url, isPopState), 100);
-                    }
-                }
-            });
-
+        // 3. Wait for both the animation and the fetch to finish
+        let nextPage;
+        try {
+            nextPage = await fetchPromise;
+            await transitionPromise;
         } catch (err) {
             console.error('Navigation error:', err);
             window.location.href = url;
+            return;
         }
+
+        // 4. Now swap the content and finish the transition
+        nextPageHTML = nextPage.nextWrapper.innerHTML;
+        const doc = nextPage.doc;
+
+        // Keep transition visible while updating content
+        const container = document.querySelector('.page-wrapper');
+        if (!container) return;
+
+        ScrollTrigger.getAll().forEach(t => t.kill());
+
+        if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
+        if (window.interactiveCursor?.destroy) window.interactiveCursor.destroy();
+        if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
+
+        document.title = doc.querySelector('title')?.textContent || document.title;
+        container.innerHTML = nextPageHTML;
+
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        // Initialize new page content
+        initInfinityGallery();
+        initHomeVideo();
+        setTimeout(() => {
+            initInteractiveCursor();
+            initGsapAnimations();
+            initNavbarShowHide();
+            ScrollTrigger.refresh(true);
+            initCustomSmoothScrolling();
+            initSplitTextAnimations();
+            initVWFontZoomSafeForGSAP();
+        }, 100);
+
+        // Complete the transition animation (outro)
+        const tl = gsap.timeline();
+        tl.to(swipeup, {
+            duration: 0.6,
+            ease: 'power4.in',
+            attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
+        });
+
+        tl.to(swipeup, {
+            duration: 0.4,
+            ease: 'power2',
+            attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
+            onComplete: () => {
+                gsap.set(cursor, { scale: 0 });
+                gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
+                gsap.set(".menu-toggle", { opacity: 0 });
+
+                const inTl = gsap.timeline();
+                inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+                inTl.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0);
+                inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
+
+                // Only hide transition after all animations are complete
+                transition.style.opacity = '0';
+                transition.style.visibility = 'hidden';
+                isAnimating = false;
+                window.transitioning = false;
+
+                if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
+                    window.navbarShowHide = initNavbarShowHide();
+                }
+
+                if (pendingNavigation) {
+                    const { url, isPopState } = pendingNavigation;
+                    pendingNavigation = null;
+                    setTimeout(() => handleNavigation(url, isPopState), 100);
+                }
+            }
+        });
     }
 
     document.body.addEventListener('click', (e) => {
