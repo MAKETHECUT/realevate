@@ -1,19 +1,5 @@
 window.history.scrollRestoration = "manual";
 
-// SplitText Language Switching Fix:
-// This script includes fixes for SplitText animations during language switching.
-// The main issues were:
-// 1. Old SplitText instances not being cleaned up properly
-// 2. RTL/LTR text direction conflicts between Hebrew and English
-// 3. Timing issues with DOM updates during language switching
-// 4. ScrollTrigger conflicts with old animations
-//
-// Solution includes:
-// - cleanupSplitTextAnimations() function to properly clean up old instances
-// - Proper timing with WebFont loading detection
-// - RTL/LTR text direction handling
-// - Global handleLanguageSwitch() function for external language switching scripts
-
 window.addEventListener("beforeunload", () => {
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
