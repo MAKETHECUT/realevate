@@ -1,5 +1,19 @@
 window.history.scrollRestoration = "manual";
 
+// SplitText Language Switching Fix:
+// This script includes fixes for SplitText animations during language switching.
+// The main issues were:
+// 1. Old SplitText instances not being cleaned up properly
+// 2. RTL/LTR text direction conflicts between Hebrew and English
+// 3. Timing issues with DOM updates during language switching
+// 4. ScrollTrigger conflicts with old animations
+//
+// Solution includes:
+// - cleanupSplitTextAnimations() function to properly clean up old instances
+// - Proper timing with WebFont loading detection
+// - RTL/LTR text direction handling
+// - Global handleLanguageSwitch() function for external language switching scripts
+
 window.addEventListener("beforeunload", () => {
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
@@ -105,6 +119,8 @@ async function startApp() {
     requestAnimationFrame(() => {
       initNavbarShowHide();
       initGsapAnimations();
+      // Clean up any existing SplitText before initializing new ones
+      cleanupSplitTextAnimations();
       initSplitTextAnimations();
       initVWFontZoomSafeForGSAP();
       
@@ -137,6 +153,8 @@ function initAllFunctions() {
         // Initialize animations with proper timing
         requestAnimationFrame(() => {
             initGsapAnimations();
+            // Clean up any existing SplitText before initializing new ones
+            cleanupSplitTextAnimations();
             initSplitTextAnimations();
            initInfinityGallery();
          
@@ -559,6 +577,9 @@ function initPageTransitions() {
         if (window.interactiveCursor?.destroy) window.interactiveCursor.destroy();
         if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
 
+        // Clean up SplitText animations before content swap
+        cleanupSplitTextAnimations();
+
         document.title = doc.querySelector('title')?.textContent || document.title;
         container.innerHTML = nextPageHTML;
 
@@ -575,7 +596,10 @@ function initPageTransitions() {
             initNavbarShowHide();
             ScrollTrigger.refresh(true);
             initCustomSmoothScrolling();
-            initSplitTextAnimations();
+            // Add delay for SplitText to ensure DOM is fully ready
+            setTimeout(() => {
+                initSplitTextAnimations();
+            }, 150);
             initVWFontZoomSafeForGSAP();
         }, 100);
 
@@ -684,57 +708,163 @@ Split Text Animations
 ============================================== */
 
 function initSplitTextAnimations() {
-  if (gsap.ScrollTrigger) {
-    gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  // Kill all existing ScrollTriggers first
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
   }
 
-  const elements = document.querySelectorAll(
-    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
-  );
-
-  elements.forEach((element) => {
-    const split = new SplitText(element, { type: "lines", linesClass: "line" });
-
-    split.lines.forEach((line) => {
-      line.style.display = "inline-block";
-      line.style.width = "100%";
-      line.style.lineHeight = "unset";
-      line.style.visibility = "hidden";
-    });
-
-    split.lines.forEach((line) => line.offsetWidth); // force reflow
-
-    gsap.set(split.lines, {
-      visibility: "visible",
-      yPercent: 100,
-      clipPath: "inset(0% 0% 100% 0%)",
-      opacity: 1,
-    });
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: element,
-        start: "top bottom",
-        once: true,
-        onEnter: () => tl.play()
-      },
-      paused: true,
-      onComplete: () => {
-        if (!element.matches(".hero-headline h1")) {
-          split.revert();
-        }
+  // Clean up any existing SplitText instances
+  if (typeof SplitText !== 'undefined') {
+    // Find and revert any existing SplitText instances
+    document.querySelectorAll('.line').forEach(line => {
+      if (line._splitTextInstance) {
+        line._splitTextInstance.revert();
       }
     });
+  }
 
-    tl.to(split.lines, {
-      yPercent: 0,
-      clipPath: "inset(-20% -10% -20% 0%)",
-      opacity: 1,
-      stagger: 0.12,
-      duration: 2,
-      delay: element.closest(".hero, .delay") ? 0.5 : 0,
-      ease: "power3.out"
+  // Wait for DOM to be fully updated and fonts to be loaded
+  const waitForContent = () => {
+    return new Promise((resolve) => {
+      // Check if WebFont is loaded
+      if (typeof WebFont !== 'undefined') {
+        WebFont.load({
+          google: {
+            families: ["IBM Plex Sans Hebrew:regular,500:hebrew,latin"]
+          },
+          active: () => {
+            // Give extra time for fonts to render
+            setTimeout(resolve, 100);
+          },
+          inactive: () => {
+            // Fallback if WebFont fails
+            setTimeout(resolve, 200);
+          }
+        });
+      } else {
+        // Fallback if WebFont is not available
+        setTimeout(resolve, 200);
+      }
     });
+  };
+
+  waitForContent().then(() => {
+    const elements = document.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
+    );
+
+    elements.forEach((element) => {
+      // Skip if element is empty or already processed
+      if (!element.textContent.trim() || element.classList.contains('split-text-processed')) {
+        return;
+      }
+
+      try {
+        // Create new SplitText instance
+        const split = new SplitText(element, { 
+          type: "lines", 
+          linesClass: "line",
+          absolute: false // Better for RTL/LTR mixed content
+        });
+
+        // Store reference for cleanup
+        element._splitTextInstance = split;
+
+        // Mark as processed
+        element.classList.add('split-text-processed');
+
+        // Handle RTL/LTR text direction
+        const isRTL = getComputedStyle(element).direction === 'rtl' || 
+                     element.getAttribute('dir') === 'rtl' ||
+                     element.closest('[dir="rtl"]');
+
+        split.lines.forEach((line) => {
+          line.style.display = "inline-block";
+          line.style.width = "100%";
+          line.style.lineHeight = "unset";
+          line.style.visibility = "hidden";
+          
+          // Set proper text direction
+          if (isRTL) {
+            line.style.direction = "rtl";
+            line.style.textAlign = "right";
+          } else {
+            line.style.direction = "ltr";
+            line.style.textAlign = "left";
+          }
+        });
+
+        // Force reflow to ensure proper layout
+        split.lines.forEach((line) => line.offsetWidth);
+
+        gsap.set(split.lines, {
+          visibility: "visible",
+          yPercent: 100,
+          clipPath: "inset(0% 0% 100% 0%)",
+          opacity: 1,
+        });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: element,
+            start: "top bottom",
+            once: true,
+            onEnter: () => tl.play()
+          },
+          paused: true,
+          onComplete: () => {
+            // Only revert if not hero headline (keep it for special effects)
+            if (!element.matches(".hero-headline h1")) {
+              // Delay revert to ensure animation is complete
+              setTimeout(() => {
+                if (split && typeof split.revert === 'function') {
+                  split.revert();
+                  element.classList.remove('split-text-processed');
+                  delete element._splitTextInstance;
+                }
+              }, 100);
+            }
+          }
+        });
+
+        tl.to(split.lines, {
+          yPercent: 0,
+          clipPath: "inset(-20% -10% -20% 0%)",
+          opacity: 1,
+          stagger: 0.12,
+          duration: 2,
+          delay: element.closest(".hero, .delay") ? 0.5 : 0,
+          ease: "power3.out"
+        });
+
+      } catch (error) {
+        console.warn('SplitText error for element:', element, error);
+      }
+    });
+  });
+}
+
+// Add cleanup function for language switching
+function cleanupSplitTextAnimations() {
+  // Kill all ScrollTriggers
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  }
+
+  // Revert all SplitText instances
+  document.querySelectorAll('.split-text-processed').forEach(element => {
+    if (element._splitTextInstance && typeof element._splitTextInstance.revert === 'function') {
+      element._splitTextInstance.revert();
+      element.classList.remove('split-text-processed');
+      delete element._splitTextInstance;
+    }
+  });
+
+  // Remove any remaining .line elements
+  document.querySelectorAll('.line').forEach(line => {
+    if (line._splitTextInstance) {
+      line._splitTextInstance.revert();
+    }
   });
 }
 
@@ -1642,11 +1772,15 @@ async function initializeApplication() {
         // Initialize animations with proper timing
         requestAnimationFrame(() => {
             initGsapAnimations();
+            // Clean up any existing SplitText before initializing new ones
+            cleanupSplitTextAnimations();
             initSplitTextAnimations();
-            initSliderDragging();
-            initInteractiveCursor();
+           initInfinityGallery();
+         
             ScrollTrigger.refresh(true);
-            initCustomSmoothScrolling();
+          initCustomSmoothScrolling();
+           initVWFontZoomSafeForGSAP();
+   
         });
 
         // Lazy load non-critical scripts
@@ -2063,3 +2197,26 @@ function initVWFontZoomSafeForGSAP() {
 }
 
 window.addEventListener('DOMContentLoaded', initVWFontZoomSafeForGSAP);
+
+// Global function for language switching
+window.handleLanguageSwitch = function() {
+  // Clean up existing animations
+  cleanupSplitTextAnimations();
+  
+  // Kill other animations
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  }
+  
+  // Wait for DOM updates to complete
+  setTimeout(() => {
+    // Reinitialize animations
+    initGsapAnimations();
+    initSplitTextAnimations();
+    
+    // Refresh ScrollTrigger
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+  }, 200);
+};
