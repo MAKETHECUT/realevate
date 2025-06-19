@@ -2254,6 +2254,37 @@ section:not(.hero):not(:has(.footer)) {
 }
 
 /* ==============================================
-       Media Queries
+       SplitText RTL/LTR Support
 ============================================== */
 
+/* Ensure proper text direction for SplitText lines */
+.line {
+  display: inline-block !important;
+  width: 100% !important;
+  line-height: unset !important;
+  overflow: hidden;
+}
+
+/* RTL text support */
+[dir="rtl"] .line,
+.line[style*="direction: rtl"] {
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+/* LTR text support */
+[dir="ltr"] .line,
+.line[style*="direction: ltr"] {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Ensure proper word wrapping for mixed content */
+.split-text-processed {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ==============================================
+       Media Queries
+============================================== */
