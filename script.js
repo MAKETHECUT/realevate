@@ -176,8 +176,8 @@ function initCustomSmoothScrolling() {
             
             // Improved touch sensitivity for iPad
             if (isIPad) {
-                this.tm = 2.2; // Reduced for more natural iPad touch speed (was 3.5, now 2.2)
-                this.dm = 2.2; // Keep drag multiplier the same
+                this.tm = 1.8; // Reduced for slower, more controlled iPad touch (was 2.2, now 1.8)
+                this.dm = 1.8; // Reduced drag multiplier to match (was 2.2, now 1.8)
                 this.l = 0.08; // Keep lerp close to desktop
             } else {
                 this.tm = m ? 3 : 1.5;
@@ -1393,6 +1393,7 @@ function initInfinityGallery() {
       this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
       const isMobile = window.innerWidth < 650;
+      const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
       
       // Core settings
       this.wrapper = window;
@@ -1403,6 +1404,13 @@ function initInfinityGallery() {
       this.wheelMultiplier = isMobile ? 0.4 : 0.8; // Slower wheel for mobile
       this.touchMultiplier = isMobile ? 3 : 4; // Slower touch for mobile
       this.dragMultiplier = isMobile ? 3 : 3;
+
+      // Adjust for iPad specifically
+      if (isIPad) {
+        this.lerp = 0.06; // Slower lerp for iPad (was 0.05, now 0.06)
+        this.touchMultiplier = 2.5; // Slower touch for iPad (was 4, now 2.5)
+        this.dragMultiplier = 2.5; // Slower drag for iPad (was 3, now 2.5)
+      }
 
       this.cloneItems();
       this.calculateDimensions();
