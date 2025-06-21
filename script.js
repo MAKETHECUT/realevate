@@ -165,14 +165,25 @@ function initCustomSmoothScrolling() {
     class S {
         constructor() {
             const m = window.innerWidth < 750;
+            const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
+            
             this.w = window;
             this.c = document.documentElement;
             this.l = m ? 0.1 : 0.05;
             this.d = m ? 1.5 : 1.5;
             this.e = (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t));
             this.wm = 0.8;
-            this.tm = m ? 3 : 1.5;
-            this.dm = m ? 3 : 1.8;
+            
+            // Improved touch sensitivity for iPad
+            if (isIPad) {
+                this.tm = 6; // Increased from 3 for better iPad responsiveness
+                this.dm = 4; // Increased from 1.8 for better iPad responsiveness
+                this.l = 0.15; // Faster lerp for iPad
+            } else {
+                this.tm = m ? 3 : 1.5;
+                this.dm = m ? 3 : 1.8;
+            }
+            
             this.ts = 0;
             this.cs = 0;
             this.se = false;
