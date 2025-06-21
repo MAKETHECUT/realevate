@@ -1,22 +1,2099 @@
+window.history.scrollRestoration = "manual";
 
-<!DOCTYPE html><!-- Last Published: Thu Jun 19 2025 17:25:10 GMT+0000 (Coordinated Universal Time) --><html data-wf-domain="www.realevate.co.il" data-wf-page="683625562ee8a0f6224dc843" data-wf-site="683625562ee8a0f6224dc849" lang="en" data-wf-collection="683625562ee8a0f6224dc870" data-wf-item-slug="semeli"><head><meta charset="utf-8"/><title>Semeli</title><meta content="18 וילות יוקרתיות עם בריכה פרטית, 1 ק״מ מחוף הים, 500 מ׳ ממסעדות, מרכזי בילוי וקניות, ומרחק נסיעה קצר למרינה החדשה של פרלמיני שהקמתה תסתיים ב-2025 ותכלול מועדון יאכטות, בתי קפה, מסעדות, ברים וחנויות של מותגי יוקרה." name="description"/><meta content="Semeli" property="og:title"/><meta content="18 וילות יוקרתיות עם בריכה פרטית, 1 ק״מ מחוף הים, 500 מ׳ ממסעדות, מרכזי בילוי וקניות, ומרחק נסיעה קצר למרינה החדשה של פרלמיני שהקמתה תסתיים ב-2025 ותכלול מועדון יאכטות, בתי קפה, מסעדות, ברים וחנויות של מותגי יוקרה." property="og:description"/><meta content="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d96d5c224e9fca38e8ed8_pcczxj3mafmtztolilih.avif" property="og:image"/><meta content="Semeli" property="twitter:title"/><meta content="18 וילות יוקרתיות עם בריכה פרטית, 1 ק״מ מחוף הים, 500 מ׳ ממסעדות, מרכזי בילוי וקניות, ומרחק נסיעה קצר למרינה החדשה של פרלמיני שהקמתה תסתיים ב-2025 ותכלול מועדון יאכטות, בתי קפה, מסעדות, ברים וחנויות של מותגי יוקרה." property="twitter:description"/><meta content="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d96d5c224e9fca38e8ed8_pcczxj3mafmtztolilih.avif" property="twitter:image"/><meta property="og:type" content="website"/><meta content="summary_large_image" name="twitter:card"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link href="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/css/realevatenew.webflow.shared.fe2df44a3.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link href="https://fonts.gstatic.com" rel="preconnect" crossorigin="anonymous"/><script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js" type="text/javascript"></script><script type="text/javascript">WebFont.load({  google: {    families: ["IBM Plex Sans Hebrew:regular,500:hebrew,latin"]  }});</script><script type="text/javascript">!function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js",("ontouchstart"in o||o.DocumentTouch&&c instanceof DocumentTouch)&&(n.className+=t+"touch")}(window,document);</script><link href="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/6850352f7e7c6e3608107ba4_1-73149266.ico" rel="shortcut icon" type="image/x-icon"/><link href="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/684b0d40734ac8cefe9f809b_FAVICON%20259%20(3).png" rel="apple-touch-icon"/><link rel="icon" type="image/x-icon" href="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/6850352f7e7c6e3608107ba4_1-73149266.ico">
-    <link rel="shortcut icon" href="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/6850352f7e7c6e3608107ba4_1-73149266.ico">
-    <link rel="icon" type="image/png" sizes="256x256" href="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/685035fc4f7237757ee7c7ca_FAVICON%20256.png">
+window.addEventListener("beforeunload", () => {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+});
+
+
+
+function initHomeVideo() {
+  function resizeVimeoIframe(iframe) {
+    const container = iframe.parentElement;
+    const containerW = container.offsetWidth;
+    const containerH = container.offsetHeight;
+    const containerRatio = containerW / containerH;
+    const videoRatio = 16 / 9;
+    let width, height;
+
+    if (containerRatio > videoRatio) {
+      width = containerW;
+      height = containerW / videoRatio;
+    } else {
+      width = containerH * videoRatio;
+      height = containerH;
+    }
+
+    iframe.style.width = `${width}px`;
+    iframe.style.height = `${height}px`;
+    iframe.style.top = '50%';
+    iframe.style.left = '50%';
+  }
+
+  function setupVimeoCovers() {
+    document.querySelectorAll('.vimeo-bg').forEach(el => {
+      const id = el.dataset.vimeoId;
+      if (!id) return;
+
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://player.vimeo.com/video/${id}?background=1&autoplay=1&loop=1&muted=1&byline=0&title=0`;
+      iframe.frameBorder = '0';
+      iframe.allow = 'autoplay; fullscreen';
+      iframe.allowFullscreen = true;
+      iframe.className = 'vimeo-iframe';
+
+      el.appendChild(iframe);
+
+      iframe.onload = () => resizeVimeoIframe(iframe);
+      window.addEventListener('resize', () => resizeVimeoIframe(iframe));
+    });
+  }
+
+  setupVimeoCovers();
+}
+
+
+
+
+
+
+
+// --- DYNAMIC LIBRARY LOADER (at the very top) ---
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function loadAllLibraries() {
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
+  await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
+  await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
+  await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+}
+
+
+
+async function startApp() {
+  await loadAllLibraries();
+  
+
+  // UserWay widget
+  (function(d) {
+    var s = d.createElement("script");
+    s.setAttribute("data-account", "a37OvQJfVJ");
+    s.setAttribute("src", "https://cdn.userway.org/widget.js");
+    (d.body || d.head).appendChild(s);
+  })(document);
+
+  // Show loader on all pages
+  animateLoaderCounter(() => {
+    refreshbreakingpoints();
+    initInteractiveCursor();
+    initMegaMenu();
+    initPageTransitions();
+    initInfinityGallery();
+    initHomeVideo();
+    requestAnimationFrame(() => {
+      initNavbarShowHide();
+      initGsapAnimations();
+      initSplitTextAnimations();
+      initVWFontZoomSafeForGSAP();
+      
+      if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+      if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+    });
+  }, 1000);
+}
+document.addEventListener("DOMContentLoaded", startApp);
+// --- END DYNAMIC LOADER ---
+
+function initAllFunctions() {
+    // Register GSAP plugins (fallback)
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' && typeof SplitText !== 'undefined') {
+        gsap.registerPlugin(SplitText, ScrollTrigger);
+    }
+  
+    initPageTransitions();
+   initHomeVideo();
+    refreshbreakingpoints();
+  initNavbarShowHide();
+  
     
-    
-    <style>
-      html, body {
-        background: #1E1F24;
-        visibility: hidden;
+    // Ensure GSAP and ScrollTrigger are ready before animations
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // Initialize animations with proper timing
+        requestAnimationFrame(() => {
+            initGsapAnimations();
+            initSplitTextAnimations();
+           initInfinityGallery();
+         
+            ScrollTrigger.refresh(true);
+          initCustomSmoothScrolling();
+           initVWFontZoomSafeForGSAP();
+   
+        });
+    }
+  
+  
+}
+
+ /* ==============================================
+Custom Smooth Scrolling
+============================================== */
+
+
+function initCustomSmoothScrolling() {
+    const l = (s, e, t) => s * (1 - t) + e * t;
+    const c = (v, m, M) => Math.max(m, Math.min(v, M));
+    let d = false;
+    let i = null;
+    let p = 0;
+
+    class S {
+        constructor() {
+            const m = window.innerWidth < 750;
+            const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
+            
+            this.w = window;
+            this.c = document.documentElement;
+            this.l = m ? 0.1 : 0.05;
+            this.d = m ? 1.5 : 1.5;
+            this.e = (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t));
+            this.wm = 0.8;
+            
+            // Improved touch sensitivity for iPad
+            if (isIPad) {
+                this.tm = 2.2; // Reduced for more natural iPad touch speed (was 3.5, now 2.2)
+                this.dm = 2.2; // Keep drag multiplier the same
+                this.l = 0.08; // Keep lerp close to desktop
+            } else {
+                this.tm = m ? 3 : 1.5;
+                this.dm = m ? 3 : 1.8;
+            }
+            
+            this.ts = 0;
+            this.cs = 0;
+            this.se = false;
+            this.dr = false;
+            this.sx = 0;
+            this.sy = 0;
+            this.lft = performance.now();
+            this.v = 0;
+            this.dir = 0;
+            this.ct = 0;
+            this.r = false;
+            this.rc = false;
+            this.sliderTouchActive = false;
+            this.sliderTouchStartX = undefined;
+            this.sliderTouchStartY = undefined;
+            this.init();
+        }
+
+        init() {
+            this.as();
+            this.ud();
+            this.be();
+            setTimeout(() => {
+                this.se = true;
+                this.fsu();
+                this.sl();
+            }, 10);
+        }
+
+        as() {
+            if (window.isMenuOpen && window.isMenuOpen()) {
+                document.body.style.overflow = "hidden";
+                document.body.style.position = "fixed";
+                document.body.style.width = "100%";
+                document.body.style.top = `-${window.scrollY}px`;
+            } else {
+                document.body.style.overflow = "";
+                document.body.style.position = "";
+                document.body.style.width = "";
+                document.body.style.top = "";
+            }
+            document.documentElement.style.scrollBehavior = "auto";
+            document.documentElement.style.touchAction = "pan-x pan-y";
+            // Disable zoom at the viewport level
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+        }
+
+        ud() {
+            const w = this.w === window ? document.documentElement : this.w;
+            const c = this.c;
+            this.dim = {
+                width: w.clientWidth,
+                height: w.clientHeight,
+                sw: c.scrollWidth,
+                sh: c.scrollHeight
+            };
+            const s = document.querySelector(".wrapper");
+            if (s) {
+                document.body.style.height = `${s.clientHeight}px`;
+            }
+        }
+
+        be() {
+            window.addEventListener("wheel", (e) => {
+                if (!this.se || d || (window.isMenuOpen && window.isMenuOpen())) return;
+                const t = e.deltaY * this.wm;
+                this.os(t);
+                e.preventDefault();
+            }, { passive: false });
+
+            window.addEventListener("touchstart", (e) => {
+                if (e.touches.length > 1) {
+                    e.preventDefault(); // Prevent multi-touch gestures
+                    return;
+                }
+                if (window.isMenuOpen && window.isMenuOpen()) return;
+                
+                // Check if touch is on slider-wrapper specifically
+                const target = e.target;
+                const isOnSliderWrapper = target.closest('.slider-wrapper');
+                if (isOnSliderWrapper) {
+                    this.sliderTouchStartX = e.touches[0].clientX;
+                    this.sliderTouchStartY = e.touches[0].clientY;
+                    this.sliderTouchActive = false; // Will be set to true only if dragging
+                }
+                
+                this.std(e);
+            }, { passive: false });
+
+            window.addEventListener("touchmove", (e) => {
+                if (e.touches.length > 1) {
+                    e.preventDefault(); // Prevent multi-touch gestures
+                    return;
+                }
+                if (window.isMenuOpen && window.isMenuOpen()) return;
+                
+                // Check if we're actively dragging the slider-wrapper
+                if (this.sliderTouchStartX !== undefined) {
+                    const touchX = e.touches[0].clientX;
+                    const touchY = e.touches[0].clientY;
+                    const deltaX = touchX - this.sliderTouchStartX;
+                    const deltaY = Math.abs(touchY - this.sliderTouchStartY);
+                    
+                    // Only consider it dragging if horizontal movement is significant and greater than vertical
+                    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
+                        this.sliderTouchActive = true;
+                        e.preventDefault(); // Prevent page scrolling only when actively dragging
+                        return;
+                    }
+                }
+                
+                // If slider is not being actively dragged, allow normal page scrolling
+                if (!this.sliderTouchActive) {
+                    this.otd(e);
+                }
+            }, { passive: false });
+
+            window.addEventListener("touchend", (e) => {
+                this.sliderTouchActive = false;
+                this.sliderTouchStartX = undefined;
+                this.sliderTouchStartY = undefined;
+                this.etd();
+            });
+
+            window.addEventListener("mousedown", (e) => {
+                if (window.isMenuOpen && window.isMenuOpen()) return;
+                if (e.button === 2) {
+                    this.rc = true;
+                    return;
+                }
+                if (!this.rc) {
+                    this.smd(e);
+                }
+            });
+
+            window.addEventListener("mousemove", (e) => {
+                if (window.isMenuOpen && window.isMenuOpen()) return;
+                this.omd(e);
+            });
+
+            window.addEventListener("mouseup", () => {
+                this.emd();
+                setTimeout(() => {
+                    this.rc = false;
+                }, 100);
+            });
+
+            window.addEventListener("resize", () => {
+                requestAnimationFrame(() => this.ud());
+            });
+          
+            document.querySelectorAll(".slider").forEach((e) => {
+                e.addEventListener("mousedown", () => { d = true; });
+                e.addEventListener("mouseup", () => { d = false; });
+                e.addEventListener("mouseleave", () => { d = false; });
+            });
+        }
+
+        os(t) {
+            if (!this.se || d || (window.isMenuOpen && window.isMenuOpen())) return;
+            this.ct = 0;
+            this.v = t;
+            this.dir = Math.sign(t);
+            const l = document.documentElement.scrollHeight - window.innerHeight;
+            this.ts = c(this.ts + t, 0, l);
+        }
+
+        std(e) {
+            if (!this.se || d || (window.isMenuOpen && window.isMenuOpen())) return;
+            this.dr = true;
+            this.sy = e.touches[0].clientY;
+        }
+
+        otd(e) {
+            if (!this.dr || !this.se || (window.isMenuOpen && window.isMenuOpen())) return;
+            const t = e.touches[0].clientY;
+            const d = (this.sy - t) * this.tm;
+            const a = Math.round(this.cs) <= 0;
+            const p = d < 0;
+            if (a && p) return;
+            this.os(d);
+            this.sy = t;
+            e.preventDefault();
+        }
+
+        etd() {
+            this.dr = false;
+        }
+
+        smd(e) {
+            if (!this.se || this.rc || (window.isMenuOpen && window.isMenuOpen())) return;
+            this.dr = true;
+            this.sy = e.clientY;
+        }
+
+        omd(e) {
+            if (!this.dr || !this.se || this.rc || (window.isMenuOpen && window.isMenuOpen())) return;
+            const t = (this.sy - e.clientY) * this.dm;
+            this.os(t);
+            this.sy = e.clientY;
+        }
+
+        emd() {
+            this.dr = false;
+        }
+
+        fsu() {
+            this.ud();
+        }
+
+        sl() {
+            const n = performance.now();
+            const dt = Math.min((n - this.lft) / 1000, 0.1);
+            this.lft = n;
+            const mo = document.querySelector(".menu-toggle").classList.contains("clicked");
+            if (this.se && !mo) {
+                const p = c(this.ct / this.d, 0, 1);
+                const co = p >= 1;
+                const e = co ? 1 : this.e(p);
+                this.cs = l(this.cs, this.ts, this.l);
+                if (!co) {
+                    this.ct += dt;
+                }
+                window.scrollTo(0, this.cs);
+                if (co) {
+                    this.ct = 0;
+                }
+            }
+            requestAnimationFrame(() => this.sl());
+        }
+
+        ses(v) {
+            this.se = v;
+        }
+
+        r() {
+            this.ts = 0;
+            this.cs = 0;
+            this.v = 0;
+            window.scrollTo(0, 0);
+        }
+
+        ts(e) {
+            if (e) {
+                document.body.style.overflow = "hidden";
+                document.body.style.position = "";
+                document.body.style.top = "";
+                document.body.style.width = "";
+                this.se = true;
+            } else {
+                const scrollY = window.scrollY;
+                document.body.style.overflow = "hidden";
+                document.body.style.position = "fixed";
+                document.body.style.width = "100%";
+                document.body.style.top = `-${scrollY}px`;
+                this.se = false;
+            }
+        }
+
+        d() {
+            this.se = false;
+            document.body.style.overflow = "";
+            document.body.style.position = "";
+            document.body.style.width = "";
+            document.body.style.top = "";
+            document.body.style.height = "";
+            document.documentElement.style.scrollBehavior = "";
+            document.documentElement.style.touchAction = "pan-x pan-y";
+            window.removeEventListener("wheel", this.os);
+            window.removeEventListener("touchstart", this.std);
+            window.removeEventListener("touchmove", this.otd);
+            window.removeEventListener("touchend", this.etd);
+            window.removeEventListener("mousedown", this.smd);
+            window.removeEventListener("mousemove", this.omd);
+            window.removeEventListener("mouseup", this.emd);
+            window.removeEventListener("resize", this.ud);
+        }
+    }
+
+    i = new S();
+
+    window.toggleSmoothScroll = (e) => {
+        if (i) {
+            i.ts(e);
+        }
+    };
+}
+
+
+
+
+
+
+function initPageTransitions() {
+  
+
+  
+    const loader = gsap.timeline();
+    let isAnimating = false;
+    let nextPageHTML = '';
+    let pendingNavigation = null;
+    let lastNavigationTime = 0;
+    const NAVIGATION_COOLDOWN = 1000;
+
+    if (!document.querySelector('.transition')) {
+        const div = document.createElement('div');
+        div.className = 'transition';
+        div.innerHTML = `
+            <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
+                <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
+            </svg>
+        `;
+        document.body.appendChild(div);
+    }
+
+    const swipeup = document.querySelector('.swipeup');
+    const transition = document.querySelector('.transition');
+    const cursor = document.querySelector('.cursor');
+
+    function canNavigate() {
+        const now = Date.now();
+        if (now - lastNavigationTime < NAVIGATION_COOLDOWN) return false;
+        lastNavigationTime = now;
+        return true;
+    }
+
+    async function handleNavigation(url, isPopState = false) {
+        if (window.transitioning) {
+            pendingNavigation = { url, isPopState };
+            return;
+        }
+
+        if (!canNavigate()) return;
+
+        window.transitioning = true;
+        isAnimating = true;
+
+        // 1. Start the transition animation immediately
+        let transitionDone;
+        const transitionPromise = new Promise((resolve) => {
+            const tl = gsap.timeline({ onComplete: resolve });
+            tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
+            tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+            tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+            tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+            tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
+            tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
+            tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+        });
+
+        // 2. Start fetching the next page in parallel
+        const fetchPromise = fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const nextWrapper = doc.querySelector('.page-wrapper');
+                if (!nextWrapper) throw new Error('No .page-wrapper found');
+                return { html, doc, nextWrapper };
+            });
+
+        // 3. Wait for both the animation and the fetch to finish
+        let nextPage;
+        try {
+            nextPage = await fetchPromise;
+            await transitionPromise;
+        } catch (err) {
+            console.error('Navigation error:', err);
+            window.location.href = url;
+            return;
+        }
+
+        // 4. Now swap the content and finish the transition
+        nextPageHTML = nextPage.nextWrapper.innerHTML;
+        const doc = nextPage.doc;
+
+        // Keep transition visible while updating content
+        const container = document.querySelector('.page-wrapper');
+        if (!container) return;
+
+        ScrollTrigger.getAll().forEach(t => t.kill());
+
+        if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
+        if (window.interactiveCursor?.destroy) window.interactiveCursor.destroy();
+        if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
+
+        document.title = doc.querySelector('title')?.textContent || document.title;
+        container.innerHTML = nextPageHTML;
+
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        // Initialize new page content
+        initInfinityGallery();
+        initHomeVideo();
+        setTimeout(() => {
+            initInteractiveCursor();
+            initGsapAnimations();
+            initNavbarShowHide();
+            ScrollTrigger.refresh(true);
+            initCustomSmoothScrolling();
+            initSplitTextAnimations();
+            initVWFontZoomSafeForGSAP();
+        }, 100);
+
+        // Complete the transition animation (outro)
+        const tl = gsap.timeline();
+        tl.to(swipeup, {
+            duration: 0.6,
+            ease: 'power4.in',
+            attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
+        });
+
+        tl.to(swipeup, {
+            duration: 0.4,
+            ease: 'power2',
+            attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
+            onComplete: () => {
+                gsap.set(cursor, { scale: 0 });
+                gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
+                gsap.set(".menu-toggle", { opacity: 0 });
+
+                const inTl = gsap.timeline();
+                inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+                inTl.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0);
+                inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
+
+                // Only hide transition after all animations are complete
+                transition.style.opacity = '0';
+                transition.style.visibility = 'hidden';
+                isAnimating = false;
+                window.transitioning = false;
+
+                if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
+                    window.navbarShowHide = initNavbarShowHide();
+                }
+
+                if (pendingNavigation) {
+                    const { url, isPopState } = pendingNavigation;
+                    pendingNavigation = null;
+                    setTimeout(() => handleNavigation(url, isPopState), 100);
+                }
+            }
+        });
+    }
+
+    document.body.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+
+        const href = link.getAttribute('href');
+        if (
+            link.target === '_blank' ||
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            href.startsWith('#') ||
+            (href.startsWith('http') && !href.includes(location.hostname))
+        ) return;
+
+        e.preventDefault();
+        history.pushState({ title: document.title }, '', href);
+        handleNavigation(href);
+    });
+
+    window.addEventListener('popstate', () => {
+        if (window.transitioning) {
+            pendingNavigation = { url: location.href, isPopState: true };
+            return;
+        }
+        handleNavigation(location.href, true);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        history.replaceState({ title: document.title }, '', location.href);
+    });
+}
+
+
+
+
+
+
+
+
+/* ==============================================
+Show/Hide Grid on Keypress
+============================================== */
+document.addEventListener("keydown", function (event) {
+    if (event.shiftKey && event.key === "G") {
+    const gridOverlay = document.querySelector(".grid-overlay");
+    if (gridOverlay) {
+      gridOverlay.remove();
+    } else {
+      const overlay = document.createElement("div");
+      overlay.className = "grid-overlay";
+      for (let i = 0; i < 12; i++) {
+        const column = document.createElement("div");
+        overlay.appendChild(column);
       }
-    </style>
-    <script>
-      document.documentElement.style.background = '#1E1F24';
-      document.body.style.background = '#1E1F24';
-      document.documentElement.style.visibility = 'hidden';
-      document.body.style.visibility = 'hidden';
-    </script>
+      document.body.appendChild(overlay);
+    }
+    }
+});
+
+
+/* ==============================================
+Split Text Animations
+============================================== */
+
+function initSplitTextAnimations() {
+  if (gsap.ScrollTrigger) {
+    gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  }
+
+  const elements = document.querySelectorAll(
+    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
+  );
+
+  elements.forEach((element) => {
+    const split = new SplitText(element, { type: "lines", linesClass: "line" });
+
+    split.lines.forEach((line) => {
+      line.style.display = "inline-block";
+      line.style.width = "100%";
+      line.style.lineHeight = "unset";
+      line.style.visibility = "hidden";
+    });
+
+    split.lines.forEach((line) => line.offsetWidth); // force reflow
+
+    gsap.set(split.lines, {
+      visibility: "visible",
+      yPercent: 100,
+      clipPath: "inset(0% 0% 100% 0%)",
+      opacity: 1,
+    });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: element,
+        start: "top bottom",
+        once: true,
+        onEnter: () => tl.play()
+      },
+      paused: true,
+      onComplete: () => {
+        if (!element.matches(".hero-headline h1")) {
+          split.revert();
+        }
+      }
+    });
+
+    tl.to(split.lines, {
+      yPercent: 0,
+      clipPath: "inset(-20% -10% -20% 0%)",
+      opacity: 1,
+      stagger: 0.12,
+      duration: 2,
+      delay: element.closest(".hero, .delay") ? 0.5 : 0,
+      ease: "power3.out"
+    });
+  });
+}
+
+
+
+/* ==============================================
+Page GSAP Animations
+============================================== */
+
+
+function initGsapAnimations() {
+  // Common animations for all pages
+  gsap.fromTo(".clipping-video", 
+    { clipPath: "inset(100% 0% 0% 0%)" }, 
+    { 
+      clipPath: "inset(0% 0% 0% 0%)", 
+      delay: 0.6,
+      duration: 1.5, 
+      ease: "power4.inOut" 
+    }
+  );
+
+  gsap.set("img, .burger", { opacity: 0 });
+  gsap.to("img, .burger", { opacity: 1, duration: 1.5, ease: "power4.inOut" });
+
+  // Homepage specific animations
+  const visual = document.querySelector(".video-visual");
+  if (visual) {
+    const isMobile = window.innerWidth < 650;
+    const scrollEnd = isMobile ? 900 : 1500;
+
+    gsap.to(visual, {
+      clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+      width: "100vw",
+      height: "100svh",
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".hero",
+        start: "top top",
+        end: `+=${scrollEnd}`,
+        scrub: 0.5,
+        invalidateOnRefresh: true
+      }
+    });
+
+    const isMobile2 = window.innerWidth < 650;
+    const pinScrollEnd = isMobile2 ? 1200 : 2000;
+
+    ScrollTrigger.create({
+      trigger: ".hero",
+      start: "top top",
+      ease: "none",
+      end: `+=${pinScrollEnd}`,
+      pin: true,
+      pinSpacing: true,
+      scrub: 0.5,
+      anticipatePin: 0,
+      onEnter: () => ScrollTrigger.getAll().forEach(st => {
+        if (st.trigger !== document.querySelector(".hero")) st.disable();
+      }),
+      onLeave: () => ScrollTrigger.getAll().forEach(st => st.enable())
+    });
+  }
+
+  // Work thumbnail animations
+  document.querySelectorAll('.work-thumbnail .image-wrapper img').forEach(img => {
+    gsap.fromTo(img, 
+      { y: '-10%', scale: 1.1 }, 
+      {
+        y: '10%',
+        scale: 1,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: img,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.2
+        }
+      }
+    );
+  });
+
+  // Logo animations
+  gsap.set(".home-about .logo", { opacity: 0, visibility: "hidden" });
+  gsap.utils.toArray(".home-about .logo").forEach((logo) => {
+    gsap.to(logo, {
+      opacity: 1,
+      visibility: "visible",
+      duration: 2,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: logo,
+        start: "top 80%",
+        toggleActions: "play none none none"
+      }
+    });
+  });
+
+  // Hero headline animations
+  const heroHeadline = document.querySelector(".hero-headline h1");
+  if (heroHeadline) {
+    gsap.fromTo(heroHeadline, 
+      { 
+        clipPath: "inset(-10% -10% -20% -10%)",
+        y: 0
+      }, 
+      { 
+        clipPath: "inset(-10% -10% 100% -10%)",
+        y: -100,
+        ease: "none",
+        scrollTrigger: {
+          trigger: ".hero",
+          start: "top 1%",
+          end: "bottom 0%",
+          scrub: 0.5,
+        }
+      }
+    );
+  }
+
+  // Image parallax animations
+  document.querySelectorAll('.home-container .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
+    gsap.from(img, {
+      yPercent: -15,
+      transformOrigin: "center center",
+      ease: "none",
+      scrollTrigger: {
+        trigger: img,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: 1,
+      }
+    });
+  });
+
+  // Left to right animations
+  gsap.utils.toArray(".left-to-right").forEach((img) => {
+    gsap.fromTo(img, 
+      { clipPath: "inset(0 100% 0 0)" }, 
+      {
+        clipPath: "inset(0 0% 0 0)",
+        duration: 2.5,
+        delay: -0.7,
+        ease: "expo.inOut",
+        scrollTrigger: {
+          trigger: img,
+          start: "top 95%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+  });
+
+  // Right to left animations
+  gsap.utils.toArray(".right-to-left").forEach((img) => {
+    gsap.fromTo(img, 
+      { clipPath: "inset(0 0 0 100%)" }, 
+      {
+        clipPath: "inset(0 0 0 0%)",
+        duration: 2.5,
+        delay: -0.7,
+        ease: "expo.inOut",
+        scrollTrigger: {
+          trigger: img,
+          start: "top 95%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+  });
+
+  // Icon animations
+  gsap.utils.toArray(".content .icon").forEach(icon => {
+    gsap.fromTo(icon, 
+      { clipPath: "circle(0% at 50% 50%)" }, 
+      {
+        clipPath: "circle(100% at 50% 50%)",
+        duration: 2.5,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: icon,
+          start: "top 85%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+  });
+
+  // Line fill animation
+  gsap.to(".line-fill", {
+    y: "0%",
+    duration: 2,
+    repeat: -1,
+    ease: "power2.inOut",
+    yoyo: true
+  });
+
+  // Property image hover effects
+  document.querySelectorAll('.property .image img').forEach(img => {
+    if (img.closest('.home') || img.closest('.more-work')) {
+      img.addEventListener('mouseenter', () => {
+        gsap.to(img, {
+          scale: 1.1,
+          transformOrigin: 'center center',
+          duration: 1.3,
+          ease: 'power3.out',
+          overwrite: 'auto'
+        });
+      });
+
+      img.addEventListener('mouseleave', () => {
+        gsap.to(img, {
+          scale: 1,
+          transformOrigin: 'center center',
+          duration: 1.3,
+          ease: 'power3.out',
+          overwrite: 'auto'
+        });
+      });
+    }
+  });
+
+  // Bullet animations
+  document.querySelectorAll(".bullet").forEach((el) => {
+    gsap.from(el, {
+      scrollTrigger: {
+        trigger: el,
+        start: "top 80%",
+        toggleActions: "play none none none"
+      },
+      opacity: 0,
+      y: 100,
+      clipPath: "inset(8% 8% 8% 8%)",
+      duration: 1.3,
+      ease: "power3.out"
+    });
+  });
+  
+  
+  document.querySelectorAll(".w-input, .w-select").forEach((el) => {
+    gsap.fromTo(el, {
+      clipPath: "inset(0 0 0 100%)"
+    }, {
+      clipPath: "inset(0 0 0 0%)",
+      duration: 1,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: el,
+        start: "top 90%",
+        toggleActions: "play none none none"
+      }
+    });
+  });
+
+  
+  /*
+  
+  gsap.from(".home-properties .property", {
+  y: 300,
+  opacity: 0,
+  duration: 1.5,
+    delay:0.3,
+  stagger: 0.2,
+  ease: "power4.out"
+});
+
+*/
+
+/*
+document.querySelectorAll('.slider').forEach(slider => {
+  let startX = 0;
+  let endX = 0;
+
+  slider.addEventListener('mousedown', e => {
+    startX = e.clientX;
+  });
+
+  slider.addEventListener('mouseup', e => {
+    endX = e.clientX;
+    if (Math.abs(startX - endX) < 5) {
+      const items = slider.querySelectorAll('.slider-item');
+      items.forEach(item => {
+        const isExpanded = item.classList.contains('expanded');
+
+        if (!isExpanded) {
+          item.classList.add('expanded');
+
+          item.dataset.originalMinWidth = window.getComputedStyle(item).minWidth;
+          item.dataset.originalMinHeight = window.getComputedStyle(item).minHeight;
+
+          item.style.transformOrigin = 'center center';
+
+          gsap.to(item, {
+            minWidth: '100vw',
+            height:'100svh',
+            duration: 1,
+            ease: 'power2.inOut'
+          });
+        } else {
+          item.classList.remove('expanded');
+
+          gsap.to(item, {
+            minWidth: item.dataset.originalMinWidth,
+            height: item.dataset.originalMinHeight,
+            duration: 1,
+            ease: 'power2.inOut'
+          });
+        }
+      });
+    }
+  });
+});
+*/
+  
+  /*
+  document.querySelectorAll('.slider').forEach(slider => {
+    slider.addEventListener('click', () => {
+        const isExpanded = slider.classList.contains('expanded');
+        
+        if (!isExpanded) {
+            slider.classList.add('expanded');
+            gsap.to(slider, {
+                scale: 2,
+              height:'100svh',
+                duration: 1,
+                ease: 'power4.inOut'
+            });
+        } else {
+            slider.classList.remove('expanded');
+            gsap.to(slider, {
+                scale: 1,
+                            height:'100svh',
+                duration: 1,
+                ease: 'power4.inOut'
+            });
+        }
+    });
+  });
+  */
+  
+}
+
+
+
+
+function resetInteractiveCursor() {
+  if (window.cursorAnimationFrame) {
+    cancelAnimationFrame(window.cursorAnimationFrame);
+    window.cursorAnimationFrame = null;
+  }
+
+  if (window.cleanupCursor) {
+    window.cleanupCursor();
+    window.cleanupCursor = null;
+  }
+
+  const cursor = document.querySelector("#cursor");
+  if (cursor) {
+    cursor.className = "cursor";
+    gsap.killTweensOf(cursor);
+    gsap.set(cursor, {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      xPercent: -50,
+      yPercent: -50,
+      scale: 0,
+      opacity: 0,
+      visibility: "hidden"
+    });
+  }
+}
+
+function initInteractiveCursor() {
+  if (window.innerWidth <= 650) return;
+
+  const cursor = document.querySelector("#cursor");
+  if (!cursor) return;
+
+  resetInteractiveCursor();
+
+  const mouse = { x: -100, y: -100 };
+  let isMoving = false;
+  let isDragging = false;
+  let cursorLocked = false;
+  let cursorAnimationFrame;
+  let dragTimeout;
+
+  gsap.to(cursor, {
+    scale: 1,
+    opacity: 1,
+    visibility: "visible",
+    duration: 0.4,
+    ease: "power2.out"
+  });
+
+  function trackMouse(e) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    isMoving = true;
+  }
+
+  function animateCursor() {
+    if (isMoving) {
+      gsap.to(cursor, {
+        duration: 0.7,
+        x: mouse.x,
+        y: mouse.y,
+        ease: "power3.out"
+      });
+      isMoving = false;
+    }
+    cursorAnimationFrame = requestAnimationFrame(animateCursor);
+  }
+
+  function resetCursor() {
+    if (!cursorLocked) {
+      cursor.classList.remove("change", "explore", "drag", "scroll", "enter", "play", "slide");
+    }
+  }
+
+  function handleMouseDown() {
+    dragTimeout = setTimeout(() => {
+      isDragging = true;
+      cursor.classList.add("drag");
+    }, 150);
+  }
+
+  function handleMouseMove() {
+    if (isDragging) cursor.classList.add("drag");
+  }
+
+  function handleMouseUp() {
+    if (isDragging) {
+      isDragging = false;
+      cursor.classList.remove("drag");
+    }
+    clearTimeout(dragTimeout);
+  }
+
+  document.querySelectorAll(".hero:not(.contact .hero)").forEach(el => {
+    el.addEventListener("mouseenter", () => cursor.classList.add("scroll"));
+    el.addEventListener("mouseleave", () => cursor.classList.remove("scroll"));
+  });
+
+  document.querySelectorAll(".home-properties-grid .property").forEach(el => {
+    el.addEventListener("mouseenter", () => cursor.classList.add("enter"));
+    el.addEventListener("mouseleave", () => cursor.classList.remove("enter"));
+  });
+
+  document.querySelectorAll(".video-visual").forEach(el => {
+    el.addEventListener("mouseenter", () => cursor.classList.add("play"));
+    el.addEventListener("mouseleave", () => cursor.classList.remove("play"));
+  });
+
+  document.querySelectorAll(".slider").forEach(el => {
+    el.addEventListener("mouseenter", () => cursor.classList.add("slide"));
+    el.addEventListener("mouseleave", () => cursor.classList.remove("slide"));
+  });
+
+  document.addEventListener("mousemove", trackMouse);
+  document.addEventListener("mousedown", handleMouseDown);
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mouseup", handleMouseUp);
+
+  animateCursor();
+
+  window.cursorAnimationFrame = cursorAnimationFrame;
+  window.cleanupCursor = function () {
+    cancelAnimationFrame(cursorAnimationFrame);
+    document.removeEventListener("mousemove", trackMouse);
+    document.removeEventListener("mousedown", handleMouseDown);
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+  };
+}
+
+
+
+/* ==============================================
+Navbar Show/Hide 
+============================================== */
+
+function initNavbarShowHide() {
+    // Kill any existing instance
+    if (window.navbarShowHide && typeof window.navbarShowHide.destroy === 'function') {
+        window.navbarShowHide.destroy();
+    }
+
+    const navElements = document.querySelectorAll(".header");
+    let lastScrollTop = 0;
+    const isMobile = window.innerWidth < 650;
+    const hideY = isMobile ? "-20vw" : "-8vw";
+    let hasScrolledDown = false;
+    let scrollHandler = null;
+
+    if (navElements.length) {
+        // Force scroll to top immediately
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        // Reset any existing animations
+        navElements.forEach((nav) => {
+            gsap.killTweensOf(nav);
+        });
+
+        // Set initial position without animation
+        navElements.forEach((nav) => {
+            gsap.set(nav, { 
+                y: 0, 
+                position: "fixed", 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                zIndex: 999,
+                clearProps: "transform" // Clear any existing transforms
+            });
+        });
+
+        lastScrollTop = 0;
+        hasScrolledDown = false;
+
+        // Remove any existing scroll handler
+        if (window.navbarScrollHandler) {
+            window.removeEventListener("scroll", window.navbarScrollHandler);
+        }
+
+        // Create new scroll handler
+        scrollHandler = function() {
+            const st = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollDelta = st - lastScrollTop;
+
+            // Reset hasScrolledDown if we're at the top
+            if (st === 0) {
+                hasScrolledDown = false;
+                navElements.forEach((nav) => {
+                    gsap.set(nav, { y: 0 });
+                });
+                return;
+            }
+
+            if (!hasScrolledDown && st > 0) {
+                hasScrolledDown = true;
+            }
+
+            if (!hasScrolledDown || st < 100) return;
+
+            if (st > lastScrollTop) {
+                // Scrolling down - hide navbar
+                navElements.forEach((nav) => {
+                    gsap.to(nav, { 
+                        y: hideY, 
+                        duration: 1, 
+                        ease: "power4.out",
+                        overwrite: true // Ensure smooth transitions
+                    });
+                });
+            } else if (st < lastScrollTop && Math.abs(scrollDelta) > 1) {
+                // Scrolling up - only show navbar if scroll delta is significant
+                navElements.forEach((nav) => {
+                    gsap.to(nav, { 
+                        y: "0vw", 
+                        duration: 1, 
+                        ease: "power4.out",
+                        overwrite: true // Ensure smooth transitions
+                    });
+                });
+            }
+
+            lastScrollTop = Math.max(0, st);
+        };
+
+        // Store the handler reference globally
+        window.navbarScrollHandler = scrollHandler;
+        window.addEventListener("scroll", scrollHandler);
+
+        // Force initial position
+        requestAnimationFrame(() => {
+            navElements.forEach((nav) => {
+                gsap.set(nav, { y: 0 });
+            });
+        });
+    }
+
+    // Create and store the instance
+    window.navbarShowHide = {
+        destroy: function() {
+            if (window.navbarScrollHandler) {
+                window.removeEventListener("scroll", window.navbarScrollHandler);
+                window.navbarScrollHandler = null;
+            }
+            // Reset GSAP animations
+            navElements.forEach((nav) => {
+                gsap.killTweensOf(nav);
+                gsap.set(nav, { clearProps: "all" });
+            });
+        }
+    };
+
+    return window.navbarShowHide;
+}
+  
+
+
+
+
+function refreshbreakingpoints() {
+  let wasMobile = window.innerWidth < 650;
+
+  window.addEventListener("resize", () => {
+    const isMobile = window.innerWidth < 650;
+    if (isMobile !== wasMobile) {
+      wasMobile = isMobile;
+      window.location.reload();
+    }
+  });
+}
+  
+
+
+
+
+
+function initInfinityGallery() {
+  class InfiniteHorizontalScroll {
+    constructor(container) {
+      if (!container) return;
+      this.container = container;
+      this.items = Array.from(this.container.children);
+      if (this.items.length === 0) return;
+
+      this.scrollX = 0;
+      this.smoothScrollX = 0;
+      this.touchStartX = 0;
+      this.touchStartY = 0;
+      this.isDragging = false;
+      this.dragStartX = 0;
+      this.dragDelta = 0;
+      this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+      const isMobile = window.innerWidth < 650;
+      
+      // Core settings
+      this.wrapper = window;
+      this.content = document.documentElement;
+      this.lerp = isMobile ? 0.1 : 0.05; // Slower lerp for mobile
+      this.duration = isMobile ? 0.05 : 1.5;
+      this.easing = (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t));
+      this.wheelMultiplier = isMobile ? 0.4 : 0.8; // Slower wheel for mobile
+      this.touchMultiplier = isMobile ? 3 : 4; // Slower touch for mobile
+      this.dragMultiplier = isMobile ? 3 : 3;
+
+      this.cloneItems();
+      this.calculateDimensions();
+      this.init();
+    }
+
+    cloneItems() {
+      const fragmentBefore = document.createDocumentFragment();
+      const fragmentAfter = document.createDocumentFragment();
+      this.items.forEach((item) => {
+        const cloneBefore = item.cloneNode(true);
+        const cloneAfter = item.cloneNode(true);
+        fragmentBefore.appendChild(cloneBefore);
+        fragmentAfter.appendChild(cloneAfter);
+      });
+      this.container.insertBefore(fragmentBefore, this.container.firstChild);
+      this.container.appendChild(fragmentAfter);
+    }
+
+    calculateDimensions() {
+      this.totalWidth = 0;
+      Array.from(this.container.children).forEach((item) => {
+        const itemWidth = item.getBoundingClientRect().width;
+        const itemMarginRight = parseFloat(getComputedStyle(item).marginRight);
+        this.totalWidth += itemWidth + itemMarginRight;
+      });
+      const originalWidth = this.totalWidth / 3;
+      this.scrollX = originalWidth;
+      this.smoothScrollX = originalWidth;
+      this.container.style.transform = `translateX(${-this.scrollX}px)`;
+    }
+
+    init() {
+      this.bindEvents();
+      this.animate();
+      window.addEventListener("resize", () => {
+        this.calculateDimensions();
+      });
+    }
+
+    bindEvents() {
+      document.addEventListener("wheel", (e) => this.handleWheel(e), { passive: false });
+      
+      // Touch events for all touch devices (including iPad)
+      if (this.isTouchDevice) {
+        this.container.addEventListener("touchstart", (e) => this.handleTouchStart(e), { passive: true });
+        this.container.addEventListener("touchmove", (e) => this.handleTouchMove(e), { passive: false });
+        this.container.addEventListener("touchend", () => this.handleTouchEnd());
+        this.container.addEventListener("touchcancel", () => this.handleTouchEnd());
+      }
+
+      // Mouse events for non-touch devices
+      if (!this.isTouchDevice) {
+        this.container.addEventListener("mousedown", (e) => this.handleDragStart(e));
+        window.addEventListener("mousemove", (e) => this.handleDragMove(e));
+        window.addEventListener("mouseup", () => this.handleDragEnd());
+      }
+    }
+
+    handleWheel(event) {
+      if (event.target.closest("button, input, textarea, select")) return;
+      event.preventDefault();
+      this.scrollX += event.deltaY * this.wheelMultiplier;
+      this.handleInfiniteScroll();
+    }
+
+    handleTouchStart(event) {
+      if (event.touches.length > 1) return; // Ignore multi-touch
+      this.touchStartX = event.touches[0].clientX;
+      this.touchStartY = event.touches[0].clientY;
+      this.dragDelta = 0;
+    }
+
+    handleTouchMove(event) {
+      if (event.touches.length > 1) return; // Ignore multi-touch
+      
+      const touchX = event.touches[0].clientX;
+      const touchY = event.touches[0].clientY;
+      const deltaX = touchX - this.touchStartX;
+      const deltaY = Math.abs(touchY - this.touchStartY);
+      
+      // Only handle horizontal scrolling if the horizontal movement is greater than vertical
+      if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
+        event.preventDefault();
+        this.scrollX -= deltaX * this.touchMultiplier;
+        this.touchStartX = touchX;
+        this.touchStartY = touchY;
+        this.handleInfiniteScroll();
+      }
+    }
+
+    handleTouchEnd() {
+      this.dragDelta = 0;
+    }
+
+    handleDragStart(e) {
+      this.isDragging = true;
+      this.dragStartX = e.clientX;
+    }
+
+    handleDragMove(e) {
+      if (!this.isDragging) return;
+      const deltaX = e.clientX - this.dragStartX;
+      this.dragStartX = e.clientX;
+      this.scrollX -= deltaX * this.dragMultiplier;
+      this.handleInfiniteScroll();
+    }
+
+    handleDragEnd() {
+      this.isDragging = false;
+    }
+
+    handleInfiniteScroll() {
+      const originalWidth = this.totalWidth / 3;
+      if (this.scrollX < 0) {
+        this.scrollX += originalWidth;
+        this.smoothScrollX += originalWidth;
+      } else if (this.scrollX > this.totalWidth - originalWidth) {
+        this.scrollX -= originalWidth;
+        this.smoothScrollX -= originalWidth;
+      }
+    }
+
+    animate() {
+      this.smoothScrollX += (this.scrollX - this.smoothScrollX) * this.lerp;
+      this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
+      requestAnimationFrame(() => this.animate());
+    }
+  }
+
+  new InfiniteHorizontalScroll(document.querySelector(".slider-wrapper"));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==============================================
+Script Loading Utility
+============================================== */
+
+// Version control for scripts
+const SCRIPT_VERSIONS = {
+    'gsap': '3.12.5',
+    'scrolltrigger': '3.12.5',
+    'splittext': '3.12.5'
+};
+
+// Cache control
+const CACHE_BUSTER = `?v=${Date.now()}`;
+
+// Retry logic
+async function loadScriptWithRetry(src, options = {}, maxRetries = 3) {
+    let retries = 0;
     
-    </head><body><div class="default-styles"><div class="w-embed"><link rel="stylesheet" href="style.css"></div><div id="cursor" class="cursor"><div class="cursor__circle"></div></div><header class="header"><div class="grid"><a href="/" class="w-inline-block"><div class="logo"><img loading="lazy" src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc869_realevate-logo.svg" alt="Realevate"/></div></a><div class="menu"><a href="/contact-us"><span>יצירת קשר</span></a><a href="/all-projects"><span>הפרויקטים שלנו</span></a><a href="/"><span>עמוד הבית</span></a></div></div><button class="menu-toggle"><div data-position="top" class="menu-bar"></div><div data-position="bottom" class="menu-bar"></div></button></header><div class="page-overlay-first"></div><div class="page-overlay-second"></div><div id="preloader" class="preloader hide"></div><div class="mega-menu hide"><div class="menu-content"><div class="mega-menu-links"><a href="/"><span>Home</span></a><a href="/all-projects"><span>Projects</span></a><a href="/contact-us"><span>Contact</span></a></div><div class="mega-menu-image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683c1b35cc75e24bfe796415_menu-image%20(1).avif" loading="lazy" alt="" class="default"/><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc87c_d8es5ad2qoch6i9v11pv.avif" loading="lazy" alt="" class="_1"/><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc87b_s1f7iv1mtewfcjqwuop1.avif" loading="lazy" alt="" class="_2"/><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc87a_evq0poc66pjvc00khl56.avif" loading="lazy" alt="" class="_3"/></div></div></div></div><div id="page-wrapper" class="page-wrapper home"><section class="hero"><div class="grid"><div class="hero-headline"><h1>Semeli</h1></div><div class="video-visual"><div class="clipping-video"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d96deb4b4ca4724d48f5a_kxncg1cjsck6twssiwwa.avif" loading="lazy" alt=""/></div></div><div class="scroll"><div class="scroll-indicator"><div class="line-fill"></div></div></div></div><div class="page-overlay-video"></div></section><section><div class="project-about"><div class="center"><div class="location"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc88c_location-icon.svg" loading="lazy" alt=""/><p>Pernera, Protaras</p></div><h2>Semeli</h2><p>18 וילות יוקרתיות עם בריכה פרטית, 1 ק״מ מחוף הים, 500 מ׳ ממסעדות, מרכזי בילוי וקניות, ומרחק נסיעה קצר למרינה החדשה של פרלמיני שהקמתה תסתיים ב-2025 ותכלול מועדון יאכטות, בתי קפה, מסעדות, ברים וחנויות של מותגי יוקרה.</p><h4>החל מ-543 אלף יורו + מע&quot;מ</h4><div class="estimate-block"><p class="estimate">צפי לקבלת מפתח ספטמבר 2026</p><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc894_Vector%20(4).svg" loading="lazy" alt=""/></div></div></div></section><div class="slider w-dyn-list"><script type="text/x-wf-template" id="wf-template-61e6051b-d25a-b012-b8a1-2fd9c6146cb0">%3Cdiv%20role%3D%22listitem%22%20class%3D%22slider-item%20w-dyn-item%20w-dyn-repeater-item%22%3E%3Cimg%20src%3D%22https%3A%2F%2Fcdn.prod.website-files.com%2F683625562ee8a0f6224dc86e%2F684d96faa78aa3ada9d004ba_naysqjvtcwz4vhgavhzw.avif%22%20loading%3D%22eager%22%20alt%3D%22%22%2F%3E%3C%2Fdiv%3E</script><div role="list" class="slider-wrapper w-dyn-items"><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d96faa78aa3ada9d004ba_naysqjvtcwz4vhgavhzw.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d970ed11156b5cbd39dc4_bebjo5bfmy4bjoouthow.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d970586d0f0f7ba532416_ogjlprmttpwn60bqvrh1.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d972479ad24f44f698f51_go91mxlviunn6kujtz1x.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d9728ab39a043514fcb9b_dhbzvkcpnzfrcqxgtqmo.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d972ecef202b8dd9f6b52_skkywktz5a1dpkkchmg0.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d9738dc2ec4d941c2bb51_jp0gbadpdl4cwqb0zu72.avif" loading="eager" alt=""/></div><div role="listitem" class="slider-item w-dyn-item w-dyn-repeater-item"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/684d973de2810d8628d474d2_dtdgacnmhjnhdngpaaec.avif" loading="eager" alt=""/></div></div><div class="w-dyn-hide w-dyn-empty"><div>No items found.</div></div></div><section><div class="description w-richtext"><li>3 חדרי שינה</li><li>3 חדרי רחצה</li><li>בריכה פרטית</li><li>חנייה פרטית</li><li>גודל מגרש - 397 - 308 מ״ר</li><li>שטח בנוי – 153 מ״ר</li><li>מרפסות – 19 מ״ר</li><li>גג – 34 מ״ר</li></div><div class="description w-condition-invisible w-dyn-bind-empty w-richtext"></div></section><section><div class="center"><div class="bullets"><div class="bullet"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc890_ep_cold-drink.svg" loading="lazy" alt=""/><p>כ-5 דקות נסיעה לטיילת, הדאון טאון והחופים של פרוטאראס</p></div><div class="bullet"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc88e_umbrella%201.svg" loading="lazy" alt=""/><p>כ-10 דקות נסיעה מאיה נאפה ומחוף Nissi beach - זכה בחוף הטוב ביותר באירופה לשנת 2024</p></div><div class="bullet"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc88d_forest%201.svg" loading="lazy" alt=""/><p>כ-10 דקות נסיעה מהפארק הלאומי CAPE CAVO GRECO והלגונה הכחולה</p></div><div class="bullet"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc891_Vector.svg" loading="lazy" alt=""/><p>כ-5 דקות נסיעה למרכז של פרלמיני, בתי ספר ובתי חולים</p></div><div class="bullet"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc88f_fluent_highway-24-filled.svg" loading="lazy" alt=""/><p>גישה נוחה ומהירה ל-Highway, לכיוון לרנקה ולימסול</p></div><div class="bullet"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc892_Frame%201707480098.svg" loading="lazy" alt=""/><p>כ-40 דקות נסיעה לשדה התעופה של לרנקה (63 ק&quot;מ)</p></div></div></div></section><section><div class="home-properties"><h1>The Location</h1><div class="w-dyn-list"><div role="list" class="places-grid w-dyn-items"><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8a2_xvuj8ncneb3yzxaigigz.avif" loading="lazy" alt=""/></div><h4 class="place-name">Nissi Beach Ayia Napa</h4><p class="info">חוף ניסי באיה נאפה הוא רצועת חוף מרהיבה עם חול לבן ומים צלולים, המושכת מבקרים מכל העולם. החוף מציע שילוב של שלווה, ספורט ימי וחיי חוף תוססים עם מסיבות קצף ומוזיקה חיה לאורך הקיץ.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8a3_s7iltqs01pfjqx5dnqxg.avif" loading="lazy" alt=""/></div><h4 class="place-name">Fig Tree Bay Protaras</h4><p class="info">חוף פיג טרי ביי בפרוטארס מציע חוויה ייחודית עם מים צלולים, חול זהוב ואי קטן שניתן לשחות אליו. החוף עטור בדגל כחול, מצויד במתקנים נוחים ונגישות מלאה, ומתאים במיוחד למשפחות ולחובבי ספורט ימי.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8b4_uzdokukgxkx9ghbivhls.avif" loading="lazy" alt=""/></div><h4 class="place-name">Cape Cavo Greco</h4><p class="info">פנינת טבע פראית המשקיפה על מי טורקיז צלולים וצוקים דרמטיים. יעד מושלם לטיולים, שקיעות עוצרות נשימה וחיבור מרגש אל עוצמת הים והטבע.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8b5_o4aashbfu2kceouoaifv.avif" loading="lazy" alt=""/></div><h4 class="place-name">Aya Napa Marine</h4><p class="info">המרינה משלבת יוקרה עכשווית עם תחושת חופש ימית אמיתית. שדרת היאכטות, המסעדות האלגנטיות והאווירה התוססת יוצרים חוויית חוף אורבנית, בלב אחד היעדים המרהיבים בקפריסין.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8b6_l46z0ou9q1jvcscwc7jc.avif" loading="lazy" alt=""/></div><h4 class="place-name">Paralimni Marine</h4><p class="info">המרינה החדשה של פרלמיני שהקמתה תסתיים ב-2025 ותכלול מועדון יאכטות, בתי קפה, מסעדות, ברים וחנויות של מותגי יוקרה.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8b7_mxaizfdglhrjspbxlr4s.avif" loading="lazy" alt=""/></div><h4 class="place-name">Ayia Napa Down Town</h4><p class="info">העיר העתיקה של איה נאפה מציעה אווירה מקומית ואותנטית עם רחובות מרוצפים, טברנות מסורתיות וכנסייה היסטורית בלב הכיכר. זוהי נקודת מפגש שקטה יותר מהמרכז התוסס, שמזמינה לשיטוט רגוע ולחוויית תרבות קפריסאית אמיתית.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8b8_jftdthl9aloozdgk83qu.avif" loading="lazy" alt=""/></div><h4 class="place-name">Beach Bars &amp; Vibrant Night Life</h4><p class="info">חופי קפריסין מלאים בברי חוף ססגוניים שמציעים קוקטיילים מרעננים, מוזיקה חיה ואווירת שקיעה מושלמת. בין מיטות שיזוף לגלים, כל בר יוצר חוויה ייחודית שמשלבת חופש, סטייל וים.</p></div><div role="listitem" class="place w-dyn-item"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc86e/683625562ee8a0f6224dc8b9_osi66rlfr9j4igwdow9d.avif" loading="lazy" alt=""/></div><h4 class="place-name">Cyprus Fine Dining</h4><p class="info">סצנת ה-Fine Dining בקפריסין מציעה חיבור מרתק בין מטבח ים-תיכוני עילי לבין טכניקות מודרניות ופרזנטציה מוקפדת. באי תמצאו מסעדות עטורות שבחים עם חומרי גלם מקומיים, יינות בוטיק ונופים מהפנטים.</p></div></div></div></div></section><section><div class="bottom-cta"><div class="center"><h3>כל חלום גדול, <br/>מתחיל בצעד קטן לחוף.</h3><div class="download-block"><a href="/contact-us" class="button-link">הורדת ברושור פרויקט</a><a href="/contact-us" class="button-link">לקבלת פרטים ותיאום שיחה עם נציג</a></div></div></div></section><footer><section><div class="footer"><div class="grid"><div class="footer-image"><div class="image"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc87d_footer-image.avif" loading="lazy" alt="Realevate Premium Living in Cyprus"/></div></div><div class="footer-sitemap"><div class="block spread-blocks"><div><h5>מפת אתר</h5><div class="menu"><a href="/contact-us"><span>יצירת קשר</span></a><a href="/all-projects"><span>הפרויקטים שלנו</span></a><a href="/"><span>עמוד הבית</span></a></div></div><div><div class="menu"><div class="privacy-policy"><a href="/terms-of-use"><span>מדיניות שימוש ופרטיות</span></a></div></div></div></div><div class="block"><h5>למידע נוסף ויצירת קשר</h5><p>מייל: info@realevate.co.il</p><p>טלפון: <span class="ltr">(+972)54-4991690</span></p><p></p><a href="https://wa.me/972544991690" target="_blank" class="whatsapp-link w-inline-block"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/684dd9b9568c5d80f515a5f3_whatsappicon.svg" loading="lazy" alt=""/><p><span>לשליחת הודעת WhatsApp</span></p></a></div><div class="block"><h5>טופס יצירת קשר מהיר</h5><div class="w-form"><form id="email-form" name="email-form" data-name="Email Form" redirect="/thank-you" data-redirect="/thank-you" method="post" data-wf-page-id="683625562ee8a0f6224dc843" data-wf-element-id="89682d13-77a4-c01b-8366-53f6f043533f"><label for="Full-Name">שם מלא:</label><input class="w-input" maxlength="256" name="Full-Name" data-name="Full Name" placeholder="" type="text" id="Full-Name"/><label for="Phone-3">טלפון:</label><input class="w-input" maxlength="256" name="Phone" data-name="Phone" placeholder="" type="tel" id="Phone-3" required=""/><label for="Email-3">אימייל:</label><input class="w-input" maxlength="256" name="Email" data-name="Email" placeholder="" type="email" id="Email-3" required=""/><label for="Hours-3">באיזה שעות נוח לך לדבר?</label><input class="w-input" maxlength="256" name="Hours" data-name="Hours" placeholder="" type="text" id="Hours-3" required=""/><input type="submit" data-wait="Please wait..." class="w-button" value="שלח"/></form><div class="success-message w-form-done"><div class="hide">Thank you! Your submission has been received!</div></div><div class="error-message w-form-fail"><div class="text-block">שגיאה - בדקו את השדות ונסו שנית</div></div></div></div></div><div class="logo"><img src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/683625562ee8a0f6224dc869_realevate-logo.svg" loading="lazy" alt="Realevate"/></div></div></div></section></footer></div><script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=683625562ee8a0f6224dc849" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/683625562ee8a0f6224dc849/js/webflow.a0aa6ca1.0ca6e49a52f9ec96.js" type="text/javascript"></script><script src="script.js"></script>
+    while (retries < maxRetries) {
+        try {
+            return await loadScript(src, options);
+        } catch (error) {
+            retries++;
+            if (retries === maxRetries) throw error;
+            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+    }
+}
+
+function loadScriptsSequentially(scripts) {
+    return scripts.reduce((promiseChain, script) => {
+        return promiseChain.then(() => loadScriptWithRetry(script.src, script.options));
+    }, Promise.resolve());
+}
+
+// Lazy loading utility
+function lazyLoadScript(src, options = {}) {
+    return new Promise((resolve) => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    observer.disconnect();
+                    loadScriptWithRetry(src, options)
+                        .then(resolve)
+                        .catch(console.error);
+                }
+            });
+        });
+
+        const placeholder = document.createElement('div');
+        placeholder.dataset.lazyScript = src;
+        document.body.appendChild(placeholder);
+        observer.observe(placeholder);
+    });
+}
+
+/* ==============================================
+Initialization Sequence
+============================================== */
+
+async function initializeApplication() {
+    try {
+        // First load core dependencies
+        await loadScriptsSequentially([
+            {
+                src: `https://cdnjs.cloudflare.com/ajax/libs/gsap/${SCRIPT_VERSIONS.gsap}/gsap.min.js`,
+                options: { async: false }
+            },
+            {
+                src: `https://cdnjs.cloudflare.com/ajax/libs/gsap/${SCRIPT_VERSIONS.scrolltrigger}/ScrollTrigger.min.js`,
+                options: { async: false }
+            },
+            {
+                src: `https://cdnjs.cloudflare.com/ajax/libs/gsap/${SCRIPT_VERSIONS.splittext}/SplitText.min.js`,
+                options: { async: false }
+            },
+            // Add ScrollToPlugin
+            {
+                src: 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js',
+                options: { async: false }
+            },
+            // Add imagesLoaded
+            {
+                src: 'https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js',
+                options: { async: false }
+            },
+            // Add Lottie (bodymovin)
+            {
+                src: 'https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js',
+                options: { async: false }
+            }
+        ]);
+
+        // Register GSAP plugins
+        if (typeof gsap !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger, SplitText);
+            if (typeof ScrollToPlugin !== 'undefined') {
+                gsap.registerPlugin(ScrollToPlugin);
+            }
+        }
+
+        // Load smooth scroll script
+        await loadScriptWithRetry('https://cdn.prod.website-files.com/645e0e1ff7fdb6dc8c85f3a2/64a5544a813c7253b90f2f50_lenis-offbrand.txt', {
+            attributes: {
+                'data-id-scroll': '',
+                'data-autoinit': 'true',
+                'data-duration': '1',
+                'data-orientation': 'vertical',
+                'data-smoothWheel': 'true',
+                'data-smoothTouch': 'false',
+                'data-touchMultiplier': '1.5',
+                'data-easing': '(t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))',
+                'data-useOverscroll': 'true',
+                'data-useControls': 'true',
+                'data-useAnchor': 'true',
+                'data-useRaf': 'true',
+                'data-infinite': 'false'
+            }
+        });
+
+        // Initialize core functionality
+        initPageTransitions();
+        refreshbreakingpoints();
+
+        // Initialize animations with proper timing
+        requestAnimationFrame(() => {
+            initGsapAnimations();
+            initSplitTextAnimations();
+            initInteractiveCursor();
+            ScrollTrigger.refresh(true);
+            initCustomSmoothScrolling();
+        });
+
+        // Lazy load non-critical scripts
+        lazyLoadScript('https://cdn.userway.org/widget.js', {
+            attributes: {
+                'data-account': 'a37OvQJfVJ'
+            }
+        });
+
+    } catch (error) {
+        console.error('Error initializing application:', error);
+        // Fallback initialization without animations
+        initPageTransitions();
+        refreshbreakingpoints();
+    }
+}
+
+// Replace the old initialization
+document.addEventListener("DOMContentLoaded", initializeApplication);
+
+// --- PAGE LOADER OVERLAY WITH COUNTER ---
+(function addPageLoader() {
+  // Add loader on all pages
+  const loader = document.createElement('div');
+  loader.id = 'page-loader';
+  loader.className = 'page-loader';
+  loader.innerHTML = `
+    <div id="loader-counter" class="loader-counter">0</div>
+  `;
+  document.body.appendChild(loader);
+})();
+
+function animateLoaderCounter(onComplete, duration = 100) {
+  document.documentElement.style.visibility = "visible";
+  document.body.style.visibility = "visible";
+
+  const counter = document.getElementById('loader-counter');
+  const loader = document.getElementById('page-loader');
     
-    </body></html>
+  // If no loader elements found, just run the callback
+  if (!counter || !loader) {
+    if (typeof onComplete === 'function') onComplete();
+    return;
+  }
+
+  // Create loading line
+  const loadingLine = document.createElement('div');
+  loadingLine.className = 'loading-line';
+  document.body.appendChild(loadingLine);
+      
+  const target = 100;
+      
+  // Set initial state
+  gsap.set(counter, {
+    opacity: 0,
+    y: 100,
+    visibility: "hidden",
+    textContent: 0
+  });
+
+  gsap.set(loadingLine, { width: "0%" });
+  
+  // Create main timeline
+  const tl = gsap.timeline({
+    onComplete: () => {
+      // Start the functions immediately
+      if (typeof onComplete === 'function') onComplete();
+         
+      // Create timeline for exit animation
+      const exitTl = gsap.timeline();
+         
+      // Animate counter up and fade out
+      exitTl.to(counter, {
+        y: -100,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.in"
+      }, 0);
+
+      // Animate loading line from left to right with clip-path
+      exitTl.to(loadingLine, {
+        clipPath: "inset(0 0 0 100%)",
+        duration: 0.8,
+        ease: "power2.in"
+      }, 0);
+         
+      // Then animate the clip-path
+      exitTl.to(loader, {
+        clipPath: "inset(0 0 100% 0)", // From bottom to top
+        duration: 1.4,
+        ease: "expo.inOut",
+        onComplete: () => {
+          loader.remove();
+          loadingLine.remove();
+        }
+      }, 0);
+    }
+  });
+
+  // Fade in and slide up
+  tl.to(counter, {
+    y: 0,
+    opacity: 1,
+    duration: 1.2,
+    visibility: "visible",
+    ease: "power2.inOut"
+  });
+
+  // Animate the counter
+  tl.to(counter, {
+    duration: duration / 1000,
+    textContent: target,
+    snap: { textContent: 1 },
+    ease: "none"
+  });
+
+  // Animate the loading line with power4.inOut
+  tl.to(loadingLine, {
+    width: "100%",
+    duration: duration / 1000,
+    ease: "power4.inOut"
+  }, "<");
+}
+
+
+/* ==============================================
+Fullscreen Mega Menu Core (No Infinity Logic)
+============================================== */
+
+function initMegaMenu() {
+  
+  
+  const style = document.createElement("style");
+style.textContent = `.mega-menu.hide { display: block; }`;
+document.head.appendChild(style);
+
+    // Global animation settings
+    const ANIMATION = {
+        duration: 1.2,
+        ease: 'power4.inOut',
+        stagger: 0.1
+    };
+
+
+    const menuToggle = document.querySelector('.menu-toggle');
+    const megaMenu = document.querySelector('.mega-menu');
+    const bars = menuToggle ? menuToggle.querySelectorAll('.menu-bar') : [];
+    if (!menuToggle || !megaMenu || bars.length < 2) return;
+
+    let overlay = document.getElementById('mega-menu-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'mega-menu-overlay';
+        overlay.classList.add('mega-menu-overlay');
+        document.body.appendChild(overlay);
+    }
+
+    gsap.set(megaMenu, { opacity: 1, clipPath: 'inset(100% 0 0 0)', pointerEvents: 'none' });
+    gsap.set(overlay, { opacity: 0, pointerEvents: 'none' });
+    gsap.set(bars[0], { top: 'calc(50% - 0.3vw)', opacity: 1, backgroundColor: 'var(--darkgrey)' });
+    gsap.set(bars[1], { top: 'calc(50% + 0.3vw)', opacity: 1, backgroundColor: 'var(--darkgrey)' });
+    gsap.set('.mega-menu .menu-content', { y: 0 });
+
+function openMenu() {
+  // Set initial state first
+  gsap.set(megaMenu, { 
+      pointerEvents: 'auto',
+      display: 'block',  // Override the !important rule
+      y: 0,
+      clipPath: 'inset(100% 0% 0% 0%)' 
+  });
+
+  gsap.set('.mega-menu .menu-content', { y: 0 });
+  
+  gsap.set('.mega-menu .mega-menu-image', { 
+      clipPath: 'inset(100% 0% 0% 0%)' 
+  });
+  gsap.set('.mega-menu .mega-menu-image img', {
+      scale: 2,
+      objectPosition: 'bottom'
+  });
+  gsap.set('.mega-menu-links a', { 
+      y: '120%',
+      clipPath: 'inset(0% 0% 120% 0%)'
+  });
+  gsap.set(overlay, { pointerEvents: 'auto' });
+
+  // Create the main timeline
+  const tl = gsap.timeline({
+      onComplete: () => {
+          gsap.set(megaMenu, { pointerEvents: 'auto' });
+          isAnimating = false;
+      }
+  });
+  tl.to(overlay, { opacity: 0.8, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+    .to(megaMenu, { clipPath: 'inset(0% 0% 0% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+    .to('.mega-menu .mega-menu-image', { clipPath: 'inset(0% 0% 0% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease, delay: 0.050, }, 0)
+    .to('.mega-menu .mega-menu-image img', { 
+        scale: 1,
+        duration: ANIMATION.duration * 1.5,
+        ease: "power4.out"
+    }, 0)
+    .to(bars[0], { 
+        top: '50%', 
+        opacity: 1, 
+        duration: ANIMATION.duration * 0.5, 
+        ease: "power2.inOut"
+    }, 0)
+    .to(bars[1], { 
+        top: '50%', 
+        opacity: 1, 
+        duration: ANIMATION.duration * 0.5, 
+        ease: "power2.inOut"
+    }, 0)
+    .to(bars[0], {
+        backgroundColor: '#fff',
+        duration: ANIMATION.duration * 0.6,
+        ease: "power2.inOut"
+    }, ">0.1")
+    .to(bars[1], {
+        backgroundColor: '#fff',
+        duration: ANIMATION.duration * 0.6,
+        ease: "power2.inOut"
+    }, "<")
+    .to(document.querySelectorAll('.header .logo, .header .menu'), { opacity: 0, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+    .to('.mega-menu-links a', { 
+        y: '0%',
+        clipPath: 'inset(-20% -10% -20% 0%)',
+        duration: 1.4, 
+        stagger: 0.1,
+        delay: 0,
+        ease: "power2.inOut",
+    }, -0.1);
+  menuToggle.classList.add('clicked');
+}
+
+    function closeMenu() {
+        // Set initial state first
+        gsap.set(megaMenu, { 
+            pointerEvents: 'auto',
+            clipPath: 'inset(0% 0% 0% 0%)' 
+        });
+        gsap.set('.mega-menu .mega-menu-image', { 
+            clipPath: 'inset(0% 0% 0% 0%)' 
+        });
+        gsap.set('.mega-menu-links a', { 
+            clipPath: 'inset(-20% -10% -20% 0%)'
+        });
+
+        // Set initial states before timeline
+        gsap.set('.mega-menu .menu-content', { y: 0 });
+
+        const tl = gsap.timeline({
+            onComplete: () => {
+                gsap.set(overlay, { pointerEvents: 'none' });
+                gsap.set(megaMenu, { pointerEvents: 'none' });
+                // Reset clip-paths to bottom position for next opening
+                gsap.set(megaMenu, { clipPath: 'inset(0% 0% 100% 0%)' });
+                gsap.set('.mega-menu-links a', { clipPath: 'inset(0% 0% 100% 0%)' });
+                isAnimating = false;
+            }
+        });
+
+        tl.to(overlay, { opacity: 0, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+          .to(megaMenu, { clipPath: 'inset(0% 0% 100% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+          .to('.mega-menu .menu-content', { y: -200, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+          .to(bars[0], { 
+              top: 'calc(50% - 0.3vw)', 
+              opacity: 1, 
+              duration: ANIMATION.duration * 0.5, 
+              ease: "power2.inOut"
+          }, 0)
+          .to(bars[1], { 
+              top: 'calc(50% + 0.3vw)', 
+              opacity: 1, 
+              duration: ANIMATION.duration * 0.5, 
+              ease: "power2.inOut"
+          }, 0)
+          .to(bars[0], { 
+              backgroundColor: 'var(--darkgrey)',
+              duration: ANIMATION.duration * 0.6,
+              ease: "power2.inOut"
+          }, ">0.1")
+          .to(bars[1], { 
+              backgroundColor: 'var(--darkgrey)',
+              duration: ANIMATION.duration * 0.6,
+              ease: "power2.inOut"
+          }, "<")
+          .to(document.querySelectorAll('.header .logo, .header .menu'), { opacity: 1, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0);
+        menuToggle.classList.remove('clicked');
+    }
+
+    let isAnimating = false;
+    menuToggle.addEventListener('click', () => {
+        if (isAnimating) return;
+        isAnimating = true;
+        
+        if (!menuToggle.classList.contains('clicked')) {
+            openMenu();
+        } else {
+            closeMenu();
+        }
+    });
+
+    megaMenu.addEventListener('click', (e) => {
+        if (
+            e.target.classList.contains('mega-menu') ||
+            e.target.closest('.mega-menu-links a')
+        ) {
+            closeMenu();
+        }
+    });
+
+    // --- BEGIN: Mega Menu Link Hover Image Animation (GSAP only, default always visible, hovered image always on top) ---
+    const menuLinks = document.querySelectorAll('.mega-menu-links a');
+    const menuImages = document.querySelectorAll('.mega-menu-image img');
+    const menuLinksContainer = document.querySelector('.mega-menu-links');
+    let imageTween = null;
+    let zTop = 10; // Arbitrary high z-index for hovered image
+
+    // Always show the default image as background with lowest z-index
+    if (menuImages[0]) {
+        gsap.set(menuImages[0], { opacity: 1, scale: 1, zIndex: 0, display: 'block' });
+    }
+    // Hide all other images initially, set their z-index above the background
+    menuImages.forEach((img, i) => {
+        if (i !== 0) {
+            gsap.set(img, { opacity: 0, scale: 1.1, zIndex: 1, display: 'none' });
+        }
+    });
+
+    menuLinks.forEach((link, i) => {
+        link.addEventListener('mouseenter', () => {
+            const targetIndex = i + 1;
+            menuImages.forEach((img, j) => {
+                gsap.killTweensOf(img);
+                if (j === targetIndex) {
+                    gsap.set(img, { opacity: 0, scale: 1.1, zIndex: zTop, display: 'block' });
+                    imageTween = gsap.to(img, {
+                        opacity: 1,
+                        scale: 1,
+                        duration: 1.3,
+                        ease: 'power3.out',
+                        overwrite: 'auto',
+                    });
+                } else if (j !== 0) {
+                    gsap.to(img, { opacity: 0, scale: 1.1, zIndex: 1, duration: 1.3, ease: 'power3.out', onComplete: () => {
+                        gsap.set(img, { display: 'none' });
+                    }});
+                }
+            });
+        });
+    });
+
+    // On mouseleave of the whole container, fade out all except the default image
+    if (menuLinksContainer) {
+        menuLinksContainer.addEventListener('mouseleave', () => {
+            menuImages.forEach((img, j) => {
+                gsap.killTweensOf(img);
+                if (j === 0) {
+                    gsap.set(img, { scale: 1, zIndex: 0, display: 'block' });
+                    gsap.fromTo(img, { opacity: 0 }, { opacity: 1, duration: 1.3, ease: 'power3.out' });
+                } else {
+                    gsap.to(img, { opacity: 0, scale: 1.1, zIndex: 1, duration: 1.3, ease: 'power3.out', onComplete: () => {
+                        gsap.set(img, { display: 'none' });
+                    }});
+                }
+            });
+        });
+    }
+    // --- END: Mega Menu Link Hover Image Animation ---
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMegaMenu();
+});
+
+window.addEventListener('resize', () => {
+    if (megaMenuState && typeof megaMenuState.refresh === 'function') {
+        megaMenuState.refresh('Home');
+    }
+});
+
+
+
+
+function initVWFontZoomSafeForGSAP() {
+  const elements = [];
+  const baseZoom = window.devicePixelRatio;
+  const baseWidth = window.innerWidth;
+
+  // Collect elements and store their original vw font size
+  document.querySelectorAll('body *:not(img):not(video):not(canvas):not(iframe)').forEach(el => {
+    const computed = getComputedStyle(el);
+    const fontSizePx = parseFloat(computed.fontSize);
+    const vw = (fontSizePx / baseWidth) * 100;
+
+    if (vw > 0 && vw < 20) {
+      elements.push({ el, baseVW: vw });
+    }
+  });
+
+  function applyZoom() {
+    const currentZoom = window.devicePixelRatio;
+    const scale = currentZoom / baseZoom;
+
+    elements.forEach(({ el, baseVW }) => {
+      el.style.setProperty('font-size', `${baseVW * scale}vw`, 'important');
+    });
+  }
+
+  window.addEventListener('resize', applyZoom);
+  applyZoom();
+}
+
+window.addEventListener('DOMContentLoaded', initVWFontZoomSafeForGSAP);
