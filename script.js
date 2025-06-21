@@ -2076,6 +2076,8 @@ window.addEventListener('resize', () => {
 
 
 function initVWFontZoomSafeForGSAP() {
+
+/*
   const elements = [];
   const baseZoom = window.devicePixelRatio;
   const baseWidth = window.innerWidth;
@@ -2102,6 +2104,7 @@ function initVWFontZoomSafeForGSAP() {
 
   window.addEventListener('resize', applyZoom);
   applyZoom();
+  */
 }
 
 window.addEventListener('DOMContentLoaded', initVWFontZoomSafeForGSAP);
