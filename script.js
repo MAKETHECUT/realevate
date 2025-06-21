@@ -196,6 +196,7 @@ function initCustomSmoothScrolling() {
             this.ct = 0;
             this.r = false;
             this.rc = false;
+            this.sliderTouchActive = false;
             this.init();
         }
 
@@ -260,6 +261,15 @@ function initCustomSmoothScrolling() {
                     return;
                 }
                 if (window.isMenuOpen && window.isMenuOpen()) return;
+                
+                // Check if touch is on slider or its children
+                const target = e.target;
+                const isOnSlider = target.closest('.slider, .slider-wrapper, .slider-item');
+                if (isOnSlider) {
+                    this.sliderTouchActive = true;
+                    return;
+                }
+                
                 this.std(e);
             }, { passive: false });
 
@@ -269,10 +279,19 @@ function initCustomSmoothScrolling() {
                     return;
                 }
                 if (window.isMenuOpen && window.isMenuOpen()) return;
+                
+                // If slider touch is active, don't handle page scrolling
+                if (this.sliderTouchActive) {
+                    return;
+                }
+                
                 this.otd(e);
             }, { passive: false });
 
-            window.addEventListener("touchend", () => this.etd());
+            window.addEventListener("touchend", (e) => {
+                this.sliderTouchActive = false;
+                this.etd();
+            });
 
             window.addEventListener("mousedown", (e) => {
                 if (window.isMenuOpen && window.isMenuOpen()) return;
@@ -301,15 +320,6 @@ function initCustomSmoothScrolling() {
                 requestAnimationFrame(() => this.ud());
             });
 
-            if (window.innerWidth < 767) {
-                document.querySelectorAll(".slider").forEach((s) => {
-                    s.addEventListener("touchstart", (e) => this.ssd(e), { passive: true });
-                    s.addEventListener("touchmove", (e) => this.dsd(e), { passive: false });
-                    s.addEventListener("touchend", () => this.esd());
-                    s.addEventListener("touchcancel", () => this.esd());
-                });
-            }
-          
             document.querySelectorAll(".slider").forEach((e) => {
                 e.addEventListener("mousedown", () => { d = true; });
                 e.addEventListener("mouseup", () => { d = false; });
@@ -363,28 +373,6 @@ function initCustomSmoothScrolling() {
 
         emd() {
             this.dr = false;
-        }
-
-        ssd(e) {
-            this.sx = e.touches[0].clientX;
-            this.sy = e.touches[0].clientY;
-            d = false;
-        }
-
-        dsd(e) {
-            const t = e.touches[0].clientX - this.sx;
-            const m = e.touches[0].clientY - this.sy;
-            if (!d && Math.abs(t) > 10 && Math.abs(t) > Math.abs(m)) {
-                d = true;
-                e.preventDefault();
-            }
-            if (d) {
-                e.preventDefault();
-            }
-        }
-
-        esd() {
-            d = false;
         }
 
         fsu() {
