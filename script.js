@@ -176,9 +176,9 @@ function initCustomSmoothScrolling() {
             
             // Improved touch sensitivity for iPad
             if (isIPad) {
-                this.tm = 6; // Increased from 3 for better iPad responsiveness
-                this.dm = 4; // Increased from 1.8 for better iPad responsiveness
-                this.l = 0.15; // Faster lerp for iPad
+                this.tm = 4.5; // Moderate increase from 3 (was 6, now 4.5)
+                this.dm = 2.8; // Moderate increase from 1.8 (was 4, now 2.8)
+                this.l = 0.12; // Moderate lerp (was 0.15, now 0.12)
             } else {
                 this.tm = m ? 3 : 1.5;
                 this.dm = m ? 3 : 1.8;
