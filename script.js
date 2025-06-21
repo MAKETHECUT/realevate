@@ -178,7 +178,7 @@ function initCustomSmoothScrolling() {
             if (isIPad) {
                 this.tm = 4.5; // Moderate increase from 3 (was 6, now 4.5)
                 this.dm = 2.8; // Moderate increase from 1.8 (was 4, now 2.8)
-                this.l = 0.30; // Moderate lerp (was 0.15, now 0.12)
+                this.l = 0.20; // Moderate lerp (was 0.15, now 0.12)
             } else {
                 this.tm = m ? 3 : 1.5;
                 this.dm = m ? 3 : 1.8;
