@@ -287,11 +287,11 @@ function initCustomSmoothScrolling() {
                 if (this.sliderTouchStartX !== undefined) {
                     const touchX = e.touches[0].clientX;
                     const touchY = e.touches[0].clientY;
-                    const deltaX = Math.abs(touchX - this.sliderTouchStartX);
+                    const deltaX = touchX - this.sliderTouchStartX;
                     const deltaY = Math.abs(touchY - this.sliderTouchStartY);
                     
                     // Only consider it dragging if horizontal movement is significant and greater than vertical
-                    if (deltaX > 10 && deltaX > deltaY) {
+                    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
                         this.sliderTouchActive = true;
                         e.preventDefault(); // Prevent page scrolling only when actively dragging
                         return;
@@ -1481,11 +1481,11 @@ function initInfinityGallery() {
       
       const touchX = event.touches[0].clientX;
       const touchY = event.touches[0].clientY;
-      const deltaX = Math.abs(touchX - this.touchStartX);
+      const deltaX = touchX - this.touchStartX;
       const deltaY = Math.abs(touchY - this.touchStartY);
       
       // Only handle horizontal scrolling if the horizontal movement is greater than vertical
-      if (deltaX > 10 && deltaX > deltaY) {
+      if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
         event.preventDefault();
         this.scrollX -= deltaX * this.touchMultiplier;
         this.touchStartX = touchX;
