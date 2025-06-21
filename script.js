@@ -197,6 +197,8 @@ function initCustomSmoothScrolling() {
             this.r = false;
             this.rc = false;
             this.sliderTouchActive = false;
+            this.sliderTouchStartX = undefined;
+            this.sliderTouchStartY = undefined;
             this.init();
         }
 
@@ -262,12 +264,13 @@ function initCustomSmoothScrolling() {
                 }
                 if (window.isMenuOpen && window.isMenuOpen()) return;
                 
-                // Check if touch is on slider or its children
+                // Check if touch is on slider-wrapper specifically
                 const target = e.target;
-                const isOnSlider = target.closest('.slider, .slider-wrapper, .slider-item');
-                if (isOnSlider) {
-                    this.sliderTouchActive = true;
-                    return;
+                const isOnSliderWrapper = target.closest('.slider-wrapper');
+                if (isOnSliderWrapper) {
+                    this.sliderTouchStartX = e.touches[0].clientX;
+                    this.sliderTouchStartY = e.touches[0].clientY;
+                    this.sliderTouchActive = false; // Will be set to true only if dragging
                 }
                 
                 this.std(e);
@@ -280,16 +283,31 @@ function initCustomSmoothScrolling() {
                 }
                 if (window.isMenuOpen && window.isMenuOpen()) return;
                 
-                // If slider touch is active, don't handle page scrolling
-                if (this.sliderTouchActive) {
-                    return;
+                // Check if we're actively dragging the slider-wrapper
+                if (this.sliderTouchStartX !== undefined) {
+                    const touchX = e.touches[0].clientX;
+                    const touchY = e.touches[0].clientY;
+                    const deltaX = Math.abs(touchX - this.sliderTouchStartX);
+                    const deltaY = Math.abs(touchY - this.sliderTouchStartY);
+                    
+                    // Only consider it dragging if horizontal movement is significant and greater than vertical
+                    if (deltaX > 10 && deltaX > deltaY) {
+                        this.sliderTouchActive = true;
+                        e.preventDefault(); // Prevent page scrolling only when actively dragging
+                        return;
+                    }
                 }
                 
-                this.otd(e);
+                // If slider is not being actively dragged, allow normal page scrolling
+                if (!this.sliderTouchActive) {
+                    this.otd(e);
+                }
             }, { passive: false });
 
             window.addEventListener("touchend", (e) => {
                 this.sliderTouchActive = false;
+                this.sliderTouchStartX = undefined;
+                this.sliderTouchStartY = undefined;
                 this.etd();
             });
 
@@ -319,7 +337,7 @@ function initCustomSmoothScrolling() {
             window.addEventListener("resize", () => {
                 requestAnimationFrame(() => this.ud());
             });
-
+          
             document.querySelectorAll(".slider").forEach((e) => {
                 e.addEventListener("mousedown", () => { d = true; });
                 e.addEventListener("mouseup", () => { d = false; });
@@ -1463,11 +1481,11 @@ function initInfinityGallery() {
       
       const touchX = event.touches[0].clientX;
       const touchY = event.touches[0].clientY;
-      const deltaX = touchX - this.touchStartX;
-      const deltaY = touchY - this.touchStartY;
+      const deltaX = Math.abs(touchX - this.touchStartX);
+      const deltaY = Math.abs(touchY - this.touchStartY);
       
       // Only handle horizontal scrolling if the horizontal movement is greater than vertical
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX > 10 && deltaX > deltaY) {
         event.preventDefault();
         this.scrollX -= deltaX * this.touchMultiplier;
         this.touchStartX = touchX;
