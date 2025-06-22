@@ -1390,6 +1390,14 @@ function refreshbreakingpoints() {
 
 function initInfinityGallery() {
   console.log('initInfinityGallery called');
+
+  // Destroy the previous instance if it exists
+  if (window.infinitySliderInstance) {
+    window.infinitySliderInstance.destroy();
+    window.infinitySliderInstance = null;
+    console.log('Previous infinity slider instance destroyed.');
+  }
+
   const sliderWrapper = document.querySelector(".slider-wrapper");
   console.log('Slider wrapper found:', sliderWrapper);
   
@@ -1415,6 +1423,7 @@ function initInfinityGallery() {
       this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       this.scrollEnabled = true; // Add this to control when scrolling is allowed
       this.isFullscreenOpen = false; // Add this to track fullscreen state
+      this.animationFrameId = null; // To hold the animation frame ID
 
       const isMobile = window.innerWidth < 650;
       const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
@@ -1769,29 +1778,42 @@ function initInfinityGallery() {
     }
 
     bindEvents() {
-      document.addEventListener("wheel", (e) => this.handleWheel(e), { passive: false });
+      // Store bound versions of handlers to ensure they can be removed later
+      this.handleWheel = this.handleWheel.bind(this);
+      this.handleTouchStart = this.handleTouchStart.bind(this);
+      this.handleTouchMove = this.handleTouchMove.bind(this);
+      this.handleTouchEnd = this.handleTouchEnd.bind(this);
+      this.handleDragStart = this.handleDragStart.bind(this);
+      this.handleDragMove = this.handleDragMove.bind(this);
+      this.handleDragEnd = this.handleDragEnd.bind(this);
+      this.calculateDimensions = this.calculateDimensions.bind(this);
+      this.handleKeydown = this.handleKeydown.bind(this);
+
+      document.addEventListener("wheel", this.handleWheel, { passive: false });
       
       // Touch events for all touch devices (including iPad)
       if (this.isTouchDevice) {
-        this.wrapper.addEventListener("touchstart", (e) => this.handleTouchStart(e), { passive: true });
-        this.wrapper.addEventListener("touchmove", (e) => this.handleTouchMove(e), { passive: false });
-        this.wrapper.addEventListener("touchend", () => this.handleTouchEnd());
-        this.wrapper.addEventListener("touchcancel", () => this.handleTouchEnd());
+        this.wrapper.addEventListener("touchstart", this.handleTouchStart, { passive: true });
+        this.wrapper.addEventListener("touchmove", this.handleTouchMove, { passive: false });
+        this.wrapper.addEventListener("touchend", this.handleTouchEnd);
+        this.wrapper.addEventListener("touchcancel", this.handleTouchEnd);
       }
 
       // Mouse events for non-touch devices
       if (!this.isTouchDevice) {
-        this.wrapper.addEventListener("mousedown", (e) => this.handleDragStart(e));
-        window.addEventListener("mousemove", (e) => this.handleDragMove(e));
-        window.addEventListener("mouseup", () => this.handleDragEnd());
+        this.wrapper.addEventListener("mousedown", this.handleDragStart);
+        window.addEventListener("mousemove", this.handleDragMove);
+        window.addEventListener("mouseup", this.handleDragEnd);
       }
       
       // Keyboard events for closing fullscreen
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && this.isFullscreenOpen) {
-          this.closeFullscreen();
-        }
-      });
+      document.addEventListener("keydown", this.handleKeydown);
+    }
+
+    handleKeydown(e) {
+      if (e.key === "Escape" && this.isFullscreenOpen) {
+        this.closeFullscreen();
+      }
     }
 
     handleWheel(event) {
@@ -1868,11 +1890,37 @@ function initInfinityGallery() {
         this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
         this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
       }
-      requestAnimationFrame(() => this.animate());
+      this.animationFrameId = requestAnimationFrame(() => this.animate());
+    }
+
+    destroy() {
+      // Cancel the animation frame
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+      }
+
+      // Remove all event listeners
+      document.removeEventListener("wheel", this.handleWheel, { passive: false });
+      this.wrapper.removeEventListener("touchstart", this.handleTouchStart, { passive: true });
+      this.wrapper.removeEventListener("touchmove", this.handleTouchMove, { passive: false });
+      this.wrapper.removeEventListener("touchend", this.handleTouchEnd);
+      this.wrapper.removeEventListener("touchcancel", this.handleTouchEnd);
+      this.wrapper.removeEventListener("mousedown", this.handleDragStart);
+      window.removeEventListener("mousemove", this.handleDragMove);
+      window.removeEventListener("mouseup", this.handleDragEnd);
+      window.removeEventListener("resize", this.calculateDimensions);
+      document.removeEventListener("keydown", this.handleKeydown);
+
+      // Nullify references to help with garbage collection
+      this.container = null;
+      this.items = null;
+      this.modal = null;
+
+      console.log("InfiniteHorizontalScroll instance destroyed.");
     }
   }
 
-  new InfiniteHorizontalScroll(sliderWrapper);
+  window.infinitySliderInstance = new InfiniteHorizontalScroll(sliderWrapper);
 }
 
 
