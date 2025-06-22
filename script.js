@@ -1006,91 +1006,7 @@ function initGsapAnimations() {
     });
   });
 
-  
-  /*
-  
-  gsap.from(".home-properties .property", {
-  y: 300,
-  opacity: 0,
-  duration: 1.5,
-    delay:0.3,
-  stagger: 0.2,
-  ease: "power4.out"
-});
 
-*/
-
-/*
-document.querySelectorAll('.slider').forEach(slider => {
-  let startX = 0;
-  let endX = 0;
-
-  slider.addEventListener('mousedown', e => {
-    startX = e.clientX;
-  });
-
-  slider.addEventListener('mouseup', e => {
-    endX = e.clientX;
-    if (Math.abs(startX - endX) < 5) {
-      const items = slider.querySelectorAll('.slider-item');
-      items.forEach(item => {
-        const isExpanded = item.classList.contains('expanded');
-
-        if (!isExpanded) {
-          item.classList.add('expanded');
-
-          item.dataset.originalMinWidth = window.getComputedStyle(item).minWidth;
-          item.dataset.originalMinHeight = window.getComputedStyle(item).minHeight;
-
-          item.style.transformOrigin = 'center center';
-
-          gsap.to(item, {
-            minWidth: '100vw',
-            height:'100svh',
-            duration: 1,
-            ease: 'power2.inOut'
-          });
-        } else {
-          item.classList.remove('expanded');
-
-          gsap.to(item, {
-            minWidth: item.dataset.originalMinWidth,
-            height: item.dataset.originalMinHeight,
-            duration: 1,
-            ease: 'power2.inOut'
-          });
-        }
-      });
-    }
-  });
-});
-*/
-  
-  /*
-  document.querySelectorAll('.slider').forEach(slider => {
-    slider.addEventListener('click', () => {
-        const isExpanded = slider.classList.contains('expanded');
-        
-        if (!isExpanded) {
-            slider.classList.add('expanded');
-            gsap.to(slider, {
-                scale: 2,
-              height:'100svh',
-                duration: 1,
-                ease: 'power4.inOut'
-            });
-        } else {
-            slider.classList.remove('expanded');
-            gsap.to(slider, {
-                scale: 1,
-                            height:'100svh',
-                duration: 1,
-                ease: 'power4.inOut'
-            });
-        }
-    });
-  });
-  */
   
 }
 
@@ -1466,79 +1382,7 @@ function initInfinityGallery() {
         console.log('Creating fullscreen modal...');
         const modal = document.createElement('div');
         modal.className = 'fullscreen-modal';
-        modal.style.cssText = `
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: 9999;
-          cursor: pointer;
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-          -webkit-touch-callout: none;
-          -webkit-tap-highlight-color: transparent;
-        `;
         document.body.appendChild(modal);
-
-        // Add styles for the modal image with better Safari support
-        const style = document.createElement('style');
-        style.textContent = `
-          .fullscreen-modal img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            -o-user-drag: none;
-            transform-origin: center center;
-            -webkit-transform-origin: center center;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            -webkit-perspective: 1000;
-            perspective: 1000;
-          }
-          .slider-item img {
-            cursor: pointer;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            -o-user-drag: none;
-          }
-          .slider-item {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-          }
-          .expand-icon {
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-          }
-          .fullscreen-modal {
-            -webkit-touch-callout: none;
-            -webkit-tap-highlight-color: transparent;
-          }
-        `;
-        document.head.appendChild(style);
 
         // Store modal reference
         this.modal = modal;
@@ -1610,6 +1454,7 @@ function initInfinityGallery() {
       // Set fullscreen state and disable scrolling
       this.isFullscreenOpen = true;
       this.disableScroll();
+      document.body.classList.add('fullscreen-active');
       
       // Create a clone of the image
       const clone = img.cloneNode(true);
@@ -1654,7 +1499,7 @@ function initInfinityGallery() {
       if (parentItem) {
         const icon = parentItem.querySelector('.expand-icon');
         if (icon) {
-          tl.to(icon, { opacity: 0, duration: 0.4, ease: 'power2.out', overwrite: 'auto' }, 0);
+          tl.to(icon, { opacity: 0, duration: 1, ease: 'power2.out', overwrite: 'auto' }, 0);
         }
       }
 
@@ -1672,8 +1517,8 @@ function initInfinityGallery() {
         top: 0,
         left: 0,
         width: '100vw',
-        height: '100vh',
-        scale: 1.05,
+        height: '100svh',
+        scale: 1.050,
         rotation: 0,
         clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Animate to full
         duration: 1.5,
@@ -1706,6 +1551,7 @@ function initInfinityGallery() {
           // Reset fullscreen state and re-enable scrolling
           this.isFullscreenOpen = false;
           this.enableScroll();
+          document.body.classList.remove('fullscreen-active');
           this.currentAnimation = null;
         }
       });
@@ -1721,7 +1567,7 @@ function initInfinityGallery() {
       
       // Animate all items to fade back in
       this.container.querySelectorAll('.slider-item').forEach(item => {
-        closeTl.to(item, { opacity: 1, duration: 1, ease: "power4.inOut" }, 0);
+        closeTl.to(item, { opacity: 1, duration: 1, ease: "power4.inOut" }, 0.5);
       });
       
       // Main collapse animation
@@ -1932,7 +1778,7 @@ function initInfinityGallery() {
     }
 
     snapToCenter() {
-      if (this.isDragging || (this.isTouchDevice && this.dragDelta !== 0)) return;
+      if (window.innerWidth >= 650 || this.isDragging || (this.isTouchDevice && this.dragDelta !== 0)) return;
 
       const viewportCenter = window.innerWidth / 2;
       let currentScrollCenter = this.smoothScrollX + viewportCenter;
