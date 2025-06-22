@@ -166,8 +166,7 @@ html {
 
 
 input,
-textarea,
-{
+textarea {
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	appearance: none;
@@ -1644,62 +1643,151 @@ section:not(.hero):not(:has(.footer)) {
   cursor: grab;
   width: 100%;
   margin-top: 17.13vw;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .slider-wrapper {
   display: flex;
   grid-gap: 3vw;
+  height:60vh;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .slider-item  {
   min-width:50vw;
-  min-height:40vw;
+  min-height:100%;
+  position: relative;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
-
 
 .slider-item img {
   object-fit: cover;
   width: 100%;
   height: 100%;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+}
+
+/* Plus icon for expanding images */
+.slider-item .expand-icon {
+  position: absolute;
+  bottom: 2vw;
+  left: 2vw;
+  width: 3vw;
+  height: 3vw;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.slider-item .expand-icon::before,
+.slider-item .expand-icon::after {
+  content: '';
+  position: absolute;
+  background: var(--darkgrey);
+  transition: all 0.3s ease;
+}
+
+.slider-item .expand-icon::before {
+  width: 1.5vw;
+  height: 0.2vw;
+}
+
+.slider-item .expand-icon::after {
+  width: 0.2vw;
+  height: 1.5vw;
+}
+
+.slider-item .expand-icon:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+  -webkit-transform: scale(1.1);
 }
 
 
-
-
-/*
-.works-slider {
-  grid-column: 1 / 13;
-  width:100%;
-  position: fixed;
-  top: 7.8vw;
-  z-index:0;
-  cursor:grabbing;
-}
-
-.works-container {
-  display:flex;
+.fullscreen-overlay img {
   width: 100vw;
-  grid-gap: 10vw;
+  height: 100vh;
+  object-fit: cover;
+  border-radius: 0;
+  max-width: 100vw;
+  max-height: 100vh;
 }
 
-.work-slide {
-  min-width:38vh;
-  margin-right: 6dvh;
-  grid-gap: 1vw;
-  display: grid;
-  position:relative;
+.fullscreen-overlay.active {
+  display: flex;
+  opacity: 1;
 }
 
-.work-slide .image {
-  overflow: hidden;
+.fullscreen-overlay .close-icon {
+  position: absolute;
+  top: 3vw;
+  right: 3vw;
+  width: 4vw;
+  height: 4vw;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
-.work-slide img {
-  width: 100%;
-  height: 25vh;
-  object-fit:cover;
 
+.fullscreen-overlay .close-icon::before,
+.fullscreen-overlay .close-icon::after {
+  content: '';
+  position: absolute;
+  background: var(--darkgrey);
+  width: 2vw;
+  height: 0.2vw;
+  transform: rotate(45deg);
 }
-*/
+
+.fullscreen-overlay .close-icon::after {
+  transform: rotate(-45deg);
+}
+
+.fullscreen-overlay .close-icon:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
 
 .description {
   display: flex;
@@ -1871,6 +1959,38 @@ section:not(.hero):not(:has(.footer)) {
     height: 50svh;
     min-width:80vw;
     max-width:80vw;
+  }
+  
+  /* Mobile styles for expand icon */
+  .slider-item .expand-icon {
+    bottom: 4vw;
+    left: 4vw;
+    width: 8vw;
+    height: 8vw;
+  }
+  
+  .slider-item .expand-icon::before {
+    width: 4vw;
+    height: 0.5vw;
+  }
+  
+  .slider-item .expand-icon::after {
+    width: 0.5vw;
+    height: 4vw;
+  }
+  
+  /* Mobile styles for fullscreen overlay */
+  .fullscreen-overlay .close-icon {
+    top: 6vw;
+    right: 6vw;
+    width: 10vw;
+    height: 10vw;
+  }
+  
+  .fullscreen-overlay .close-icon::before,
+  .fullscreen-overlay .close-icon::after {
+    width: 5vw;
+    height: 0.5vw;
   }
 }
 
@@ -2251,38 +2371,6 @@ section:not(.hero):not(:has(.footer)) {
     width: 180vw;
     height: 100vh;
   display: block;
-}
-
-/* ==============================================
-       SplitText RTL/LTR Support
-============================================== */
-
-/* Ensure proper text direction for SplitText lines */
-.line {
-  display: inline-block !important;
-  width: 100% !important;
-  line-height: unset !important;
-  overflow: hidden;
-}
-
-/* RTL text support */
-[dir="rtl"] .line,
-.line[style*="direction: rtl"] {
-  direction: rtl !important;
-  text-align: right !important;
-}
-
-/* LTR text support */
-[dir="ltr"] .line,
-.line[style*="direction: ltr"] {
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-/* Ensure proper word wrapping for mixed content */
-.split-text-processed {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 /* ==============================================
