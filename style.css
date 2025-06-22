@@ -350,8 +350,6 @@ strong {
 	}
 	#cursor.slide .cursor__circle {
 		transform: scale(1);
-    		width: 7vw;
-		height: 7vw;
 	}
 	#cursor.slide .cursor__circle::before {
 		content: "↔";
@@ -1704,7 +1702,6 @@ section:not(.hero):not(:has(.footer)) {
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   -webkit-user-select: none;
