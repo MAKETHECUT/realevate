@@ -1412,6 +1412,7 @@ function initInfinityGallery() {
       this.container = container;
       this.items = Array.from(this.container.children);
       if (this.items.length === 0) return;
+      this.originalItemCount = this.items.length;
 
       this.scrollX = 0;
       this.smoothScrollX = 0;
@@ -1424,6 +1425,9 @@ function initInfinityGallery() {
       this.scrollEnabled = true; // Add this to control when scrolling is allowed
       this.isFullscreenOpen = false; // Add this to track fullscreen state
       this.animationFrameId = null; // To hold the animation frame ID
+      this.originalItemCount = this.items.length;
+      this.snapOnSettle = false;
+      this.snapAnimation = null;
 
       const isMobile = window.innerWidth < 650;
       const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
@@ -1645,6 +1649,15 @@ function initInfinityGallery() {
         }
       });
 
+      // Animate the icon on the selected item to fade out
+      const parentItem = img.closest('.slider-item');
+      if (parentItem) {
+        const icon = parentItem.querySelector('.expand-icon');
+        if (icon) {
+          tl.to(icon, { opacity: 0, duration: 0.4, ease: 'power2.out', overwrite: 'auto' }, 0);
+        }
+      }
+
       // Animate non-selected items to fade out slightly faster
       const clickedSrc = img.getAttribute('src');
       this.container.querySelectorAll('.slider-item').forEach(item => {
@@ -1697,9 +1710,18 @@ function initInfinityGallery() {
         }
       });
       
+      // Animate the icon on the selected item to fade back in
+      const closeParentItem = this.originalImage.closest('.slider-item');
+      if (closeParentItem) {
+        const icon = closeParentItem.querySelector('.expand-icon');
+        if (icon) {
+          closeTl.to(icon, { opacity: 1, duration: 0.4, ease: 'power2.in', delay: 0.2, overwrite: 'auto' });
+        }
+      }
+      
       // Animate all items to fade back in
       this.container.querySelectorAll('.slider-item').forEach(item => {
-        closeTl.to(item, { opacity: 1, duration: 1, ease: "power4.inOut" }, 0.5);
+        closeTl.to(item, { opacity: 1, duration: 1, ease: "power4.inOut" }, 0);
       });
       
       // Main collapse animation
@@ -1819,14 +1841,30 @@ function initInfinityGallery() {
     handleWheel(event) {
       if (event.target.closest("button, input, textarea, select")) return;
       if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
-      event.preventDefault();
-      this.scrollX += event.deltaY * this.wheelMultiplier;
+      
+      const isTrackpad = Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < 10;
+      
+      if (isTrackpad) {
+        this.scrollX += event.deltaX * this.wheelMultiplier;
+        this.scrollX += event.deltaY * this.wheelMultiplier;
+      } else {
+        event.preventDefault();
+        this.scrollX += event.deltaY * this.wheelMultiplier;
+      }
+
       this.handleInfiniteScroll();
     }
 
     handleTouchStart(event) {
       if (event.touches.length > 1) return; // Ignore multi-touch
       if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      
+      this.snapOnSettle = false;
+      if (this.snapAnimation) {
+        this.snapAnimation.kill();
+        this.snapAnimation = null;
+      }
+
       this.touchStartX = event.touches[0].clientX;
       this.touchStartY = event.touches[0].clientY;
       this.dragDelta = 0;
@@ -1853,10 +1891,18 @@ function initInfinityGallery() {
 
     handleTouchEnd() {
       this.dragDelta = 0;
+      this.snapOnSettle = true;
     }
 
     handleDragStart(e) {
       if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      
+      this.snapOnSettle = false;
+      if (this.snapAnimation) {
+        this.snapAnimation.kill();
+        this.snapAnimation = null;
+      }
+
       this.isDragging = true;
       this.dragStartX = e.clientX;
     }
@@ -1871,6 +1917,7 @@ function initInfinityGallery() {
 
     handleDragEnd() {
       this.isDragging = false;
+      this.snapOnSettle = true;
     }
 
     handleInfiniteScroll() {
@@ -1884,11 +1931,62 @@ function initInfinityGallery() {
       }
     }
 
+    snapToCenter() {
+      if (this.isDragging || (this.isTouchDevice && this.dragDelta !== 0)) return;
+
+      const viewportCenter = window.innerWidth / 2;
+      let currentScrollCenter = this.smoothScrollX + viewportCenter;
+      
+      let closestItem = null;
+      let minDistance = Infinity;
+
+      // Adjust for infinite scroll wrapping
+      const originalWidth = this.totalWidth / 3;
+      currentScrollCenter = (currentScrollCenter % originalWidth) + originalWidth;
+      
+      const originalItems = this.items.slice(this.originalItemCount, this.originalItemCount * 2);
+
+      originalItems.forEach(item => {
+        const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+        const distance = Math.abs(currentScrollCenter - itemCenter);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestItem = item;
+        }
+      });
+
+      if (closestItem) {
+        const targetX = closestItem.offsetLeft + closestItem.offsetWidth / 2 - viewportCenter;
+        
+        let finalTargetX = targetX;
+        if(Math.abs(this.smoothScrollX - targetX) > originalWidth / 2) {
+            if(targetX < this.smoothScrollX) {
+                finalTargetX += originalWidth;
+            } else {
+                finalTargetX -= originalWidth;
+            }
+        }
+
+        if (this.snapAnimation) this.snapAnimation.kill();
+        this.snapAnimation = gsap.to(this, { 
+          scrollX: finalTargetX, 
+          duration: 0.2, 
+          ease: 'none',
+          onComplete: () => { this.snapAnimation = null; }
+        });
+      }
+    }
+
     animate() {
       if (this.scrollEnabled && !this.isFullscreenOpen) {
         this.smoothScrollX += (this.scrollX - this.smoothScrollX) * this.lerp;
         this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
         this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
+
+        if (this.snapOnSettle && !this.isDragging && Math.abs(this.scrollX - this.smoothScrollX) < 0.5) {
+            this.snapToCenter();
+            this.snapOnSettle = false;
+        }
       }
       this.animationFrameId = requestAnimationFrame(() => this.animate());
     }
@@ -1920,6 +2018,7 @@ function initInfinityGallery() {
       this.container = null;
       this.items = null;
       this.modal = null;
+      this.originalImage = null; // Prevent stale references
 
       console.log("InfiniteHorizontalScroll instance destroyed.");
     }
