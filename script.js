@@ -1911,6 +1911,11 @@ function initInfinityGallery() {
       window.removeEventListener("resize", this.calculateDimensions);
       document.removeEventListener("keydown", this.handleKeydown);
 
+      // Remove the modal from the DOM to ensure it's fresh on next init
+      if (this.modal) {
+        this.modal.remove();
+      }
+
       // Nullify references to help with garbage collection
       this.container = null;
       this.items = null;
