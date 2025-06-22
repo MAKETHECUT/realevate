@@ -339,7 +339,7 @@ function initCustomSmoothScrolling() {
             });
           
             document.querySelectorAll(".slider").forEach((e) => {
-                e.addEventListener("mousedown", () => { d = true; });
+                e.addEventListener("mousedown", () => d = true);
                 e.addEventListener("mouseup", () => { d = false; });
                 e.addEventListener("mouseleave", () => { d = false; });
             });
@@ -1211,6 +1211,19 @@ function initInteractiveCursor() {
     el.addEventListener("mouseleave", () => cursor.classList.remove("slide"));
   });
 
+  // Hide cursor when hovering over expand icons
+  document.addEventListener("mouseover", (e) => {
+    if (e.target.closest('.expand-icon')) {
+      cursor.classList.remove("slide");
+    }
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    if (e.target.closest('.expand-icon')) {
+      // Let the normal cursor behavior handle the transition
+    }
+  });
+
   document.addEventListener("mousemove", trackMouse);
   document.addEventListener("mousedown", handleMouseDown);
   document.addEventListener("mousemove", handleMouseMove);
@@ -1376,6 +1389,15 @@ function refreshbreakingpoints() {
 
 
 function initInfinityGallery() {
+  console.log('initInfinityGallery called');
+  const sliderWrapper = document.querySelector(".slider-wrapper");
+  console.log('Slider wrapper found:', sliderWrapper);
+  
+  if (!sliderWrapper) {
+    console.error('Slider wrapper not found!');
+    return;
+  }
+  
   class InfiniteHorizontalScroll {
     constructor(container) {
       if (!container) return;
@@ -1391,6 +1413,8 @@ function initInfinityGallery() {
       this.dragStartX = 0;
       this.dragDelta = 0;
       this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      this.scrollEnabled = true; // Add this to control when scrolling is allowed
+      this.isFullscreenOpen = false; // Add this to track fullscreen state
 
       const isMobile = window.innerWidth < 650;
       const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
@@ -1408,13 +1432,306 @@ function initInfinityGallery() {
       // Adjust for iPad specifically
       if (isIPad) {
         this.lerp = 0.06; // Slower lerp for iPad (was 0.05, now 0.06)
-        this.touchMultiplier = 2.5; // Slower touch for iPad (was 4, now 2.5)
-        this.dragMultiplier = 2.5; // Slower drag for iPad (was 3, now 2.5)
+      this.touchMultiplier = 2.5; // Slower touch for iPad (was 4, now 2.5)
+      this.dragMultiplier = 2.5; // Slower drag for iPad (was 3, now 2.5)
       }
 
       this.cloneItems();
       this.calculateDimensions();
       this.init();
+      
+      // Update items to include clones and set up modals
+      this.items = Array.from(this.container.children);
+      this.setupFullscreenModal();
+    }
+
+    setupFullscreenModal() {
+      console.log('Setting up fullscreen modal...');
+      
+      // Create modal container if it doesn't exist
+      if (!document.querySelector('.fullscreen-modal')) {
+        console.log('Creating fullscreen modal...');
+        const modal = document.createElement('div');
+        modal.className = 'fullscreen-modal';
+        modal.style.cssText = `
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 9999;
+          cursor: pointer;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+          -webkit-tap-highlight-color: transparent;
+        `;
+        document.body.appendChild(modal);
+
+        // Add styles for the modal image with better Safari support
+        const style = document.createElement('style');
+        style.textContent = `
+          .fullscreen-modal img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            transform-origin: center center;
+            -webkit-transform-origin: center center;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            -webkit-perspective: 1000;
+            perspective: 1000;
+          }
+          .slider-item img {
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+          }
+          .slider-item {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+          }
+          .expand-icon {
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+          .fullscreen-modal {
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+          }
+        `;
+        document.head.appendChild(style);
+
+        // Store modal reference
+        this.modal = modal;
+        this.currentAnimation = null;
+        this.originalImage = null;
+
+        // Handle modal click to close
+        const closeModal = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeFullscreen();
+        };
+        modal.addEventListener('click', closeModal);
+        modal.addEventListener('touchend', closeModal);
+        
+        // Prevent any touch events on the modal from propagating
+        modal.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }, { passive: false });
+        
+        modal.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }, { passive: false });
+      } else {
+        this.modal = document.querySelector('.fullscreen-modal');
+      }
+
+      // Add expand icons to all slider items
+      console.log('Items found:', this.items.length);
+      this.items.forEach((item, index) => {
+        console.log(`Processing item ${index}:`, item);
+        if (!item.querySelector('.expand-icon')) {
+          console.log(`Creating expand icon for item ${index}`);
+          const expandIcon = document.createElement('div');
+          expandIcon.className = 'expand-icon';
+          item.appendChild(expandIcon);
+          
+          // Use both click and touchend for better Safari support
+          const handleExpand = (e) => {
+            console.log('Expand icon clicked!');
+            e.preventDefault();
+            e.stopPropagation();
+            const img = item.querySelector('img');
+            console.log('Image found:', img);
+            this.openFullscreen(img);
+          };
+          
+          expandIcon.addEventListener('click', handleExpand);
+          expandIcon.addEventListener('touchend', handleExpand);
+        } else {
+          console.log(`Expand icon already exists for item ${index}`);
+        }
+      });
+      
+      console.log('Fullscreen modal setup complete');
+    }
+
+    openFullscreen(img) {
+      if (!this.modal || !img) return;
+
+      if (this.currentAnimation) {
+        this.currentAnimation.kill();
+      }
+
+      console.log('Opening fullscreen for:', img);
+      
+      // Set fullscreen state and disable scrolling
+      this.isFullscreenOpen = true;
+      this.disableScroll();
+      
+      // Create a clone of the image
+      const clone = img.cloneNode(true);
+      this.originalImage = img;
+      this.modal.innerHTML = '';
+      this.modal.appendChild(clone);
+      this.modal.style.display = 'block';
+
+      // Get the original image position and size
+      const rect = img.getBoundingClientRect();
+      
+      // Set initial position with Safari-specific properties
+      clone.style.position = 'fixed';
+      clone.style.top = rect.top + 'px';
+      clone.style.left = rect.left + 'px';
+      clone.style.width = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      clone.style.zIndex = '10000';
+      clone.style.objectFit = 'cover';
+      clone.style.borderRadius = '0';
+      clone.style.transition = 'none';
+      clone.style.transformOrigin = 'center center';
+      clone.style.webkitTransformOrigin = 'center center';
+      clone.style.webkitBackfaceVisibility = 'hidden';
+      clone.style.backfaceVisibility = 'hidden';
+      clone.style.webkitPerspective = '1000';
+      clone.style.perspective = '1000';
+
+      // Set initial clip-path
+      gsap.set(clone, { clipPath: 'polygon(10% 3%, 92% 13%, 100% 100%, 0% 100%)' });
+
+      // Simple GSAP animation with scale and rotation
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Don't re-enable scroll here - keep it disabled while fullscreen is open
+          this.currentAnimation = null;
+        }
+      });
+
+      // Animate non-selected items to fade out slightly faster
+      const clickedSrc = img.getAttribute('src');
+      this.container.querySelectorAll('.slider-item').forEach(item => {
+        const itemImg = item.querySelector('img');
+        if (!itemImg || itemImg.getAttribute('src') !== clickedSrc) {
+          tl.to(item, { opacity: 0, duration: 1, ease: "power4.inOut" }, 0);
+        }
+      });
+
+      // Clean perspective animation
+      tl.to(clone, {
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        scale: 1.05,
+        rotation: 0,
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Animate to full
+        duration: 1.5,
+        ease: "expo.inOut"
+      }, 0);
+
+      this.currentAnimation = tl;
+    }
+
+    closeFullscreen() {
+      if (!this.modal || !this.originalImage) return;
+
+      if (this.currentAnimation) {
+        this.currentAnimation.kill();
+      }
+
+      const img = this.modal.querySelector('img');
+      if (!img) return;
+
+      console.log('Closing fullscreen');
+
+      // Get the original image position and size
+      const rect = this.originalImage.getBoundingClientRect();
+
+      // Simple GSAP animation for closing
+      const closeTl = gsap.timeline({
+        onComplete: () => {
+          this.modal.style.display = 'none';
+          
+          // Reset fullscreen state and re-enable scrolling
+          this.isFullscreenOpen = false;
+          this.enableScroll();
+          this.currentAnimation = null;
+        }
+      });
+      
+      // Animate all items to fade back in
+      this.container.querySelectorAll('.slider-item').forEach(item => {
+        closeTl.to(item, { opacity: 1, duration: 1, ease: "power4.inOut" }, 0.5);
+      });
+      
+      // Main collapse animation
+      closeTl.to(img, {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        scale: 1,
+        rotation: 0,
+        clipPath: 'polygon(10% 3%, 92% 13%, 100% 100%, 0% 100%)', // Animate back to distorted
+        duration: 1.5,
+        ease: "expo.inOut"
+      }, 0);
+
+      this.currentAnimation = closeTl;
+    }
+
+    updateOriginalPosition() {
+      if (this.originalImage) {
+        const rect = this.originalImage.getBoundingClientRect();
+        const modalImg = this.modal.querySelector('img');
+        if (modalImg) {
+          modalImg.dataset.originalTop = rect.top + 'px';
+          modalImg.dataset.originalLeft = rect.left + 'px';
+          modalImg.dataset.originalWidth = rect.width + 'px';
+          modalImg.dataset.originalHeight = rect.height + 'px';
+        }
+      }
+    }
+
+    disableScroll() {
+      // Disable the infinity gallery scrolling
+      this.scrollEnabled = false;
+      console.log('Slider scrolling disabled');
+    }
+
+    enableScroll() {
+      // Re-enable the infinity gallery scrolling
+      this.scrollEnabled = true;
+      console.log('Slider scrolling enabled');
     }
 
     cloneItems() {
@@ -1456,22 +1773,30 @@ function initInfinityGallery() {
       
       // Touch events for all touch devices (including iPad)
       if (this.isTouchDevice) {
-        this.container.addEventListener("touchstart", (e) => this.handleTouchStart(e), { passive: true });
-        this.container.addEventListener("touchmove", (e) => this.handleTouchMove(e), { passive: false });
-        this.container.addEventListener("touchend", () => this.handleTouchEnd());
-        this.container.addEventListener("touchcancel", () => this.handleTouchEnd());
+        this.wrapper.addEventListener("touchstart", (e) => this.handleTouchStart(e), { passive: true });
+        this.wrapper.addEventListener("touchmove", (e) => this.handleTouchMove(e), { passive: false });
+        this.wrapper.addEventListener("touchend", () => this.handleTouchEnd());
+        this.wrapper.addEventListener("touchcancel", () => this.handleTouchEnd());
       }
 
       // Mouse events for non-touch devices
       if (!this.isTouchDevice) {
-        this.container.addEventListener("mousedown", (e) => this.handleDragStart(e));
+        this.wrapper.addEventListener("mousedown", (e) => this.handleDragStart(e));
         window.addEventListener("mousemove", (e) => this.handleDragMove(e));
         window.addEventListener("mouseup", () => this.handleDragEnd());
       }
+      
+      // Keyboard events for closing fullscreen
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.isFullscreenOpen) {
+          this.closeFullscreen();
+        }
+      });
     }
 
     handleWheel(event) {
       if (event.target.closest("button, input, textarea, select")) return;
+      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       event.preventDefault();
       this.scrollX += event.deltaY * this.wheelMultiplier;
       this.handleInfiniteScroll();
@@ -1479,6 +1804,7 @@ function initInfinityGallery() {
 
     handleTouchStart(event) {
       if (event.touches.length > 1) return; // Ignore multi-touch
+      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       this.touchStartX = event.touches[0].clientX;
       this.touchStartY = event.touches[0].clientY;
       this.dragDelta = 0;
@@ -1486,16 +1812,17 @@ function initInfinityGallery() {
 
     handleTouchMove(event) {
       if (event.touches.length > 1) return; // Ignore multi-touch
+      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       
       const touchX = event.touches[0].clientX;
       const touchY = event.touches[0].clientY;
-      const deltaX = touchX - this.touchStartX;
+      const deltaX = touchX - this.touchStartX; // Remove Math.abs() to preserve direction
       const deltaY = Math.abs(touchY - this.touchStartY);
       
       // Only handle horizontal scrolling if the horizontal movement is greater than vertical
       if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
         event.preventDefault();
-        this.scrollX -= deltaX * this.touchMultiplier;
+        this.scrollX -= deltaX * this.touchMultiplier; // Use actual deltaX (with direction)
         this.touchStartX = touchX;
         this.touchStartY = touchY;
         this.handleInfiniteScroll();
@@ -1507,12 +1834,13 @@ function initInfinityGallery() {
     }
 
     handleDragStart(e) {
+      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       this.isDragging = true;
       this.dragStartX = e.clientX;
     }
 
     handleDragMove(e) {
-      if (!this.isDragging) return;
+      if (!this.isDragging || !this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       const deltaX = e.clientX - this.dragStartX;
       this.dragStartX = e.clientX;
       this.scrollX -= deltaX * this.dragMultiplier;
@@ -1535,13 +1863,16 @@ function initInfinityGallery() {
     }
 
     animate() {
-      this.smoothScrollX += (this.scrollX - this.smoothScrollX) * this.lerp;
-      this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
+      if (this.scrollEnabled && !this.isFullscreenOpen) {
+        this.smoothScrollX += (this.scrollX - this.smoothScrollX) * this.lerp;
+        this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
+        this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
+      }
       requestAnimationFrame(() => this.animate());
     }
   }
 
-  new InfiniteHorizontalScroll(document.querySelector(".slider-wrapper"));
+  new InfiniteHorizontalScroll(sliderWrapper);
 }
 
 
@@ -1681,6 +2012,7 @@ async function initializeApplication() {
         // Initialize core functionality
         initPageTransitions();
         refreshbreakingpoints();
+        initInfinityGallery(); // Add this line
 
         // Initialize animations with proper timing
         requestAnimationFrame(() => {
@@ -2076,8 +2408,6 @@ window.addEventListener('resize', () => {
 
 
 function initVWFontZoomSafeForGSAP() {
-
-/*
   const elements = [];
   const baseZoom = window.devicePixelRatio;
   const baseWidth = window.innerWidth;
@@ -2104,7 +2434,6 @@ function initVWFontZoomSafeForGSAP() {
 
   window.addEventListener('resize', applyZoom);
   applyZoom();
-  */
 }
 
 window.addEventListener('DOMContentLoaded', initVWFontZoomSafeForGSAP);
