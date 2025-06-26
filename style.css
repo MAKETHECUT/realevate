@@ -1897,6 +1897,10 @@ body.fullscreen-active .slider-item .expand-icon {
     width: unset;
     grid-gap: 3vw;
   }
+
+.slider-wrapper {
+	height:unset;
+}
   
   .slider-item {
     height: 50svh;
