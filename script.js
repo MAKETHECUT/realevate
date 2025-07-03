@@ -482,13 +482,14 @@ function initCustomSmoothScrolling() {
 
 function initPageTransitions() {
   
+
+  
     const loader = gsap.timeline();
     let isAnimating = false;
     let nextPageHTML = '';
     let pendingNavigation = null;
     let lastNavigationTime = 0;
     const NAVIGATION_COOLDOWN = 1000;
-    let currentPage = window.location.pathname;
 
     if (!document.querySelector('.transition')) {
         const div = document.createElement('div');
@@ -506,24 +507,19 @@ function initPageTransitions() {
     const cursor = document.querySelector('.cursor');
 
     function canNavigate() {
-        // Remove cooldown for popstate events to allow immediate browser navigation
+        const now = Date.now();
+        if (now - lastNavigationTime < NAVIGATION_COOLDOWN) return false;
+        lastNavigationTime = now;
         return true;
     }
 
     async function handleNavigation(url, isPopState = false) {
-        // Don't navigate if we're already on the same page
-        if (url === currentPage && !isPopState) {
-            return;
-        }
-
-        // For popstate events, always handle immediately to prevent double-clicks
-        if (window.transitioning && !isPopState) {
+        if (window.transitioning) {
             pendingNavigation = { url, isPopState };
             return;
         }
 
-        // Only apply cooldown for non-popstate navigation
-        if (!isPopState && !canNavigate()) return;
+        if (!canNavigate()) return;
 
         window.transitioning = true;
         isAnimating = true;
@@ -579,17 +575,9 @@ function initPageTransitions() {
         if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
         if (window.interactiveCursor?.destroy) window.interactiveCursor.destroy();
         if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
-        
-        // Disable smooth scrolling during transition
-        if (window.toggleSmoothScroll) {
-            window.toggleSmoothScroll(false);
-        }
 
         document.title = doc.querySelector('title')?.textContent || document.title;
         container.innerHTML = nextPageHTML;
-        
-        // Update current page tracking
-        currentPage = url;
 
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
@@ -606,11 +594,6 @@ function initPageTransitions() {
             initCustomSmoothScrolling();
             initSplitTextAnimations();
             initVWFontZoomSafeForGSAP();
-            
-            // Re-enable smooth scrolling after transition
-            if (window.toggleSmoothScroll) {
-                window.toggleSmoothScroll(true);
-            }
         }, 100);
 
         // Complete the transition animation (outro)
@@ -654,14 +637,6 @@ function initPageTransitions() {
         });
     }
 
-    // Cleanup function for page transitions
-    window.cleanupPageTransitions = function() {
-        window.transitioning = false;
-        isAnimating = false;
-        pendingNavigation = null;
-        currentPage = window.location.pathname;
-    };
-
     document.body.addEventListener('click', (e) => {
         const link = e.target.closest('a[href]');
         if (!link) return;
@@ -676,32 +651,22 @@ function initPageTransitions() {
         ) return;
 
         e.preventDefault();
-        
-        // Only push state if we're actually navigating to a different page
-        if (href !== currentPage) {
-            history.pushState({ title: document.title }, '', href);
-            handleNavigation(href);
-        }
+        history.pushState({ title: document.title }, '', href);
+        handleNavigation(href);
     });
 
     window.addEventListener('popstate', () => {
-        // Always handle popstate events immediately, even if transitioning
-        // This prevents the double-click issue with browser navigation
+        // Force immediate navigation for popstate events to prevent double-click issue
         if (window.transitioning) {
-            // Kill any ongoing transition and handle immediately
             window.transitioning = false;
             isAnimating = false;
-            // Clear any pending navigation
             pendingNavigation = null;
         }
         handleNavigation(location.href, true);
     });
 
     window.addEventListener('DOMContentLoaded', () => {
-        // Only replace state if we're not already in a navigation
-        if (!window.transitioning) {
-            history.replaceState({ title: document.title }, '', location.href);
-        }
+        history.replaceState({ title: document.title }, '', location.href);
     });
 }
 
