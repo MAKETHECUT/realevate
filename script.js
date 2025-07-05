@@ -698,6 +698,78 @@ document.addEventListener("keydown", function (event) {
 Split Text Animations
 ============================================== */
 
+
+
+function truncateByWords(el, wordLimit = 30) {
+  const text = el.textContent.trim();
+  const words = text.split(/\s+/);
+  if (words.length > wordLimit) {
+    el.textContent = words.slice(0, wordLimit).join(' ') + '...';
+  }
+}
+
+function initSplitTextAnimations() {
+  if (gsap.ScrollTrigger) {
+    gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  }
+
+  const elements = document.querySelectorAll(
+    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
+  );
+
+  elements.forEach((element) => {
+    // Truncate before SplitText to keep ellipsis visible
+    if (element.tagName.toLowerCase() === 'p') {
+      truncateByWords(element, 30); // Adjust word limit
+    }
+
+    const split = new SplitText(element, { type: "lines", linesClass: "line" });
+
+    split.lines.forEach((line) => {
+      line.style.display = "inline-block";
+      line.style.width = "100%";
+      line.style.lineHeight = "unset";
+      line.style.visibility = "hidden";
+    });
+
+    split.lines.forEach((line) => line.offsetWidth); // force reflow
+
+    gsap.set(split.lines, {
+      visibility: "visible",
+      yPercent: 100,
+      clipPath: "inset(0% 0% 100% 0%)",
+      opacity: 1,
+    });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: element,
+        start: "top bottom",
+        once: true,
+        onEnter: () => tl.play()
+      },
+      paused: true,
+      onComplete: () => {
+        if (!element.matches(".hero-headline h1")) {
+          split.revert();
+        }
+      }
+    });
+
+    tl.to(split.lines, {
+      yPercent: 0,
+      clipPath: "inset(-20% -10% -20% 0%)",
+      opacity: 1,
+      stagger: 0.12,
+      duration: 2,
+      delay: element.closest(".hero, .delay") ? 0.5 : 0,
+      ease: "power3.out"
+    });
+  });
+}
+
+
+/*
 function initSplitTextAnimations() {
   if (gsap.ScrollTrigger) {
     gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
@@ -752,6 +824,8 @@ function initSplitTextAnimations() {
     });
   });
 }
+
+*/
 
 
 
