@@ -700,7 +700,7 @@ Split Text Animations
 
 
 
-function truncateByWords(el, wordLimit = 30) {
+function truncateByWords(el, wordLimit = 43) {
   const text = el.textContent.trim();
   const words = text.split(/\s+/);
   if (words.length > wordLimit) {
