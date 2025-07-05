@@ -698,8 +698,6 @@ document.addEventListener("keydown", function (event) {
 Split Text Animations
 ============================================== */
 
-
-
 function truncateByWords(el, wordLimit = 43) {
   const text = el.textContent.trim();
   const words = text.split(/\s+/);
@@ -718,9 +716,8 @@ function initSplitTextAnimations() {
   );
 
   elements.forEach((element) => {
-    // Truncate before SplitText to keep ellipsis visible
-    if (element.tagName.toLowerCase() === '.info p') {
-      truncateByWords(element, 43); // Adjust word limit
+    if (element.matches("p.info")) {
+      truncateByWords(element, 43);
     }
 
     const split = new SplitText(element, { type: "lines", linesClass: "line" });
