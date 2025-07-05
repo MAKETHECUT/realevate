@@ -719,7 +719,7 @@ function initSplitTextAnimations() {
 
   elements.forEach((element) => {
     // Truncate before SplitText to keep ellipsis visible
-    if (element.tagName.toLowerCase() === 'p') {
+    if (element.tagName.toLowerCase() === '.info') {
       truncateByWords(element, 43); // Adjust word limit
     }
 
