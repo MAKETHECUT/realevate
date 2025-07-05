@@ -6,6 +6,69 @@ window.addEventListener("beforeunload", () => {
   document.body.scrollTop = 0;
 });
 
+// Global scroll management system
+window.scrollManager = {
+  isDisabled: false,
+  disableCount: 0,
+  scrollbarWidth: 0,
+  savedScrollY: 0,
+  
+  disable() {
+    this.disableCount++;
+    this.isDisabled = true;
+    
+    // Save current scroll position
+    if (this.disableCount === 1) {
+      this.savedScrollY = window.scrollY;
+      this.scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    }
+    
+    // Disable browser native scrolling while preserving scrollbar space
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    // Add padding to compensate for the missing scrollbar
+    if (this.scrollbarWidth > 0) {
+      document.body.style.paddingRight = this.scrollbarWidth + 'px';
+    }
+    
+    // Disable custom smooth scrolling if it exists
+    if (window.customSmoothScroll && typeof window.customSmoothScroll.disable === 'function') {
+      window.customSmoothScroll.disable();
+    }
+    
+    console.log('Scroll disabled (count:', this.disableCount, ')');
+  },
+  
+  enable() {
+    this.disableCount = Math.max(0, this.disableCount - 1);
+    
+    if (this.disableCount === 0) {
+      this.isDisabled = false;
+      
+      // Re-enable browser native scrolling
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      
+      // Remove the padding compensation
+      document.body.style.paddingRight = '';
+      
+      // Re-enable custom smooth scrolling if it exists
+      if (window.customSmoothScroll && typeof window.customSmoothScroll.enable === 'function') {
+        window.customSmoothScroll.enable();
+      }
+      
+      console.log('Scroll enabled');
+    } else {
+      console.log('Scroll still disabled (count:', this.disableCount, ')');
+    }
+  },
+  
+  isScrollDisabled() {
+    return this.isDisabled;
+  }
+};
+
 
 
 function initHomeVideo() {
@@ -214,16 +277,13 @@ function initCustomSmoothScrolling() {
         }
 
         as() {
-            if (window.isMenuOpen && window.isMenuOpen()) {
+            // Only disable scrolling without changing position
+            if (window.isMenuOpen && window.isMenuOpen() || window.scrollManager.isScrollDisabled()) {
                 document.body.style.overflow = "hidden";
-                document.body.style.position = "fixed";
-                document.body.style.width = "100%";
-                document.body.style.top = `-${window.scrollY}px`;
+                document.documentElement.style.overflow = "hidden";
             } else {
                 document.body.style.overflow = "";
-                document.body.style.position = "";
-                document.body.style.width = "";
-                document.body.style.top = "";
+                document.documentElement.style.overflow = "";
             }
             document.documentElement.style.scrollBehavior = "auto";
             document.documentElement.style.touchAction = "pan-x pan-y";
@@ -243,15 +303,18 @@ function initCustomSmoothScrolling() {
                 sw: c.scrollWidth,
                 sh: c.scrollHeight
             };
-            const s = document.querySelector(".wrapper");
-            if (s) {
-                document.body.style.height = `${s.clientHeight}px`;
+            // Only set body height if not in a disabled scroll state
+            if (!window.scrollManager.isScrollDisabled() && !(window.isMenuOpen && window.isMenuOpen())) {
+                const s = document.querySelector(".wrapper");
+                if (s) {
+                    document.body.style.height = `${s.clientHeight}px`;
+                }
             }
         }
 
         be() {
             window.addEventListener("wheel", (e) => {
-                if (!this.se || d || (window.isMenuOpen && window.isMenuOpen())) return;
+                if (!this.se || d || (window.isMenuOpen && window.isMenuOpen()) || window.scrollManager.isScrollDisabled()) return;
                 const t = e.deltaY * this.wm;
                 this.os(t);
                 e.preventDefault();
@@ -262,7 +325,7 @@ function initCustomSmoothScrolling() {
                     e.preventDefault(); // Prevent multi-touch gestures
                     return;
                 }
-                if (window.isMenuOpen && window.isMenuOpen()) return;
+                if (window.isMenuOpen && window.isMenuOpen() || window.scrollManager.isScrollDisabled()) return;
                 
                 // Check if touch is on slider-wrapper specifically
                 const target = e.target;
@@ -281,7 +344,7 @@ function initCustomSmoothScrolling() {
                     e.preventDefault(); // Prevent multi-touch gestures
                     return;
                 }
-                if (window.isMenuOpen && window.isMenuOpen()) return;
+                if (window.isMenuOpen && window.isMenuOpen() || window.scrollManager.isScrollDisabled()) return;
                 
                 // Check if we're actively dragging the slider-wrapper
                 if (this.sliderTouchStartX !== undefined) {
@@ -312,7 +375,7 @@ function initCustomSmoothScrolling() {
             });
 
             window.addEventListener("mousedown", (e) => {
-                if (window.isMenuOpen && window.isMenuOpen()) return;
+                if (window.isMenuOpen && window.isMenuOpen() || window.scrollManager.isScrollDisabled()) return;
                 if (e.button === 2) {
                     this.rc = true;
                     return;
@@ -323,7 +386,7 @@ function initCustomSmoothScrolling() {
             });
 
             window.addEventListener("mousemove", (e) => {
-                if (window.isMenuOpen && window.isMenuOpen()) return;
+                if (window.isMenuOpen && window.isMenuOpen() || window.scrollManager.isScrollDisabled()) return;
                 this.omd(e);
             });
 
@@ -432,16 +495,11 @@ function initCustomSmoothScrolling() {
         ts(e) {
             if (e) {
                 document.body.style.overflow = "hidden";
-                document.body.style.position = "";
-                document.body.style.top = "";
-                document.body.style.width = "";
+                document.documentElement.style.overflow = "hidden";
                 this.se = true;
             } else {
-                const scrollY = window.scrollY;
                 document.body.style.overflow = "hidden";
-                document.body.style.position = "fixed";
-                document.body.style.width = "100%";
-                document.body.style.top = `-${scrollY}px`;
+                document.documentElement.style.overflow = "hidden";
                 this.se = false;
             }
         }
@@ -449,9 +507,7 @@ function initCustomSmoothScrolling() {
         d() {
             this.se = false;
             document.body.style.overflow = "";
-            document.body.style.position = "";
-            document.body.style.width = "";
-            document.body.style.top = "";
+            document.documentElement.style.overflow = "";
             document.body.style.height = "";
             document.documentElement.style.scrollBehavior = "";
             document.documentElement.style.touchAction = "pan-x pan-y";
@@ -467,6 +523,20 @@ function initCustomSmoothScrolling() {
     }
 
     i = new S();
+
+    // Add enable/disable methods to the instance
+    i.enable = function() {
+        this.se = true;
+        console.log('Custom smooth scroll enabled');
+    };
+
+    i.disable = function() {
+        this.se = false;
+        console.log('Custom smooth scroll disabled');
+    };
+
+    // Expose the instance globally
+    window.customSmoothScroll = i;
 
     window.toggleSmoothScroll = (e) => {
         if (i) {
@@ -656,11 +726,9 @@ function initPageTransitions() {
     });
 
     window.addEventListener('popstate', () => {
-        // Force immediate navigation for popstate events to prevent double-click issue
         if (window.transitioning) {
-            window.transitioning = false;
-            isAnimating = false;
-            pendingNavigation = null;
+            pendingNavigation = { url: location.href, isPopState: true };
+            return;
         }
         handleNavigation(location.href, true);
     });
@@ -703,6 +771,7 @@ Split Text Animations
 ============================================== */
 
 function initSplitTextAnimations() {
+  // Kill all existing ScrollTriggers to avoid conflicts
   if (gsap.ScrollTrigger) {
     gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
   }
@@ -712,19 +781,23 @@ function initSplitTextAnimations() {
   );
 
   elements.forEach((element) => {
+    // Revert any existing split text to avoid conflicts
+    if (element._splitText) {
+      element._splitText.revert();
+    }
+
     const split = new SplitText(element, { type: "lines", linesClass: "line" });
+    element._splitText = split; // Store reference for cleanup
 
     split.lines.forEach((line) => {
       line.style.display = "inline-block";
       line.style.width = "100%";
       line.style.lineHeight = "unset";
-      line.style.visibility = "hidden";
     });
 
     split.lines.forEach((line) => line.offsetWidth); // force reflow
 
     gsap.set(split.lines, {
-      visibility: "visible",
       yPercent: 100,
       clipPath: "inset(0% 0% 100% 0%)",
       opacity: 1,
@@ -734,14 +807,7 @@ function initSplitTextAnimations() {
       scrollTrigger: {
         trigger: element,
         start: "top bottom",
-        once: true,
-        onEnter: () => tl.play()
-      },
-      paused: true,
-      onComplete: () => {
-        if (!element.matches(".hero-headline h1")) {
-          split.revert();
-        }
+        toggleActions: "play none none reverse"
       }
     });
 
@@ -754,6 +820,17 @@ function initSplitTextAnimations() {
       delay: element.closest(".hero, .delay") ? 0.5 : 0,
       ease: "power3.out"
     });
+  });
+
+  // Add resize listener to recalculate triggers
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (typeof ScrollTrigger !== 'undefined') {
+        ScrollTrigger.refresh(true);
+      }
+    }, 250); // Debounce resize events
   });
 }
 
@@ -1129,18 +1206,7 @@ function initInteractiveCursor() {
     el.addEventListener("mouseleave", () => cursor.classList.remove("slide"));
   });
 
-  // Hide cursor when hovering over expand icons
-  document.addEventListener("mouseover", (e) => {
-    if (e.target.closest('.expand-icon')) {
-      cursor.classList.remove("slide");
-    }
-  });
 
-  document.addEventListener("mouseout", (e) => {
-    if (e.target.closest('.expand-icon')) {
-      // Let the normal cursor behavior handle the transition
-    }
-  });
 
   document.addEventListener("mousemove", trackMouse);
   document.addEventListener("mousedown", handleMouseDown);
@@ -1456,6 +1522,7 @@ function initInfinityGallery() {
       // Set fullscreen state and disable scrolling
       this.isFullscreenOpen = true;
       this.disableScroll();
+      window.scrollManager.disable();
       document.body.classList.add('fullscreen-active');
       
       // Create a clone of the image
@@ -1496,15 +1563,6 @@ function initInfinityGallery() {
         }
       });
 
-      // Animate the icon on the selected item to fade out
-      const parentItem = img.closest('.slider-item');
-      if (parentItem) {
-        const icon = parentItem.querySelector('.expand-icon');
-        if (icon) {
-          tl.to(icon, { opacity: 0, duration: 1, ease: 'power2.out', overwrite: 'auto' }, 0);
-        }
-      }
-
       // Animate non-selected items to fade out slightly faster
       const clickedSrc = img.getAttribute('src');
       this.container.querySelectorAll('.slider-item').forEach(item => {
@@ -1514,13 +1572,15 @@ function initInfinityGallery() {
         }
       });
 
+
+
       // Clean perspective animation
       tl.to(clone, {
         top: 0,
         left: 0,
         width: '100vw',
         height: '100svh',
-        scale: 1.050,
+        scale: 1.005,
         rotation: 0,
         clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Animate to full
         duration: 1.5,
@@ -1553,19 +1613,11 @@ function initInfinityGallery() {
           // Reset fullscreen state and re-enable scrolling
           this.isFullscreenOpen = false;
           this.enableScroll();
+          window.scrollManager.enable();
           document.body.classList.remove('fullscreen-active');
           this.currentAnimation = null;
         }
       });
-      
-      // Animate the icon on the selected item to fade back in
-      const closeParentItem = this.originalImage.closest('.slider-item');
-      if (closeParentItem) {
-        const icon = closeParentItem.querySelector('.expand-icon');
-        if (icon) {
-          closeTl.to(icon, { opacity: 1, duration: 0.4, ease: 'power2.in', delay: 0.2, overwrite: 'auto' });
-        }
-      }
       
       // Animate all items to fade back in
       this.container.querySelectorAll('.slider-item').forEach(item => {
@@ -1584,6 +1636,8 @@ function initInfinityGallery() {
         duration: 1.5,
         ease: "expo.inOut"
       }, 0);
+      
+
 
       this.currentAnimation = closeTl;
     }
@@ -1688,7 +1742,7 @@ function initInfinityGallery() {
 
     handleWheel(event) {
       if (event.target.closest("button, input, textarea, select")) return;
-      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      if (!this.scrollEnabled || this.isFullscreenOpen || window.scrollManager.isScrollDisabled()) return; // Prevent scrolling when fullscreen is open or global scroll is disabled
       
       const isTrackpad = Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < 10;
       
@@ -1705,7 +1759,7 @@ function initInfinityGallery() {
 
     handleTouchStart(event) {
       if (event.touches.length > 1) return; // Ignore multi-touch
-      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      if (!this.scrollEnabled || this.isFullscreenOpen || window.scrollManager.isScrollDisabled()) return; // Prevent scrolling when fullscreen is open or global scroll is disabled
       
       this.snapOnSettle = false;
       if (this.snapAnimation) {
@@ -1720,7 +1774,7 @@ function initInfinityGallery() {
 
     handleTouchMove(event) {
       if (event.touches.length > 1) return; // Ignore multi-touch
-      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      if (!this.scrollEnabled || this.isFullscreenOpen || window.scrollManager.isScrollDisabled()) return; // Prevent scrolling when fullscreen is open or global scroll is disabled
       
       const touchX = event.touches[0].clientX;
       const touchY = event.touches[0].clientY;
@@ -1743,7 +1797,7 @@ function initInfinityGallery() {
     }
 
     handleDragStart(e) {
-      if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      if (!this.scrollEnabled || this.isFullscreenOpen || window.scrollManager.isScrollDisabled()) return; // Prevent scrolling when fullscreen is open or global scroll is disabled
       
       this.snapOnSettle = false;
       if (this.snapAnimation) {
@@ -1756,7 +1810,7 @@ function initInfinityGallery() {
     }
 
     handleDragMove(e) {
-      if (!this.isDragging || !this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
+      if (!this.isDragging || !this.scrollEnabled || this.isFullscreenOpen || window.scrollManager.isScrollDisabled()) return; // Prevent scrolling when fullscreen is open or global scroll is disabled
       const deltaX = e.clientX - this.dragStartX;
       this.dragStartX = e.clientX;
       this.scrollX -= deltaX * this.dragMultiplier;
@@ -1826,7 +1880,7 @@ function initInfinityGallery() {
     }
 
     animate() {
-      if (this.scrollEnabled && !this.isFullscreenOpen) {
+      if (this.scrollEnabled && !this.isFullscreenOpen && !window.scrollManager.isScrollDisabled()) {
         this.smoothScrollX += (this.scrollX - this.smoothScrollX) * this.lerp;
         this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
         this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
@@ -2185,6 +2239,9 @@ document.head.appendChild(style);
     gsap.set('.mega-menu .menu-content', { y: 0 });
 
 function openMenu() {
+  // Disable scrolling when menu opens
+  window.scrollManager.disable();
+  
   // Set initial state first
   gsap.set(megaMenu, { 
       pointerEvents: 'auto',
@@ -2281,6 +2338,9 @@ function openMenu() {
                 gsap.set(megaMenu, { clipPath: 'inset(0% 0% 100% 0%)' });
                 gsap.set('.mega-menu-links a', { clipPath: 'inset(0% 0% 100% 0%)' });
                 isAnimating = false;
+                
+                // Re-enable scrolling when menu closes
+                window.scrollManager.enable();
             }
         });
 
