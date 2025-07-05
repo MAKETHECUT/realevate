@@ -1701,7 +1701,7 @@ section:not(.hero):not(:has(.footer)) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 10;
+  z-index: 10001;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   -webkit-user-select: none;
@@ -1714,7 +1714,7 @@ section:not(.hero):not(:has(.footer)) {
   color: var(--darkgrey);
   font-weight: 300;
   opacity: 1;
-  transition: all 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
+
 }
 
 .slider-item .expand-icon::before {
@@ -1722,9 +1722,10 @@ section:not(.hero):not(:has(.footer)) {
   
 }
 
-body.fullscreen-active .slider-item .expand-icon {
+/* Removed this rule to let GSAP handle the animation */
+/* body.fullscreen-active .slider-item .expand-icon {
   opacity: 0;
-}
+} */
 
 .slider-item .expand-icon:hover {
   background: rgba(255, 255, 255, 1);
