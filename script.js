@@ -720,7 +720,7 @@ function initSplitTextAnimations() {
   elements.forEach((element) => {
     // Truncate before SplitText to keep ellipsis visible
     if (element.tagName.toLowerCase() === 'p') {
-      truncateByWords(element, 30); // Adjust word limit
+      truncateByWords(element, 43); // Adjust word limit
     }
 
     const split = new SplitText(element, { type: "lines", linesClass: "line" });
