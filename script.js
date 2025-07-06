@@ -13,22 +13,37 @@ function initHomeVideo() {
     const container = iframe.parentElement;
     const containerW = container.offsetWidth;
     const containerH = container.offsetHeight;
-    const containerRatio = containerW / containerH;
     const videoRatio = 16 / 9;
+    
+    // Calculate dimensions to ensure full coverage
     let width, height;
-
-    if (containerRatio > videoRatio) {
-      width = containerW;
-      height = containerW / videoRatio;
-    } else {
+    
+    // Always prioritize covering the full container
+    if (containerW / containerH > videoRatio) {
+      // Container is wider than video ratio - fit to height
       width = containerH * videoRatio;
       height = containerH;
+    } else {
+      // Container is taller than video ratio - fit to width
+      width = containerW;
+      height = containerW / videoRatio;
+    }
+    
+    // Ensure the video is at least as large as the container
+    if (width < containerW) {
+      width = containerW;
+      height = containerW / videoRatio;
+    }
+    if (height < containerH) {
+      height = containerH;
+      width = containerH * videoRatio;
     }
 
     iframe.style.width = `${width}px`;
     iframe.style.height = `${height}px`;
     iframe.style.top = '50%';
     iframe.style.left = '50%';
+    iframe.style.transform = 'translate(-50%, -50%)';
   }
 
   function setupVimeoCovers() {
@@ -45,8 +60,26 @@ function initHomeVideo() {
 
       el.appendChild(iframe);
 
-      iframe.onload = () => resizeVimeoIframe(iframe);
-      window.addEventListener('resize', () => resizeVimeoIframe(iframe));
+      // Resize immediately and on load
+      resizeVimeoIframe(iframe);
+      iframe.onload = () => {
+        resizeVimeoIframe(iframe);
+        // Force a second resize after a short delay to handle any layout changes
+        setTimeout(() => resizeVimeoIframe(iframe), 100);
+      };
+      
+      // Add resize listener with debouncing
+      let resizeTimeout;
+      const handleResize = () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => resizeVimeoIframe(iframe), 100);
+      };
+      window.addEventListener('resize', handleResize);
+      
+      // Also listen for orientation changes on mobile
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => resizeVimeoIframe(iframe), 300);
+      });
     });
   }
 
@@ -2470,6 +2503,5 @@ window.addEventListener('resize', () => {
         megaMenuState.refresh('Home');
     }
 });
-
 
 
