@@ -1749,6 +1749,10 @@ section:not(.hero):not(:has(.footer)) {
   margin-top:5vw;
 }
 
+.description:nth-of-type(3) {
+  margin-top:5vw;
+}
+
 .description h2 {
   width:100%;
   font-family:var(--secondary);
