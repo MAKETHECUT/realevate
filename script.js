@@ -9,81 +9,26 @@ window.addEventListener("beforeunload", () => {
 
 
 function initHomeVideo() {
-  function resizeVimeoIframe(iframe) {
-    const container = iframe.parentElement;
-    const containerW = container.offsetWidth;
-    const containerH = container.offsetHeight;
-    const videoRatio = 16 / 9;
-    
-    // Calculate dimensions to ensure full coverage
-    let width, height;
-    
-    // Always prioritize covering the full container
-    if (containerW / containerH > videoRatio) {
-      // Container is wider than video ratio - fit to height
-      width = containerH * videoRatio;
-      height = containerH;
-    } else {
-      // Container is taller than video ratio - fit to width
-      width = containerW;
-      height = containerW / videoRatio;
-    }
-    
-    // Ensure the video is at least as large as the container
-    if (width < containerW) {
-      width = containerW;
-      height = containerW / videoRatio;
-    }
-    if (height < containerH) {
-      height = containerH;
-      width = containerH * videoRatio;
-    }
+  document.addEventListener("DOMContentLoaded", function () {
+    const isMobile = window.innerWidth < 650;
 
-    iframe.style.width = `${width}px`;
-    iframe.style.height = `${height}px`;
-    iframe.style.top = '50%';
-    iframe.style.left = '50%';
-    iframe.style.transform = 'translate(-50%, -50%)';
-  }
+    const videoSrc = isMobile
+      ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
+      : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
 
-  function setupVimeoCovers() {
-    document.querySelectorAll('.vimeo-bg').forEach(el => {
-      const id = el.dataset.vimeoId;
-      if (!id) return;
+    const video = document.createElement("video");
+    video.autoplay = true;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
 
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://player.vimeo.com/video/${id}?background=1&autoplay=1&loop=1&muted=1&byline=0&title=0`;
-      iframe.frameBorder = '0';
-      iframe.allow = 'autoplay; fullscreen';
-      iframe.allowFullscreen = true;
-      iframe.className = 'vimeo-iframe';
+    const source = document.createElement("source");
+    source.src = videoSrc;
+    source.type = "video/mp4";
 
-      el.appendChild(iframe);
-
-      // Resize immediately and on load
-      resizeVimeoIframe(iframe);
-      iframe.onload = () => {
-        resizeVimeoIframe(iframe);
-        // Force a second resize after a short delay to handle any layout changes
-        setTimeout(() => resizeVimeoIframe(iframe), 100);
-      };
-      
-      // Add resize listener with debouncing
-      let resizeTimeout;
-      const handleResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => resizeVimeoIframe(iframe), 100);
-      };
-      window.addEventListener('resize', handleResize);
-      
-      // Also listen for orientation changes on mobile
-      window.addEventListener('orientationchange', () => {
-        setTimeout(() => resizeVimeoIframe(iframe), 300);
-      });
-    });
-  }
-
-  setupVimeoCovers();
+    video.appendChild(source);
+    document.getElementById("video-container").appendChild(video);
+  });
 }
 
 
