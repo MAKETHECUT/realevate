@@ -9,7 +9,6 @@ window.addEventListener("beforeunload", () => {
 
 
 function initHomeVideo() {
-  document.addEventListener("DOMContentLoaded", function () {
     const isMobile = window.innerWidth < 650;
 
     const videoSrc = isMobile
@@ -28,7 +27,6 @@ function initHomeVideo() {
 
     video.appendChild(source);
     document.getElementById("video-container").appendChild(video);
-  });
 }
 
 
