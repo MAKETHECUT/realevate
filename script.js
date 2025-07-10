@@ -77,7 +77,6 @@ async function startApp() {
     initMegaMenu();
     initPageTransitions();
     initInfinityGallery();
-    initHomeVideo();
     requestAnimationFrame(() => {
       initNavbarShowHide();
       initGsapAnimations();
@@ -87,6 +86,8 @@ async function startApp() {
       if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
     });
   }, 1000);
+
+    initHomeVideo();
 }
 document.addEventListener("DOMContentLoaded", startApp);
 // --- END DYNAMIC LOADER ---
@@ -98,7 +99,6 @@ function initAllFunctions() {
     }
   
     initPageTransitions();
-   initHomeVideo();
     refreshbreakingpoints();
   initNavbarShowHide();
   
@@ -114,7 +114,7 @@ function initAllFunctions() {
             initGsapAnimations();
             initSplitTextAnimations();
            initInfinityGallery();
-         
+            initHomeVideo();
             ScrollTrigger.refresh(true);
           initCustomSmoothScrolling();
    
