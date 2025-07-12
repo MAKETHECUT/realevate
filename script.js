@@ -1,3 +1,102 @@
+// --- PAGE LOADER OVERLAY WITH COUNTER ---
+(function addPageLoader() {
+  // Add loader on all pages
+  const loader = document.createElement('div');
+  loader.id = 'page-loader';
+  loader.className = 'page-loader';
+  loader.innerHTML = `
+    <div id="loader-counter" class="loader-counter">0</div>
+  `;
+  document.body.appendChild(loader);
+})();
+
+function animateLoaderCounter(onComplete, duration = 100) {
+  document.documentElement.style.visibility = "visible";
+  document.body.style.visibility = "visible";
+
+  const counter = document.getElementById('loader-counter');
+  const loader = document.getElementById('page-loader');
+    
+  // If no loader elements found, just run the callback
+  if (!counter || !loader) {
+    if (typeof onComplete === 'function') onComplete();
+    return;
+  }
+
+  // Create loading line
+  const loadingLine = document.createElement('div');
+  loadingLine.className = 'loading-line';
+  document.body.appendChild(loadingLine);
+      
+  const target = 100;
+      
+  // Set initial state
+  gsap.set(counter, {
+    opacity: 0,
+    y: 100,
+    visibility: "hidden",
+    textContent: 0
+  });
+
+  gsap.set(loadingLine, { width: "0%" });
+  
+  // Create main timeline
+  const tl = gsap.timeline({
+    onComplete: () => {
+      // Start the functions immediately
+      if (typeof onComplete === 'function') onComplete();
+         
+      // Create timeline for exit animation
+      const exitTl = gsap.timeline();
+         
+      // Animate counter up and fade out
+      exitTl.to(counter, {
+        y: -100,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.in"
+      }, 0);
+
+
+         
+      // Then animate the clip-path
+      exitTl.to(loader, {
+        clipPath: "inset(0 0 100% 0)", // From bottom to top
+        duration: 1.4,
+        ease: "expo.inOut",
+        onComplete: () => {
+          loader.remove();
+          loadingLine.remove();
+        }
+      }, 0);
+    }
+  });
+
+  // Fade in and slide up
+  tl.to(counter, {
+    y: 0,
+    opacity: 1,
+    duration: 1.2,
+    visibility: "visible",
+    ease: "power2.inOut"
+  });
+
+  // Animate the counter
+  tl.to(counter, {
+    duration: duration / 1000,
+    textContent: target,
+    snap: { textContent: 1 },
+    ease: "none"
+  });
+
+  // Animate the loading line with power4.inOut
+  tl.to(loadingLine, {
+    width: "100%",
+    duration: duration / 1000,
+    ease: "power4.inOut"
+  }, "<");
+}
+
 window.history.scrollRestoration = "manual";
 
 window.addEventListener("beforeunload", () => {
@@ -5,38 +104,6 @@ window.addEventListener("beforeunload", () => {
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
 });
-
-
-
-function initHomeVideo() {
-    const isMobile = window.innerWidth < 650;
-
-    const videoSrc = isMobile
-      ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
-      : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
-
-    const video = document.createElement("video");
-    video.autoplay = true;
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-
-    const source = document.createElement("source");
-    source.src = videoSrc;
-    source.type = "video/mp4";
-
-    video.appendChild(source);
-    
-    const videoContainer = document.getElementById("video-container");
-    if (videoContainer) {
-        videoContainer.appendChild(video);
-    }
-}
-
-
-
-
-
 
 
 // --- DYNAMIC LIBRARY LOADER (at the very top) ---
@@ -58,75 +125,86 @@ async function loadAllLibraries() {
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
   await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+  await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
 }
 
 
 
 async function startApp() {
-  await loadAllLibraries();
-  
+  try {
+    await loadAllLibraries();
+    
+    // Register GSAP plugins
+    if (typeof gsap !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger, SplitText);
+      if (typeof ScrollToPlugin !== 'undefined') {
+        gsap.registerPlugin(ScrollToPlugin);
+      }
+    }
 
-  // UserWay widget
-  (function(d) {
-    var s = d.createElement("script");
-    s.setAttribute("data-account", "a37OvQJfVJ");
-    s.setAttribute("src", "https://cdn.userway.org/widget.js");
-    (d.body || d.head).appendChild(s);
-  })(document);
+    // UserWay widget
+    (function(d) {
+      var s = d.createElement("script");
+      s.setAttribute("data-account", "a37OvQJfVJ");
+      s.setAttribute("src", "https://cdn.userway.org/widget.js");
+      (d.body || d.head).appendChild(s);
+    })(document);
 
-  // Show loader on all pages
-  animateLoaderCounter(() => {
-    refreshbreakingpoints();
-    initInteractiveCursor();
-    initMegaMenu();
-    initPageTransitions();
-    initInfinityGallery();
-    initHomeVideo();
-    requestAnimationFrame(() => {
-      initNavbarShowHide();
-      initGsapAnimations();
-      initSplitTextAnimations();
+    // Start the loader animation
+    animateLoaderCounter(() => {
+      // Initialize functions after loader completes
+      refreshbreakingpoints();
+      initInteractiveCursor();
+      initMegaMenu();
+      initPageTransitions();
+      initInfinityGallery();
       
-      if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-      if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
-    });
-  }, 1000);
+      // Initialize Webflow collection monitor
+      if (typeof initWebflowCollectionMonitor === 'function') {
+        window.webflowCollectionMonitor = initWebflowCollectionMonitor();
+      }
+    
+      initHomeVideo();
+      requestAnimationFrame(() => {
+        initNavbarShowHide();
+        initGsapAnimations();
+        initSplitTextAnimations();
+        
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+      });
+    }, 800); // 0.8 second loader duration
+
+  } catch (error) {
+    console.error('Error in startApp:', error);
+    // Fallback initialization without loader
+    refreshbreakingpoints();
+    initPageTransitions();
+    initHomeVideo();
+    initInfinityGallery();
+  }
 }
 document.addEventListener("DOMContentLoaded", startApp);
 // --- END DYNAMIC LOADER ---
 
-function initAllFunctions() {
-    // Register GSAP plugins (fallback)
-    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' && typeof SplitText !== 'undefined') {
-        gsap.registerPlugin(SplitText, ScrollTrigger);
+
+
+
+/* ==============================================
+Reload FinSweet CMS Filter
+============================================== */
+function reloadFinsweetCMS() {
+    const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
+    if (oldScript) {
+    oldScript.remove();
     }
-  
-    initPageTransitions();
-   initHomeVideo();
-    refreshbreakingpoints();
-  initNavbarShowHide();
-  
-    
-    // Ensure GSAP and ScrollTrigger are ready before animations
-    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-        
-        // Initialize animations with proper timing
-        requestAnimationFrame(() => {
-            initGsapAnimations();
-            initSplitTextAnimations();
-           initInfinityGallery();
-         
-            ScrollTrigger.refresh(true);
-          initCustomSmoothScrolling();
-   
-        });
-    }
-  
-  
-}
+    const newScript = document.createElement("script");
+    newScript.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js";
+    newScript.async = true;
+    newScript.onload = () => {};
+    document.body.appendChild(newScript);
+ }
+
 
  /* ==============================================
 Custom Smooth Scrolling
@@ -561,18 +639,23 @@ function initPageTransitions() {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
 
+        
         // Initialize new page content
         initInfinityGallery();
         initHomeVideo();
+
+        
         setTimeout(() => {
             initInteractiveCursor();
             initGsapAnimations();
             initNavbarShowHide();
-            ScrollTrigger.refresh(true);
             initCustomSmoothScrolling();
             initSplitTextAnimations();
-            
+            reloadFinsweetCMS();
+            ScrollTrigger.refresh(true);
         }, 100);
+
+        
 
         // Complete the transition animation (outro)
         const tl = gsap.timeline();
@@ -687,122 +770,94 @@ function truncateByWords(el, wordLimit = 43) {
 }
 
 function initSplitTextAnimations() {
+  // Check if SplitText is available
+  if (typeof SplitText === 'undefined') {
+    console.warn('SplitText not available, skipping text animations');
+    return;
+  }
+
+  // Kill existing ScrollTrigger instances
   if (gsap.ScrollTrigger) {
     gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
   }
 
+  // Kill any existing SplitText animations to prevent conflicts
+  document.querySelectorAll('.line').forEach(line => {
+    gsap.killTweensOf(line);
+  });
+
   const elements = document.querySelectorAll(
-    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
+    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, #email-form label, .text-link, .link-box, #email-form form div"
   );
 
   elements.forEach((element) => {
+    // Skip if element already has SplitText applied
+    if (element.querySelector('.line')) {
+      return;
+    }
+
     if (element.matches("p.info")) {
       truncateByWords(element, 43);
     }
 
-    const split = new SplitText(element, { type: "lines", linesClass: "line" });
+    try {
+      const split = new SplitText(element, { type: "lines", linesClass: "line" });
 
-    split.lines.forEach((line) => {
-      line.style.display = "inline-block";
-      line.style.width = "100%";
-      line.style.lineHeight = "unset";
-      line.style.visibility = "hidden";
-    });
+      split.lines.forEach((line) => {
+        line.style.display = "inline-block";
+        line.style.width = "100%";
+        line.style.lineHeight = "unset";
+        line.style.visibility = "hidden";
+      });
 
-    split.lines.forEach((line) => line.offsetWidth); // force reflow
+      split.lines.forEach((line) => line.offsetWidth); // force reflow
 
-    gsap.set(split.lines, {
-      visibility: "visible",
-      yPercent: 100,
-      clipPath: "inset(0% 0% 100% 0%)",
-      opacity: 1,
-    });
+      gsap.set(split.lines, {
+        visibility: "visible",
+        yPercent: 100,
+        clipPath: "inset(0% 0% 100% 0%)",
+        opacity: 1,
+      });
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: element,
-        start: "top bottom",
-        once: true,
-        onEnter: () => tl.play()
-      },
-      paused: true,
-      onComplete: () => {
-        if (!element.matches(".hero-headline h1")) {
-          split.revert();
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: element,
+          start: "top bottom",
+          once: true,
+          onEnter: () => tl.play()
+        },
+        paused: true,
+        onComplete: () => {
+          // Only revert SplitText for hero headlines, keep others for CMS compatibility
+          if (element.matches(".hero-headline h1")) {
+            // Don't revert hero headlines - they should persist
+          } else {
+            // For other elements, only revert if CMS is not being reloaded
+            // Add a longer delay to prevent conflicts with CMS reload
+            setTimeout(() => {
+              if (!isReloadingCMS && split && split.revert) {
+                split.revert();
+              }
+            }, 3000); // Increased from 2 seconds to 3 seconds
+          }
         }
-      }
-    });
+      });
 
-    tl.to(split.lines, {
-      yPercent: 0,
-      clipPath: "inset(-20% -10% -20% 0%)",
-      opacity: 1,
-      stagger: 0.12,
-      duration: 2,
-      delay: element.closest(".hero, .delay") ? 0.5 : 0,
-      ease: "power3.out"
-    });
+      tl.to(split.lines, {
+        yPercent: 0,
+        clipPath: "inset(-20% -10% -20% 0%)",
+        opacity: 1,
+        stagger: 0.12,
+        duration: 2,
+        delay: element.closest(".hero, .delay") ? 0.5 : 0,
+        ease: "power3.out"
+      });
+    } catch (error) {
+      console.warn('Error applying SplitText to element:', element, error);
+    }
   });
 }
 
-
-/*
-function initSplitTextAnimations() {
-  if (gsap.ScrollTrigger) {
-    gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-  }
-
-  const elements = document.querySelectorAll(
-    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, label, .text-link, .link-box, form div"
-  );
-
-  elements.forEach((element) => {
-    const split = new SplitText(element, { type: "lines", linesClass: "line" });
-
-    split.lines.forEach((line) => {
-      line.style.display = "inline-block";
-      line.style.width = "100%";
-      line.style.lineHeight = "unset";
-      line.style.visibility = "hidden";
-    });
-
-    split.lines.forEach((line) => line.offsetWidth); // force reflow
-
-    gsap.set(split.lines, {
-      visibility: "visible",
-      yPercent: 100,
-      clipPath: "inset(0% 0% 100% 0%)",
-      opacity: 1,
-    });
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: element,
-        start: "top bottom",
-        once: true,
-        onEnter: () => tl.play()
-      },
-      paused: true,
-      onComplete: () => {
-        if (!element.matches(".hero-headline h1")) {
-          split.revert();
-        }
-      }
-    });
-
-    tl.to(split.lines, {
-      yPercent: 0,
-      clipPath: "inset(-20% -10% -20% 0%)",
-      opacity: 1,
-      stagger: 0.12,
-      duration: 2,
-      delay: element.closest(".hero, .delay") ? 0.5 : 0,
-      ease: "power3.out"
-    });
-  });
-}
-
-*/
 
 
 
@@ -812,6 +867,16 @@ Page GSAP Animations
 
 
 function initGsapAnimations() {
+      // Kill any existing ScrollTrigger instances to prevent duplicates
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.getAll().forEach(trigger => {
+        // Preserve navbar and other critical triggers
+        if (trigger.vars && !trigger.vars.id?.includes('navbar') && !trigger.vars.id?.includes('critical')) {
+          trigger.kill();
+        }
+      });
+    }
+
   // Common animations for all pages
   gsap.fromTo(".clipping-video", 
     { clipPath: "inset(100% 0% 0% 0%)" }, 
@@ -1354,22 +1419,23 @@ function refreshbreakingpoints() {
 
 
 function initInfinityGallery() {
-  console.log('initInfinityGallery called');
+  try {
+    console.log('initInfinityGallery called');
 
-  // Destroy the previous instance if it exists
-  if (window.infinitySliderInstance) {
-    window.infinitySliderInstance.destroy();
-    window.infinitySliderInstance = null;
-    console.log('Previous infinity slider instance destroyed.');
-  }
+    // Destroy the previous instance if it exists
+    if (window.infinitySliderInstance) {
+      window.infinitySliderInstance.destroy();
+      window.infinitySliderInstance = null;
+      console.log('Previous infinity slider instance destroyed.');
+    }
 
-  const sliderWrapper = document.querySelector(".slider-wrapper");
-  console.log('Slider wrapper found:', sliderWrapper);
-  
-  if (!sliderWrapper) {
-    console.error('Slider wrapper not found!');
-    return;
-  }
+    const sliderWrapper = document.querySelector(".slider-wrapper");
+    console.log('Slider wrapper found:', sliderWrapper);
+    
+    if (!sliderWrapper) {
+      console.log('Slider wrapper not found - skipping infinity gallery initialization');
+      return;
+    }
   
   class InfiniteHorizontalScroll {
     constructor(container) {
@@ -1919,19 +1985,11 @@ function initInfinityGallery() {
     }
   }
 
-  window.infinitySliderInstance = new InfiniteHorizontalScroll(sliderWrapper);
+      window.infinitySliderInstance = new InfiniteHorizontalScroll(sliderWrapper);
+  } catch (error) {
+    console.log('Infinity gallery initialization skipped:', error.message);
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1992,205 +2050,14 @@ function lazyLoadScript(src, options = {}) {
     });
 }
 
-/* ==============================================
-Initialization Sequence
-============================================== */
 
-async function initializeApplication() {
-    try {
-        // First load core dependencies
-        await loadScriptsSequentially([
-            {
-                src: `https://cdnjs.cloudflare.com/ajax/libs/gsap/${SCRIPT_VERSIONS.gsap}/gsap.min.js`,
-                options: { async: false }
-            },
-            {
-                src: `https://cdnjs.cloudflare.com/ajax/libs/gsap/${SCRIPT_VERSIONS.scrolltrigger}/ScrollTrigger.min.js`,
-                options: { async: false }
-            },
-            {
-                src: `https://cdnjs.cloudflare.com/ajax/libs/gsap/${SCRIPT_VERSIONS.splittext}/SplitText.min.js`,
-                options: { async: false }
-            },
-            // Add ScrollToPlugin
-            {
-                src: 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js',
-                options: { async: false }
-            },
-            // Add imagesLoaded
-            {
-                src: 'https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js',
-                options: { async: false }
-            },
-            // Add Lottie (bodymovin)
-            {
-                src: 'https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js',
-                options: { async: false }
-            }
-        ]);
-
-        // Register GSAP plugins
-        if (typeof gsap !== 'undefined') {
-            gsap.registerPlugin(ScrollTrigger, SplitText);
-            if (typeof ScrollToPlugin !== 'undefined') {
-                gsap.registerPlugin(ScrollToPlugin);
-            }
-        }
-
-        // Load smooth scroll script
-        await loadScriptWithRetry('https://cdn.prod.website-files.com/645e0e1ff7fdb6dc8c85f3a2/64a5544a813c7253b90f2f50_lenis-offbrand.txt', {
-            attributes: {
-                'data-id-scroll': '',
-                'data-autoinit': 'true',
-                'data-duration': '1',
-                'data-orientation': 'vertical',
-                'data-smoothWheel': 'true',
-                'data-smoothTouch': 'false',
-                'data-touchMultiplier': '1.5',
-                'data-easing': '(t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))',
-                'data-useOverscroll': 'true',
-                'data-useControls': 'true',
-                'data-useAnchor': 'true',
-                'data-useRaf': 'true',
-                'data-infinite': 'false'
-            }
-        });
-
-        // Initialize core functionality
-        initPageTransitions();
-        refreshbreakingpoints();
-        initInfinityGallery(); // Add this line
-
-        // Initialize animations with proper timing
-        requestAnimationFrame(() => {
-            initGsapAnimations();
-            initSplitTextAnimations();
-            initInteractiveCursor();
-            ScrollTrigger.refresh(true);
-            initCustomSmoothScrolling();
-        });
-
-        // Lazy load non-critical scripts
-        lazyLoadScript('https://cdn.userway.org/widget.js', {
-            attributes: {
-                'data-account': 'a37OvQJfVJ'
-            }
-        });
-
-    } catch (error) {
-        console.error('Error initializing application:', error);
-        // Fallback initialization without animations
-        initPageTransitions();
-        refreshbreakingpoints();
-    }
-}
 
 // Replace the old initialization
 document.addEventListener("DOMContentLoaded", initializeApplication);
 
-// --- PAGE LOADER OVERLAY WITH COUNTER ---
-(function addPageLoader() {
-  // Add loader on all pages
-  const loader = document.createElement('div');
-  loader.id = 'page-loader';
-  loader.className = 'page-loader';
-  loader.innerHTML = `
-    <div id="loader-counter" class="loader-counter">0</div>
-  `;
-  document.body.appendChild(loader);
-})();
 
-function animateLoaderCounter(onComplete, duration = 100) {
-  document.documentElement.style.visibility = "visible";
-  document.body.style.visibility = "visible";
 
-  const counter = document.getElementById('loader-counter');
-  const loader = document.getElementById('page-loader');
-    
-  // If no loader elements found, just run the callback
-  if (!counter || !loader) {
-    if (typeof onComplete === 'function') onComplete();
-    return;
-  }
 
-  // Create loading line
-  const loadingLine = document.createElement('div');
-  loadingLine.className = 'loading-line';
-  document.body.appendChild(loadingLine);
-      
-  const target = 100;
-      
-  // Set initial state
-  gsap.set(counter, {
-    opacity: 0,
-    y: 100,
-    visibility: "hidden",
-    textContent: 0
-  });
-
-  gsap.set(loadingLine, { width: "0%" });
-  
-  // Create main timeline
-  const tl = gsap.timeline({
-    onComplete: () => {
-      // Start the functions immediately
-      if (typeof onComplete === 'function') onComplete();
-         
-      // Create timeline for exit animation
-      const exitTl = gsap.timeline();
-         
-      // Animate counter up and fade out
-      exitTl.to(counter, {
-        y: -100,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power2.in"
-      }, 0);
-
-      // Animate loading line from left to right with clip-path
-      exitTl.to(loadingLine, {
-        clipPath: "inset(0 0 0 100%)",
-        duration: 0.8,
-        ease: "power2.in"
-      }, 0);
-         
-      // Then animate the clip-path
-      exitTl.to(loader, {
-        clipPath: "inset(0 0 100% 0)", // From bottom to top
-        duration: 1.4,
-        ease: "expo.inOut",
-        onComplete: () => {
-          loader.remove();
-          loadingLine.remove();
-        }
-      }, 0);
-    }
-  });
-
-  // Fade in and slide up
-  tl.to(counter, {
-    y: 0,
-    opacity: 1,
-    duration: 1.2,
-    visibility: "visible",
-    ease: "power2.inOut"
-  });
-
-  // Animate the counter
-  tl.to(counter, {
-    duration: duration / 1000,
-    textContent: target,
-    snap: { textContent: 1 },
-    ease: "none"
-  });
-
-  // Animate the loading line with power4.inOut
-  tl.to(loadingLine, {
-    width: "100%",
-    duration: duration / 1000,
-    ease: "power4.inOut"
-  }, "<");
-}
 
 
 /* ==============================================
@@ -2451,3 +2318,195 @@ window.addEventListener('resize', () => {
     }
 });
 
+
+function initHomeVideo() {
+    try {
+        const isMobile = window.innerWidth < 650;
+
+        const videoSrc = isMobile
+          ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
+          : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
+
+        const video = document.createElement("video");
+        video.autoplay = true;
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+
+        const source = document.createElement("source");
+        source.src = videoSrc;
+        source.type = "video/mp4";
+
+        video.appendChild(source);
+        
+        const videoContainer = document.getElementById("video-container");
+        if (videoContainer) {
+            videoContainer.appendChild(video);
+        }
+    } catch (error) {
+        console.log('Home video initialization skipped:', error.message);
+    }
+}
+
+
+
+/* ==============================================
+Simple Webflow Collection Change Monitor
+============================================== */
+
+function initWebflowCollectionMonitor() {
+    console.log('Initializing Simple Webflow Collection Monitor...');
+    
+    let lastHeight = document.documentElement.scrollHeight;
+    let isMonitoring = false;
+    
+    // Simple function to check if page height changed
+    function checkHeightChange() {
+        const currentHeight = document.documentElement.scrollHeight;
+        
+        if (currentHeight !== lastHeight) {
+            console.log('Page height changed! Refreshing ScrollTrigger...');
+            console.log('Old height:', lastHeight, 'New height:', currentHeight);
+            
+            // Simple ScrollTrigger refresh
+            if (typeof ScrollTrigger !== 'undefined') {
+                ScrollTrigger.refresh(true);
+            }
+            
+            // Update smooth scroll if it exists
+            if (window.customSmoothScroll && typeof window.customSmoothScroll.ud === 'function') {
+                window.customSmoothScroll.ud();
+            }
+            
+            lastHeight = currentHeight;
+        }
+    }
+    
+    // Start monitoring
+    function startMonitoring() {
+        if (isMonitoring) return;
+        
+        isMonitoring = true;
+        console.log('Starting simple collection monitoring...');
+        
+        // Set initial height
+        lastHeight = document.documentElement.scrollHeight;
+        
+        // Simple observer for DOM changes
+        const observer = new MutationObserver(() => {
+            // Immediate height check
+            checkHeightChange();
+        });
+        
+        // Observe the entire document
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        // Store observer
+        window.webflowCollectionObserver = observer;
+        
+        // Also check on filter clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('[data-wf-filter]') || 
+                e.target.closest('.w-filter-button') ||
+                e.target.closest('[data-wf-filter-option]')) {
+                
+                // Immediate check + one more after a tiny delay to catch any late changes
+                checkHeightChange();
+                setTimeout(checkHeightChange, 25);
+            }
+        });
+        
+        console.log('Simple collection monitoring started');
+    }
+    
+    // Stop monitoring
+    function stopMonitoring() {
+        if (window.webflowCollectionObserver) {
+            window.webflowCollectionObserver.disconnect();
+            window.webflowCollectionObserver = null;
+        }
+        clearTimeout(window.heightCheckTimeout);
+        isMonitoring = false;
+    }
+    
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startMonitoring);
+    } else {
+        startMonitoring();
+    }
+    
+    return {
+        start: startMonitoring,
+        stop: stopMonitoring,
+        check: checkHeightChange
+    };
+}
+
+// Initialize the simple monitor
+window.webflowCollectionMonitor = initWebflowCollectionMonitor();
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.querySelector(".filters-list");
+  if (!el) return;
+
+  // Force horizontal scroll setup
+  el.style.display = "flex";
+  el.style.flexWrap = "nowrap";
+  el.style.overflowX = "scroll";
+  el.style.overflowY = "hidden";
+  el.style.webkitOverflowScrolling = "touch";
+
+  // Optional: show scrollbar always
+  el.style.scrollbarWidth = "thin";
+  el.style.msOverflowStyle = "auto";
+
+  Array.from(el.children).forEach(child => {
+    child.style.flex = "0 0 auto";
+  });
+
+  // Drag to scroll
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  el.addEventListener("mousedown", (e) => {
+    isDown = true;
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+  });
+
+  el.addEventListener("mouseleave", () => {
+    isDown = false;
+  });
+
+  el.addEventListener("mouseup", () => {
+    isDown = false;
+  });
+
+  el.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 2;
+    el.scrollLeft = scrollLeft - walk;
+  });
+
+  // Wheel support
+  el.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+      e.preventDefault();
+      el.scrollBy({
+        left: e.deltaY,
+        behavior: "smooth"
+      });
+    }
+  }, { passive: false });
+});
