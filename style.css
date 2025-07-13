@@ -1387,7 +1387,7 @@ video {
 }
 
 .filter {
-  border: 1px solid var(--darkgrey);
+  border: 0.08vw solid var(--darkgrey);
   padding: 0.05vw 0.5vw;
   border-radius: 3vw;
   width:max-content;
@@ -2304,5 +2304,123 @@ video {
 }
 
 /* ==============================================
-       Media Queries
+       Extras
 ============================================== */
+
+
+.mega-menu {
+    display:none;
+    }
+    
+    .info {
+      display: -webkit-box;
+      -webkit-line-clamp: 3; /* number of lines */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+     }
+     
+     .home-properties-grid {
+         direction: rtl;
+     }
+    
+    .location-icon {
+        width:2vw;
+      margin-bottom: 0.8vw;
+    }
+    
+    .cyprus-map {
+        margin-top: -10vw;
+    }
+    
+    @media (max-width: 650px) {
+      .location-icon {
+        width:6vw;
+        margin-bottom: 2vw;
+      }
+    }
+    
+    .w-radio, .w-form-label, .w-radio-input {
+        all:unset;
+    }
+    
+    .w-radio {
+        cursor: pointer;
+        margin-bottom: 0;
+        font-weight: 400;
+        display: inline-block;
+        border: 0.08vw solid var(--darkgrey);
+        border-radius: 1.5vw;
+        padding: 0.5vw 0.9vw!important;
+    }
+    
+    .fs-cmsfilter_active {
+        background: var(--darkgrey);
+        color: var(--white)!important;
+     }
+    
+    .property .filters-list {
+        margin: unset;
+      justify-self: start;
+      align-self: start;
+    }
+    
+    .collection-list-1{
+      display:flex;
+      width:100%;
+      grid-gap: 0.5vw;
+      margin: auto;
+      justify-self: center;
+      align-self: center;
+    }
+
+    .collection-list-1 .w-dyn-items {
+      margin: auto;
+      display: flex;
+      grid-gap: 0.4vw;
+      flex-direction: row-reverse;
+    }
+
+    
+    @media (max-width:650px) {
+      .collection-list-1 {
+        margin: 5vw 0;
+      }
+      .collection-list-1 .w-dyn-items {
+        margin: auto;
+        display: flex;
+        flex-wrap: wrap;
+        grid-gap: 0.8vw;
+        grid-row-gap: 1.5vw;
+        flex-direction: row-reverse;
+      }
+
+      .w-radio {
+          border: 0.3vw solid var(--darkgrey);
+          border-radius: 5vw;
+          padding: 1.2vw 2.5vw!important;
+          font-size:4.5vw!important;
+      }
+
+      .collection-list-1 .filters-list {
+        flex-wrap: wrap;
+        grid-gap: 1vw;
+        grid-row-gap: 2vw;
+        align-items: start;
+        justify-content: start;
+        direction: rtl;
+        margin: 8vw 0;
+      }
+      
+    }
+    
+    .projects .home-properties {
+      grid-gap: 5vw;
+      margin-top: -3vw;
+    }
+
+
+    .filters-list {
+      display: flex;
+      grid-gap: 0.4vw;
+    }
