@@ -170,10 +170,12 @@ async function startApp() {
       requestAnimationFrame(() => {
         initNavbarShowHide();
         initGsapAnimations();
-        
-        // Clean up and initialize split text animations
-        cleanupSplitTextAnimations();
         initSplitTextAnimations();
+        
+        // Only initialize cursor if not already initialized
+        if (!window.cursorInitialized) {
+            initInteractiveCursor();
+        }
         
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
         if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
@@ -425,7 +427,7 @@ function initCustomSmoothScrolling() {
         }
 
         os(t) {
-            if (!this.se || d || (window.isMenuOpen && window.isMenuOpen())) return;
+            if (!this.se || d || (window.isMenuOpen && window.isMenuOpen()) || document.querySelector('.menu-toggle').classList.contains('clicked') || document.body.classList.contains('fullscreen-active')) return;
             this.ct = 0;
             this.v = t;
             this.dir = Math.sign(t);
@@ -434,13 +436,13 @@ function initCustomSmoothScrolling() {
         }
 
         std(e) {
-            if (!this.se || d || (window.isMenuOpen && window.isMenuOpen())) return;
+            if (!this.se || d || (window.isMenuOpen && window.isMenuOpen()) || document.querySelector('.menu-toggle').classList.contains('clicked') || document.body.classList.contains('fullscreen-active')) return;
             this.dr = true;
             this.sy = e.touches[0].clientY;
         }
 
         otd(e) {
-            if (!this.dr || !this.se || (window.isMenuOpen && window.isMenuOpen())) return;
+            if (!this.dr || !this.se || (window.isMenuOpen && window.isMenuOpen()) || document.querySelector('.menu-toggle').classList.contains('clicked') || document.body.classList.contains('fullscreen-active')) return;
             const t = e.touches[0].clientY;
             const d = (this.sy - t) * this.tm;
             const a = Math.round(this.cs) <= 0;
@@ -456,13 +458,13 @@ function initCustomSmoothScrolling() {
         }
 
         smd(e) {
-            if (!this.se || this.rc || (window.isMenuOpen && window.isMenuOpen())) return;
+            if (!this.se || this.rc || (window.isMenuOpen && window.isMenuOpen()) || document.querySelector('.menu-toggle').classList.contains('clicked') || document.body.classList.contains('fullscreen-active')) return;
             this.dr = true;
             this.sy = e.clientY;
         }
 
         omd(e) {
-            if (!this.dr || !this.se || this.rc || (window.isMenuOpen && window.isMenuOpen())) return;
+            if (!this.dr || !this.se || this.rc || (window.isMenuOpen && window.isMenuOpen()) || document.querySelector('.menu-toggle').classList.contains('clicked') || document.body.classList.contains('fullscreen-active')) return;
             const t = (this.sy - e.clientY) * this.dm;
             this.os(t);
             this.sy = e.clientY;
@@ -481,7 +483,8 @@ function initCustomSmoothScrolling() {
             const dt = Math.min((n - this.lft) / 1000, 0.1);
             this.lft = n;
             const mo = document.querySelector(".menu-toggle").classList.contains("clicked");
-            if (this.se && !mo) {
+            const fullscreenActive = document.body.classList.contains('fullscreen-active');
+            if (this.se && !mo && !fullscreenActive) {
                 const p = c(this.ct / this.d, 0, 1);
                 const co = p >= 1;
                 const e = co ? 1 : this.e(p);
@@ -614,6 +617,7 @@ function initPageTransitions() {
             tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
             tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
             tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+            tl.set(cursor, { visibility: "hidden" }, 0.2);
         });
 
         // 2. Start fetching the next page in parallel
@@ -649,12 +653,8 @@ function initPageTransitions() {
         const container = document.querySelector('.page-wrapper');
         if (!container) return;
 
-        // Kill all ScrollTriggers before content change
-        ScrollTrigger.getAll().forEach(t => t.kill());
-
-        if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
-        if (window.interactiveCursor?.destroy) window.interactiveCursor.destroy();
-        if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
+        // Clean up ALL page animations (only during page transitions)
+        cleanupAllPageAnimations();
 
         document.title = doc.querySelector('title')?.textContent || document.title;
         container.innerHTML = nextPageHTML;
@@ -673,13 +673,9 @@ function initPageTransitions() {
             // Ensure proper scroll position
             ensureProperScrollPosition();
             
-            initInteractiveCursor();
             initGsapAnimations();
             initNavbarShowHide();
             initCustomSmoothScrolling();
-            
-            // Clean up and reinitialize split text animations
-            cleanupSplitTextAnimations();
             initSplitTextAnimations();
             
             reloadFinsweetCMS();
@@ -705,13 +701,14 @@ function initPageTransitions() {
             ease: 'power2',
             attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
             onComplete: () => {
-                gsap.set(cursor, { scale: 0 });
+                // Reset cursor to hidden state first
+                gsap.set(cursor, { scale: 0, visibility: "visible" });
                 gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
                 gsap.set(".menu-toggle", { opacity: 0 });
 
                 const inTl = gsap.timeline();
                 inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-                inTl.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0);
+                inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
                 inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
 
                 // Only hide transition after all animations are complete
@@ -719,6 +716,11 @@ function initPageTransitions() {
                 transition.style.visibility = 'hidden';
                 isAnimating = false;
                 window.transitioning = false;
+
+                // Initialize cursor after transition is complete
+                if (!window.cursorInitialized) {
+                    initInteractiveCursor();
+                }
 
                 if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
                     window.navbarShowHide = initNavbarShowHide();
@@ -804,35 +806,37 @@ function truncateByWords(el, wordLimit = 43) {
   }
 }
 
-function cleanupSplitTextAnimations() {
-  if (typeof SplitText === 'undefined') return;
-  
-  // Kill all existing split text ScrollTriggers
+function cleanupAllPageAnimations() {
+  // Kill ALL ScrollTriggers (only during page transitions)
   if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.getAll().forEach(trigger => {
-      if (trigger.vars && trigger.vars.id && trigger.vars.id.includes('splittext')) {
-        trigger.kill();
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+  }
+  
+  // Kill all GSAP animations
+  gsap.killTweensOf("*");
+  
+  // Clean up SplitText instances
+  if (typeof SplitText !== 'undefined') {
+    document.querySelectorAll('[data-split-text]').forEach(element => {
+      if (element._splitTextInstance && element._splitTextInstance.revert) {
+        element._splitTextInstance.revert();
+        delete element._splitTextInstance;
       }
+    });
+    
+    // Remove any existing .line elements
+    document.querySelectorAll('.line').forEach(line => {
+      line.remove();
     });
   }
   
-  // Kill any existing SplitText animations
-  document.querySelectorAll('.line').forEach(line => {
-    gsap.killTweensOf(line);
-  });
+  // Clean up custom instances
+  if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
+  if (window.cleanupCursor && typeof window.cleanupCursor === 'function') window.cleanupCursor();
+  if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
   
-  // Revert any existing SplitText instances
-  document.querySelectorAll('[data-split-text]').forEach(element => {
-    if (element._splitTextInstance && element._splitTextInstance.revert) {
-      element._splitTextInstance.revert();
-      delete element._splitTextInstance;
-    }
-  });
-  
-  // Remove any existing .line elements
-  document.querySelectorAll('.line').forEach(line => {
-    line.remove();
-  });
+  // Reset initialization flags
+  window.cursorInitialized = false;
 }
 
 function ensureProperScrollPosition() {
@@ -860,9 +864,6 @@ function initSplitTextAnimations(scope = document) {
     console.warn('SplitText not available, skipping text animations');
     return;
   }
-
-  // Clean up any existing split text animations
-  cleanupSplitTextAnimations();
 
   const elements = scope.querySelectorAll(
     "h1, h2, h3, h4, h5, h6, p, .logo img, .btn, .nav, #email-form label, .text-link, .link-box, #email-form form div"
@@ -944,16 +945,6 @@ Page GSAP Animations
 
 
 function initGsapAnimations() {
-      // Kill any existing ScrollTrigger instances to prevent duplicates
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.getAll().forEach(trigger => {
-        // Preserve navbar and other critical triggers
-        if (trigger.vars && !trigger.vars.id?.includes('navbar') && !trigger.vars.id?.includes('critical')) {
-          trigger.kill();
-        }
-      });
-    }
-
     // Ensure we're at the top of the page before creating animations
     ensureProperScrollPosition();
 
@@ -1221,16 +1212,25 @@ function initGsapAnimations() {
 
 
 function resetInteractiveCursor() {
+  // Cancel animation frame
   if (window.cursorAnimationFrame) {
     cancelAnimationFrame(window.cursorAnimationFrame);
     window.cursorAnimationFrame = null;
   }
 
-  if (window.cleanupCursor) {
+  // Run cleanup function if it exists
+  if (window.cleanupCursor && typeof window.cleanupCursor === 'function') {
     window.cleanupCursor();
     window.cleanupCursor = null;
   }
 
+  // Remove all cursor event listeners
+  document.removeEventListener("mousemove", window.cursorMouseMove);
+  document.removeEventListener("mousedown", window.cursorMouseDown);
+  document.removeEventListener("mousemove", window.cursorMouseMoveDrag);
+  document.removeEventListener("mouseup", window.cursorMouseUp);
+
+  // Reset cursor element
   const cursor = document.querySelector("#cursor");
   if (cursor) {
     cursor.className = "cursor";
@@ -1245,6 +1245,12 @@ function resetInteractiveCursor() {
       visibility: "hidden"
     });
   }
+
+  // Clear any stored references
+  window.cursorMouseMove = null;
+  window.cursorMouseDown = null;
+  window.cursorMouseMoveDrag = null;
+  window.cursorMouseUp = null;
 }
 
 function initInteractiveCursor() {
@@ -1253,6 +1259,12 @@ function initInteractiveCursor() {
   const cursor = document.querySelector("#cursor");
   if (!cursor) return;
 
+  // Prevent multiple initializations - if already initialized, just return
+  if (window.cursorInitialized) {
+    return;
+  }
+
+  // Reset cursor first
   resetInteractiveCursor();
 
   const mouse = { x: -100, y: -100 };
@@ -1262,18 +1274,36 @@ function initInteractiveCursor() {
   let cursorAnimationFrame;
   let dragTimeout;
 
-  gsap.to(cursor, {
-    scale: 1,
-    opacity: 1,
-    visibility: "visible",
-    duration: 0.4,
-    ease: "power2.out"
-  });
-
-  function trackMouse(e) {
+  // Store event listener references for proper cleanup
+  window.cursorMouseMove = function(e) {
     mouse.x = e.clientX;
     mouse.y = e.clientY;
     isMoving = true;
+  };
+
+  window.cursorMouseDown = function() {
+    dragTimeout = setTimeout(() => {
+      isDragging = true;
+      cursor.classList.add("drag");
+    }, 150);
+  };
+
+  window.cursorMouseMoveDrag = function() {
+    if (isDragging) cursor.classList.add("drag");
+  };
+
+  window.cursorMouseUp = function() {
+    if (isDragging) {
+      isDragging = false;
+      cursor.classList.remove("drag");
+    }
+    clearTimeout(dragTimeout);
+  };
+
+  function resetCursor() {
+    if (!cursorLocked) {
+      cursor.classList.remove("change", "explore", "drag", "scroll", "enter", "play", "slide");
+    }
   }
 
   function animateCursor() {
@@ -1289,31 +1319,26 @@ function initInteractiveCursor() {
     cursorAnimationFrame = requestAnimationFrame(animateCursor);
   }
 
-  function resetCursor() {
-    if (!cursorLocked) {
-      cursor.classList.remove("change", "explore", "drag", "scroll", "enter", "play", "slide");
-    }
-  }
+  // Initialize cursor appearance - start at scale 0 and animate to scale 1
+  gsap.set(cursor, {
+    scale: 0,
+    opacity: 1,
+    visibility: "visible"
+  });
+  
+  gsap.to(cursor, {
+    scale: 1,
+    duration: 0.4,
+    ease: "power2.out"
+  });
 
-  function handleMouseDown() {
-    dragTimeout = setTimeout(() => {
-      isDragging = true;
-      cursor.classList.add("drag");
-    }, 150);
-  }
+  // Add event listeners
+  document.addEventListener("mousemove", window.cursorMouseMove);
+  document.addEventListener("mousedown", window.cursorMouseDown);
+  document.addEventListener("mousemove", window.cursorMouseMoveDrag);
+  document.addEventListener("mouseup", window.cursorMouseUp);
 
-  function handleMouseMove() {
-    if (isDragging) cursor.classList.add("drag");
-  }
-
-  function handleMouseUp() {
-    if (isDragging) {
-      isDragging = false;
-      cursor.classList.remove("drag");
-    }
-    clearTimeout(dragTimeout);
-  }
-
+  // Add hover effects
   document.querySelectorAll(".hero:not(.contact .hero)").forEach(el => {
     el.addEventListener("mouseenter", () => cursor.classList.add("scroll"));
     el.addEventListener("mouseleave", () => cursor.classList.remove("scroll"));
@@ -1341,27 +1366,24 @@ function initInteractiveCursor() {
     }
   });
 
-  document.addEventListener("mouseout", (e) => {
-    if (e.target.closest('.expand-icon')) {
-      // Let the normal cursor behavior handle the transition
-    }
-  });
-
-  document.addEventListener("mousemove", trackMouse);
-  document.addEventListener("mousedown", handleMouseDown);
-  document.addEventListener("mousemove", handleMouseMove);
-  document.addEventListener("mouseup", handleMouseUp);
-
+  // Start animation loop
   animateCursor();
 
+  // Store animation frame reference
   window.cursorAnimationFrame = cursorAnimationFrame;
+  
+  // Create cleanup function
   window.cleanupCursor = function () {
     cancelAnimationFrame(cursorAnimationFrame);
-    document.removeEventListener("mousemove", trackMouse);
-    document.removeEventListener("mousedown", handleMouseDown);
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
+    document.removeEventListener("mousemove", window.cursorMouseMove);
+    document.removeEventListener("mousedown", window.cursorMouseDown);
+    document.removeEventListener("mousemove", window.cursorMouseMoveDrag);
+    document.removeEventListener("mouseup", window.cursorMouseUp);
+    window.cursorInitialized = false;
   };
+  
+  // Mark as initialized
+  window.cursorInitialized = true;
 }
 
 
