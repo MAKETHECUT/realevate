@@ -225,7 +225,7 @@ function reloadFinsweetCMS() {
  }
 
 
- /* ==============================================
+/* ==============================================
 Custom Smooth Scrolling
 ============================================== */
 
@@ -240,20 +240,24 @@ function initCustomSmoothScrolling() {
     class S {
         constructor() {
             const m = window.innerWidth < 750;
+            const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
             
             this.w = window;
             this.c = document.documentElement;
+            this.l = m ? 0.1 : 0.05;
+            this.d = m ? 1.5 : 1.5;
             this.e = (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t));
             this.wm = 0.8;
             
-            // Ease: Desktop : Touch Screen
-            this.l = m ? 0.080 : 0.06; // Lerp: 0.05 : 0.1
-
-            // Drag: Desktop : Touch Screen
-            this.dm = m ? 1 : 1.8; // Drag Multiplier: 1.8 : 1.8
-            
-            // Touch: Desktop : Touch Screen
-            this.tm = m ? 1.5 : 1.5; // Touch Multiplier: 1.5 : 3.5
+            // Improved touch sensitivity for iPad
+            if (isIPad) {
+                this.tm = 1.8; // Reduced for slower, more controlled iPad touch (was 2.2, now 1.8)
+                this.dm = 1.8; // Reduced drag multiplier to match (was 2.2, now 1.8)
+                this.l = 0.08; // Keep lerp close to desktop
+            } else {
+                this.tm = m ? 3 : 1.5;
+                this.dm = m ? 3 : 1.8;
+            }
             
             this.ts = 0;
             this.cs = 0;
