@@ -158,6 +158,7 @@ async function startApp() {
       initMegaMenu();
       initPageTransitions();
       initInfinityGallery();
+      moveShowAllIntoCollectionList();
       
       // Initialize Webflow collection monitor
       if (typeof initWebflowCollectionMonitor === 'function') {
@@ -186,6 +187,24 @@ async function startApp() {
 }
 document.addEventListener("DOMContentLoaded", startApp);
 // --- END DYNAMIC LOADER ---
+
+
+
+function moveShowAllIntoCollectionList() {
+  const showAll = document.querySelector(".show-all");
+  const typeItem = document.querySelector(".type-item");
+  const typeItemChildren = typeItem?.querySelectorAll("[role='listitem']");
+  const collectionList = document.querySelector(".collection-list-1 .w-dyn-items");
+
+  if (collectionList) {
+    if (showAll) collectionList.prepend(showAll);
+    if (typeItemChildren && typeItemChildren.length) {
+      typeItemChildren.forEach(child => collectionList.appendChild(child));
+    }
+    if (typeItem) typeItem.remove();
+  }
+}
+
 
 
 
@@ -221,24 +240,20 @@ function initCustomSmoothScrolling() {
     class S {
         constructor() {
             const m = window.innerWidth < 750;
-            const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
             
             this.w = window;
             this.c = document.documentElement;
-            this.l = m ? 0.1 : 0.05;
-            this.d = m ? 1.5 : 1.5;
             this.e = (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t));
             this.wm = 0.8;
             
-            // Improved touch sensitivity for iPad
-            if (isIPad) {
-                this.tm = 1.8; // Reduced for slower, more controlled iPad touch (was 2.2, now 1.8)
-                this.dm = 1.8; // Reduced drag multiplier to match (was 2.2, now 1.8)
-                this.l = 0.08; // Keep lerp close to desktop
-            } else {
-                this.tm = m ? 3 : 1.5;
-                this.dm = m ? 3 : 1.8;
-            }
+            // Ease: Desktop : Touch Screen
+            this.l = m ? 0.080 : 0.06; // Lerp: 0.05 : 0.1
+
+            // Drag: Desktop : Touch Screen
+            this.dm = m ? 1 : 1.8; // Drag Multiplier: 1.8 : 1.8
+            
+            // Touch: Desktop : Touch Screen
+            this.tm = m ? 1.5 : 1.5; // Touch Multiplier: 1.5 : 3.5
             
             this.ts = 0;
             this.cs = 0;
@@ -643,7 +658,7 @@ function initPageTransitions() {
         // Initialize new page content
         initInfinityGallery();
         initHomeVideo();
-
+        moveShowAllIntoCollectionList();
         
         setTimeout(() => {
             initInteractiveCursor();
@@ -2453,60 +2468,3 @@ window.webflowCollectionMonitor = initWebflowCollectionMonitor();
 
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  const el = document.querySelector(".filters-list");
-  if (!el) return;
-
-  // Force horizontal scroll setup
-  el.style.display = "flex";
-  el.style.flexWrap = "nowrap";
-  el.style.overflowX = "scroll";
-  el.style.overflowY = "hidden";
-  el.style.webkitOverflowScrolling = "touch";
-
-  // Optional: show scrollbar always
-  el.style.scrollbarWidth = "thin";
-  el.style.msOverflowStyle = "auto";
-
-  Array.from(el.children).forEach(child => {
-    child.style.flex = "0 0 auto";
-  });
-
-  // Drag to scroll
-  let isDown = false;
-  let startX;
-  let scrollLeft;
-
-  el.addEventListener("mousedown", (e) => {
-    isDown = true;
-    startX = e.pageX - el.offsetLeft;
-    scrollLeft = el.scrollLeft;
-  });
-
-  el.addEventListener("mouseleave", () => {
-    isDown = false;
-  });
-
-  el.addEventListener("mouseup", () => {
-    isDown = false;
-  });
-
-  el.addEventListener("mousemove", (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - startX) * 2;
-    el.scrollLeft = scrollLeft - walk;
-  });
-
-  // Wheel support
-  el.addEventListener("wheel", (e) => {
-    if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-      e.preventDefault();
-      el.scrollBy({
-        left: e.deltaY,
-        behavior: "smooth"
-      });
-    }
-  }, { passive: false });
-});
