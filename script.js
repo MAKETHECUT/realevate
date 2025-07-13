@@ -811,8 +811,9 @@ function initSplitTextAnimations() {
       return;
     }
 
-    if (element.matches("p.info")) {
+    if (element.closest(".home-properties-grid") && element.matches("p.info")) {
       truncateByWords(element, 43);
+      return; // skip SplitText for truncated text
     }
 
     try {
