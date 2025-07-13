@@ -1,3 +1,12 @@
+window.history.scrollRestoration = "manual";
+
+window.addEventListener("beforeunload", () => {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+});
+
+
 // --- PAGE LOADER OVERLAY WITH COUNTER ---
 (function addPageLoader() {
   // Add loader on all pages
@@ -97,14 +106,6 @@ function animateLoaderCounter(onComplete, duration = 100) {
   }, "<");
 }
 
-window.history.scrollRestoration = "manual";
-
-window.addEventListener("beforeunload", () => {
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-});
-
 
 // --- DYNAMIC LIBRARY LOADER (at the very top) ---
 function loadScript(src) {
@@ -169,6 +170,9 @@ async function startApp() {
       requestAnimationFrame(() => {
         initNavbarShowHide();
         initGsapAnimations();
+        
+        // Clean up and initialize split text animations
+        cleanupSplitTextAnimations();
         initSplitTextAnimations();
         
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
@@ -645,6 +649,7 @@ function initPageTransitions() {
         const container = document.querySelector('.page-wrapper');
         if (!container) return;
 
+        // Kill all ScrollTriggers before content change
         ScrollTrigger.getAll().forEach(t => t.kill());
 
         if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
@@ -654,9 +659,8 @@ function initPageTransitions() {
         document.title = doc.querySelector('title')?.textContent || document.title;
         container.innerHTML = nextPageHTML;
 
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
+        // Ensure proper scroll position
+        ensureProperScrollPosition();
 
         
         // Initialize new page content
@@ -664,15 +668,27 @@ function initPageTransitions() {
         initHomeVideo();
         moveShowAllIntoCollectionList();
         
+        // Delay initialization to ensure proper scroll position
         setTimeout(() => {
+            // Ensure proper scroll position
+            ensureProperScrollPosition();
+            
             initInteractiveCursor();
             initGsapAnimations();
             initNavbarShowHide();
             initCustomSmoothScrolling();
+            
+            // Clean up and reinitialize split text animations
+            cleanupSplitTextAnimations();
             initSplitTextAnimations();
+            
             reloadFinsweetCMS();
-            ScrollTrigger.refresh(true);
-        }, 100);
+            
+            // Refresh ScrollTrigger after all animations are set up
+            setTimeout(() => {
+                ScrollTrigger.refresh(true);
+            }, 50);
+        }, 150);
 
         
 
@@ -788,40 +804,87 @@ function truncateByWords(el, wordLimit = 43) {
   }
 }
 
-function initSplitTextAnimations() {
+function cleanupSplitTextAnimations() {
+  if (typeof SplitText === 'undefined') return;
+  
+  // Kill all existing split text ScrollTriggers
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach(trigger => {
+      if (trigger.vars && trigger.vars.id && trigger.vars.id.includes('splittext')) {
+        trigger.kill();
+      }
+    });
+  }
+  
+  // Kill any existing SplitText animations
+  document.querySelectorAll('.line').forEach(line => {
+    gsap.killTweensOf(line);
+  });
+  
+  // Revert any existing SplitText instances
+  document.querySelectorAll('[data-split-text]').forEach(element => {
+    if (element._splitTextInstance && element._splitTextInstance.revert) {
+      element._splitTextInstance.revert();
+      delete element._splitTextInstance;
+    }
+  });
+  
+  // Remove any existing .line elements
+  document.querySelectorAll('.line').forEach(line => {
+    line.remove();
+  });
+}
+
+function ensureProperScrollPosition() {
+  // Force scroll to top with multiple methods
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  
+  // Force a reflow to ensure the scroll position is applied
+  document.documentElement.offsetHeight;
+  
+  // Double-check scroll position
+  if (window.pageYOffset > 0) {
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  }
+}
+
+function initSplitTextAnimations(scope = document) {
   // Check if SplitText is available
   if (typeof SplitText === 'undefined') {
     console.warn('SplitText not available, skipping text animations');
     return;
   }
 
-  // Kill existing ScrollTrigger instances
-  if (gsap.ScrollTrigger) {
-    gsap.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-  }
+  // Clean up any existing split text animations
+  cleanupSplitTextAnimations();
 
-  // Kill any existing SplitText animations to prevent conflicts
-  document.querySelectorAll('.line').forEach(line => {
-    gsap.killTweensOf(line);
-  });
-
-  const elements = document.querySelectorAll(
-    "h1, h2, h3, h4, h5, h6, p, .menu a, .logo img, .btn, .nav, #email-form label, .text-link, .link-box, #email-form form div"
+  const elements = scope.querySelectorAll(
+    "h1, h2, h3, h4, h5, h6, p, .logo img, .btn, .nav, #email-form label, .text-link, .link-box, #email-form form div"
   );
 
   elements.forEach((element) => {
-    // Skip if element already has SplitText applied
+    // Skip if element already has SplitText applied (double check)
     if (element.querySelector('.line')) {
       return;
     }
 
+    // Apply word truncation for specific elements but still allow animation
     if (element.closest(".home-properties-grid") && element.matches("p.info")) {
       truncateByWords(element, 43);
-      return; // skip SplitText for truncated text
+      // Don't return here - continue with SplitText animation
     }
 
     try {
       const split = new SplitText(element, { type: "lines", linesClass: "line" });
+      
+      // Store the SplitText instance for potential cleanup
+      element._splitTextInstance = split;
 
       split.lines.forEach((line) => {
         line.style.display = "inline-block";
@@ -844,24 +907,18 @@ function initSplitTextAnimations() {
           trigger: element,
           start: "top bottom",
           once: true,
+          id: `splittext-${Math.random()}`, // Add unique ID
           onEnter: () => tl.play()
         },
-        paused: true,
-        onComplete: () => {
-          // Only revert SplitText for hero headlines, keep others for CMS compatibility
-          if (element.matches(".hero-headline h1")) {
-            // Don't revert hero headlines - they should persist
-          } else {
-            // For other elements, only revert if CMS is not being reloaded
-            // Add a longer delay to prevent conflicts with CMS reload
-            setTimeout(() => {
-              if (!isReloadingCMS && split && split.revert) {
-                split.revert();
-              }
-            }, 3000); // Increased from 2 seconds to 3 seconds
-          }
-        }
+        paused: true
       });
+
+      // Add a small delay to prevent immediate triggering
+      setTimeout(() => {
+        if (tl.scrollTrigger && !tl.scrollTrigger.isInViewport) {
+          tl.scrollTrigger.refresh();
+        }
+      }, 100);
 
       tl.to(split.lines, {
         yPercent: 0,
@@ -896,6 +953,9 @@ function initGsapAnimations() {
         }
       });
     }
+
+    // Ensure we're at the top of the page before creating animations
+    ensureProperScrollPosition();
 
   // Common animations for all pages
   gsap.fromTo(".clipping-video", 
@@ -1141,6 +1201,19 @@ function initGsapAnimations() {
   });
 
 
+  gsap.from(".collection-list-1 div, .collection-list-1 .w-dyn-items", {
+    y: 10,
+    opacity:0,
+    delay: 0.5,
+    duration: 1.2,
+    ease: "power2.out",
+    stagger: 0.060,
+    scrollTrigger: {
+      trigger: ".collection-list-1",
+      start: "top 90%",
+      toggleActions: "play none none none"
+    }
+  });
   
 }
 
@@ -2474,7 +2547,6 @@ function initWebflowCollectionMonitor() {
 
 // Initialize the simple monitor
 window.webflowCollectionMonitor = initWebflowCollectionMonitor();
-
 
 
 
