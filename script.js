@@ -2145,6 +2145,12 @@ function openMenu() {
           isAnimating = false;
       }
   });
+  
+  // Get responsive values for menu bar animation
+  const isMobile = window.innerWidth < 650;
+  const bar1TargetTop = isMobile ? 'calc(50% - 0vw)' : 'calc(50% - 0vw)'; // Both animate to center
+  const bar2TargetTop = isMobile ? 'calc(50% + -1.5vw)' : 'calc(50% + 0vw)'; // Both animate to center
+  
   tl.to(overlay, { opacity: 0.8, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
     .to(megaMenu, { clipPath: 'inset(0% 0% 0% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
     .to('.mega-menu .mega-menu-image', { clipPath: 'inset(0% 0% 0% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease, delay: 0.050, }, 0)
@@ -2154,13 +2160,13 @@ function openMenu() {
         ease: "power4.out"
     }, 0)
     .to(bars[0], { 
-        top: '50%', 
+        top: bar1TargetTop, 
         opacity: 1, 
         duration: ANIMATION.duration * 0.5, 
         ease: "power2.inOut"
     }, 0)
     .to(bars[1], { 
-        top: '50%', 
+        top: bar2TargetTop, 
         opacity: 1, 
         duration: ANIMATION.duration * 0.5, 
         ease: "power2.inOut"
@@ -2169,7 +2175,7 @@ function openMenu() {
         backgroundColor: '#fff',
         duration: ANIMATION.duration * 0.6,
         ease: "power2.inOut"
-    }, ">0.1")
+    }, ">0")
     .to(bars[1], {
         backgroundColor: '#fff',
         duration: ANIMATION.duration * 0.6,
