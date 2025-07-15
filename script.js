@@ -166,7 +166,6 @@ async function startApp() {
         window.webflowCollectionMonitor = initWebflowCollectionMonitor();
       }
     
-      initHomeVideo();
       requestAnimationFrame(() => {
         initNavbarShowHide();
         initGsapAnimations();
@@ -179,6 +178,11 @@ async function startApp() {
         
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
         if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+        
+        // Initialize video after all other animations are set up
+        setTimeout(() => {
+          initHomeVideo();
+        }, 100);
       });
     }, 800); // 0.8 second loader duration
 
@@ -663,27 +667,31 @@ function initPageTransitions() {
         ensureProperScrollPosition();
 
         
-        // Initialize new page content
+                // Initialize new page content
         initInfinityGallery();
-        initHomeVideo();
         moveShowAllIntoCollectionList();
         
         // Delay initialization to ensure proper scroll position
         setTimeout(() => {
-            // Ensure proper scroll position
-            ensureProperScrollPosition();
-            
-            initGsapAnimations();
-            initNavbarShowHide();
-            initCustomSmoothScrolling();
-            initSplitTextAnimations();
-            
-            reloadFinsweetCMS();
-            
-            // Refresh ScrollTrigger after all animations are set up
-            setTimeout(() => {
-                ScrollTrigger.refresh(true);
-            }, 50);
+          // Ensure proper scroll position
+          ensureProperScrollPosition();
+          
+          initGsapAnimations();
+          initNavbarShowHide();
+          initCustomSmoothScrolling();
+          initSplitTextAnimations();
+          
+          reloadFinsweetCMS();
+          
+          // Initialize video after all other animations are set up
+          setTimeout(() => {
+            initHomeVideo();
+          }, 100);
+          
+          // Refresh ScrollTrigger after all animations are set up
+          setTimeout(() => {
+            ScrollTrigger.refresh(true);
+          }, 50);
         }, 150);
 
         
@@ -1193,19 +1201,18 @@ function initGsapAnimations() {
 
 
   gsap.from(".collection-list-1 div, .collection-list-1 .w-dyn-items", {
-    y: 10,
-    opacity:0,
-    delay: 0.5,
-    duration: 1.2,
+    yPercent: 200,
+    duration: 1,
     ease: "power2.out",
-    stagger: 0.060,
+    stagger: 0.030,
     scrollTrigger: {
       trigger: ".collection-list-1",
       start: "top 90%",
       toggleActions: "play none none none"
     }
   });
-  
+
+
 }
 
 
@@ -2442,6 +2449,12 @@ window.addEventListener('resize', () => {
 
 function initHomeVideo() {
     try {
+        const videoContainer = document.getElementById("video-container");
+        if (!videoContainer) {
+            console.log('Video container not found, skipping video initialization');
+            return;
+        }
+
         const isMobile = window.innerWidth < 650;
 
         const videoSrc = isMobile
@@ -2453,6 +2466,7 @@ function initHomeVideo() {
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
+        video.preload = "auto"; // Allow preloading now that page is loaded
 
         const source = document.createElement("source");
         source.src = videoSrc;
@@ -2460,10 +2474,10 @@ function initHomeVideo() {
 
         video.appendChild(source);
         
-        const videoContainer = document.getElementById("video-container");
-        if (videoContainer) {
-            videoContainer.appendChild(video);
-        }
+        // Add video to container
+        videoContainer.appendChild(video);
+        
+        console.log('Home video initialized successfully');
     } catch (error) {
         console.log('Home video initialization skipped:', error.message);
     }
@@ -2569,7 +2583,6 @@ function initWebflowCollectionMonitor() {
 
 // Initialize the simple monitor
 window.webflowCollectionMonitor = initWebflowCollectionMonitor();
-
 
 
 
