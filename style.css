@@ -2398,7 +2398,7 @@ video {
         padding: 0 3.7vw;
         grid-gap: 0.8vw;
         grid-row-gap: 1.5vw;
-        flex-direction: row-reverse;
+        flex-direction: row;
       }
 
       .all-block .w-radio {
