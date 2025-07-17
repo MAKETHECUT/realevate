@@ -2366,7 +2366,7 @@ video {
       align-self: start;
     }
     
-    .collection-list-1{
+    .type-list{
       display:flex;
       width:100%;
       grid-gap: 0.5vw;
@@ -2377,7 +2377,7 @@ video {
       align-self: center;
     }
 
-    .collection-list-1 .w-dyn-items {
+    .type-list .w-dyn-items {
       margin: auto;
       display: flex;
       grid-gap: 0.4vw;
@@ -2386,7 +2386,7 @@ video {
 
     
     @media (max-width:650px) {
-      .collection-list-1 {
+      .type-list {
         margin-top: 15vw!important;
         margin-bottom: 0vw!important;
       }
@@ -2407,7 +2407,7 @@ video {
           font-size:4.5vw!important;
       }
 
-      .collection-list-1 .filters-list {
+      .type-list .filters-list {
         flex-wrap: wrap;
         grid-gap: 1vw;
         grid-row-gap: 2vw;
