@@ -202,9 +202,9 @@ document.addEventListener("DOMContentLoaded", startApp);
 
 function moveShowAllIntoCollectionList() {
   const showAll = document.querySelector(".show-all");
-  const typeItem = document.querySelector(".type-item");
+  const typeItem = document.querySelector(".collection-list-1");
   const typeItemChildren = typeItem?.querySelectorAll("[role='listitem']");
-  const collectionList = document.querySelector(".collection-list-1 .w-dyn-items");
+  const collectionList = document.querySelector(".type-item .w-dyn-items");
 
   if (collectionList) {
     if (showAll) collectionList.prepend(showAll);
@@ -2583,6 +2583,5 @@ function initWebflowCollectionMonitor() {
 
 // Initialize the simple monitor
 window.webflowCollectionMonitor = initWebflowCollectionMonitor();
-
 
 
