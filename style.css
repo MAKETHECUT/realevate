@@ -2368,7 +2368,8 @@ video {
     
     .type-list{
       display:flex;
-      width:100%;
+      /*width:100%;*/
+      direction: rtl;
       grid-gap: 0.5vw;
       margin-top: -2vw!important;
       margin-bottom: 5vw!important;
