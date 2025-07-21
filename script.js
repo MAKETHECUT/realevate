@@ -161,15 +161,15 @@ async function startApp() {
       initInfinityGallery();
       moveShowAllIntoCollectionList();
       
-      // Initialize Webflow collection monitor
-      if (typeof initWebflowCollectionMonitor === 'function') {
-        window.webflowCollectionMonitor = initWebflowCollectionMonitor();
-      }
-    
       requestAnimationFrame(() => {
         initNavbarShowHide();
         initGsapAnimations();
         initSplitTextAnimations();
+        
+        // Initialize type-list radio button handler
+        if (typeof initTypeListRadioHandler === 'function') {
+          initTypeListRadioHandler();
+        }
         
         // Only initialize cursor if not already initialized
         if (!window.cursorInitialized) {
@@ -223,6 +223,7 @@ function moveShowAllIntoCollectionList() {
 Reload FinSweet CMS Filter
 ============================================== */
 function reloadFinsweetCMS() {
+
     const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
     if (oldScript) {
     oldScript.remove();
@@ -232,7 +233,30 @@ function reloadFinsweetCMS() {
     newScript.async = true;
     newScript.onload = () => {};
     document.body.appendChild(newScript);
- }
+    
+  }
+
+// Function to handle radio button selection in .type-list
+function initTypeListRadioHandler() {
+  // Listen for clicks on radio buttons in .type-list
+  document.addEventListener('click', (e) => {
+    const radioButton = e.target.closest('.type-list .w-radio input[type="radio"]');
+    if (radioButton) {
+      setTimeout(() => {
+
+        
+        if (typeof initSplitTextAnimations === 'function') {
+          initSplitTextAnimations();
+        }
+        
+        // Refresh ScrollTrigger
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh(true);
+        }
+      }, 100);
+    }
+  });
+}
 
 
 /* ==============================================
@@ -679,10 +703,18 @@ function initPageTransitions() {
           initGsapAnimations();
           initNavbarShowHide();
           initCustomSmoothScrolling();
-          initSplitTextAnimations();
-          
+          initTypeListRadioHandler();
           reloadFinsweetCMS();
+          initTypeListRadioHandler();
           
+          // Initialize SplitText animations with a longer delay to ensure DOM is ready
+          setTimeout(() => {
+            if (typeof initSplitTextAnimations === 'function') {
+              initSplitTextAnimations();
+            }
+          }, 200);
+         
+
           // Initialize video after all other animations are set up
           setTimeout(() => {
             initHomeVideo();
@@ -2482,106 +2514,4 @@ function initHomeVideo() {
         console.log('Home video initialization skipped:', error.message);
     }
 }
-
-
-
-/* ==============================================
-Simple Webflow Collection Change Monitor
-============================================== */
-
-function initWebflowCollectionMonitor() {
-    console.log('Initializing Simple Webflow Collection Monitor...');
-    
-    let lastHeight = document.documentElement.scrollHeight;
-    let isMonitoring = false;
-    
-    // Simple function to check if page height changed
-    function checkHeightChange() {
-        const currentHeight = document.documentElement.scrollHeight;
-        
-        if (currentHeight !== lastHeight) {
-            console.log('Page height changed! Refreshing ScrollTrigger...');
-            console.log('Old height:', lastHeight, 'New height:', currentHeight);
-            
-            // Simple ScrollTrigger refresh
-            if (typeof ScrollTrigger !== 'undefined') {
-                ScrollTrigger.refresh(true);
-            }
-            
-            // Update smooth scroll if it exists
-            if (window.customSmoothScroll && typeof window.customSmoothScroll.ud === 'function') {
-                window.customSmoothScroll.ud();
-            }
-            
-            lastHeight = currentHeight;
-        }
-    }
-    
-    // Start monitoring
-    function startMonitoring() {
-        if (isMonitoring) return;
-        
-        isMonitoring = true;
-        console.log('Starting simple collection monitoring...');
-        
-        // Set initial height
-        lastHeight = document.documentElement.scrollHeight;
-        
-        // Simple observer for DOM changes
-        const observer = new MutationObserver(() => {
-            // Immediate height check
-            checkHeightChange();
-        });
-        
-        // Observe the entire document
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-        
-        // Store observer
-        window.webflowCollectionObserver = observer;
-        
-        // Also check on filter clicks
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('[data-wf-filter]') || 
-                e.target.closest('.w-filter-button') ||
-                e.target.closest('[data-wf-filter-option]')) {
-                
-                // Immediate check + one more after a tiny delay to catch any late changes
-                checkHeightChange();
-                setTimeout(checkHeightChange, 25);
-            }
-        });
-        
-        console.log('Simple collection monitoring started');
-    }
-    
-    // Stop monitoring
-    function stopMonitoring() {
-        if (window.webflowCollectionObserver) {
-            window.webflowCollectionObserver.disconnect();
-            window.webflowCollectionObserver = null;
-        }
-        clearTimeout(window.heightCheckTimeout);
-        isMonitoring = false;
-    }
-    
-    // Start when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startMonitoring);
-    } else {
-        startMonitoring();
-    }
-    
-    return {
-        start: startMonitoring,
-        stop: stopMonitoring,
-        check: checkHeightChange
-    };
-}
-
-// Initialize the simple monitor
-window.webflowCollectionMonitor = initWebflowCollectionMonitor();
-
 
