@@ -1571,6 +1571,9 @@ video {
     margin-top: 15vw;
     grid-gap: 15vw;
     padding: 8vw!important;
+  }
+
+  .home .home-properties {
     padding-top: 15vw!important;
   }
   
