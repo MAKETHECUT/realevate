@@ -1319,7 +1319,7 @@ video {
   grid-gap: 5vw;
   padding: 3.819vw!important;
   width: 100vw;
-  min-height: 100vh;
+  min-height: 100lvh;
   justify-content: center;
   align-items:center;
   background-color: var(--lightgrey);
@@ -1328,7 +1328,8 @@ video {
 
 .home-container .image {
   width: 44.2vw;
-  	height: 86lvh;
+  height: 84vh;
+  min-height: 100%;
   overflow:hidden;
 }
 
@@ -1530,7 +1531,6 @@ video {
     	grid-gap: 0lvh;
     padding: 8vw!important;
     min-width: 100vw;
-
   }
 
   .home-container .content .number {
@@ -1550,7 +1550,8 @@ video {
   
   .home-container .image {
     width: unset;
-    	height: 40lvh;
+    height: 34lvh;
+    min-height: 34lvh;
   }
   
   .home-container .content {
