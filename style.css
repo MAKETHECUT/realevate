@@ -1372,7 +1372,6 @@ video {
   left: 0vw!important;
   min-width: 100vw;
   padding: 3.819vw;
-  padding-top: 10vw;
   width: var(--global-width-desktop);
   background-color: var(--lightgrey);
   z-index: 2;
@@ -1386,6 +1385,10 @@ video {
     max-width: 90%;
     margin: auto;
   }
+}
+
+.home .home-properties {
+  padding-top: 10vw;
 }
 
 .home-properties-grid {
