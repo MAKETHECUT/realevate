@@ -182,7 +182,7 @@ async function startApp() {
         // Initialize video after all other animations are set up
         setTimeout(() => {
           initHomeVideo();
-        }, 100);
+        }, 1000); // Increased delay to ensure page is fully loaded
       });
     }, 800); // 0.8 second loader duration
 
@@ -718,7 +718,7 @@ function initPageTransitions() {
           // Initialize video after all other animations are set up
           setTimeout(() => {
             initHomeVideo();
-          }, 100);
+          }, 1000); // Increased delay to ensure page is fully loaded
           
           // Refresh ScrollTrigger after all animations are set up
           setTimeout(() => {
@@ -1011,7 +1011,7 @@ function initGsapAnimations() {
     gsap.to(visual, {
       clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
       width: "100vw",
-      height: "100svh",
+      height: "100lvh",
       ease: "none",
       scrollTrigger: {
         trigger: ".hero",
@@ -1244,6 +1244,66 @@ function initGsapAnimations() {
     }
   });
 
+  // Sticky stacking cards effect for .home-container sections
+  const homeContainers = document.querySelectorAll('.home-container');
+  if (homeContainers.length > 1) {
+    // Set initial z-index for all containers
+    homeContainers.forEach((container, index) => {
+      gsap.set(container, { zIndex: (index * 2) + 1 });
+    });
+    
+    homeContainers.forEach((container, index) => {
+      const nextContainer = homeContainers[index + 1];
+      
+      // Apply stacking effect to all sections including the 4th (index 3)
+      if (index <= 3) {
+        // Create a ScrollTrigger for each container
+        ScrollTrigger.create({
+          trigger: container,
+          start: "top top",
+          end: `+=${window.innerHeight * 2}`,
+          pin: true,
+          pinSpacing: false,
+          onUpdate: (self) => {
+            // Calculate progress and apply stacking effect
+            const progress = self.progress;
+            
+
+            
+            // Animate the ::after pseudo-element from opacity 0 to 0.5
+            gsap.set(container, {
+              '--after-opacity': progress * 0.5
+            });
+          },
+          onEnter: () => {
+            // When entering this section, set it to z-index based on index
+            gsap.set(container, { zIndex: (index * 2) + 1 });
+            // Set next section to higher z-index
+            if (nextContainer) {
+              gsap.set(nextContainer, { zIndex: ((index + 1) * 2) + 1 });
+            }
+          },
+          onLeave: () => {
+            // Keep current section at its z-index
+            gsap.set(container, { zIndex: (index * 2) + 1 });
+            // Reset next section to its proper z-index
+            if (nextContainer) {
+              gsap.set(nextContainer, { zIndex: ((index + 1) * 2) + 1 });
+            }
+          }
+        });
+      } else {
+        // Sections after the 4th - pin them normally
+        ScrollTrigger.create({
+          trigger: container,
+          start: "top top",
+          end: "bottom top",
+          pin: true,
+          pinSpacing: true
+        });
+      }
+    });
+  }
 
 }
 
@@ -1786,7 +1846,7 @@ function initInfinityGallery() {
         top: 0,
         left: 0,
         width: '100vw',
-        height: '100svh',
+        height: '100lvh',
         scale: 1.005,
         rotation: 0,
         clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Animate to full
@@ -2289,7 +2349,7 @@ function openMenu() {
   const bar1TargetTop = isMobile ? 'calc(50% - 0vw)' : 'calc(50% - 0vw)'; // Both animate to center
   const bar2TargetTop = isMobile ? 'calc(50% + -1.5vw)' : 'calc(50% + 0vw)'; // Both animate to center
   
-  tl.to(overlay, { opacity: 0.8, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
+  tl.to(overlay, { opacity: 0.2, duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
     .to(megaMenu, { clipPath: 'inset(0% 0% 0% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease }, 0)
     .to('.mega-menu .mega-menu-image', { clipPath: 'inset(0% 0% 0% 0%)', duration: ANIMATION.duration, ease: ANIMATION.ease, delay: 0.050, }, 0)
     .to('.mega-menu .mega-menu-image img', { 
@@ -2487,6 +2547,15 @@ function initHomeVideo() {
             return;
         }
 
+        // Check if page is fully loaded
+        if (document.readyState !== 'complete') {
+            console.log('Page not fully loaded, delaying video initialization');
+            window.addEventListener('load', () => {
+                setTimeout(initHomeVideo, 500); // Additional delay after load
+            });
+            return;
+        }
+
         const isMobile = window.innerWidth < 650;
 
         const videoSrc = isMobile
@@ -2498,7 +2567,7 @@ function initHomeVideo() {
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
-        video.preload = "auto"; // Allow preloading now that page is loaded
+        video.preload = "metadata"; // Only load metadata initially
 
         const source = document.createElement("source");
         source.src = videoSrc;
@@ -2509,9 +2578,20 @@ function initHomeVideo() {
         // Add video to container
         videoContainer.appendChild(video);
         
+        // Load video data when it's in viewport
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    video.preload = "auto";
+                    observer.unobserve(video);
+                }
+            });
+        });
+        
+        observer.observe(video);
+        
         console.log('Home video initialized successfully');
     } catch (error) {
         console.log('Home video initialization skipped:', error.message);
     }
 }
-
