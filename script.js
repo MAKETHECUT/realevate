@@ -1011,7 +1011,7 @@ function initGsapAnimations() {
     gsap.to(visual, {
       clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
       width: "100vw",
-      height: "100lvh",
+      height: "100svh",
       ease: "none",
       scrollTrigger: {
         trigger: ".hero",
@@ -1846,7 +1846,7 @@ function initInfinityGallery() {
         top: 0,
         left: 0,
         width: '100vw',
-        height: '100lvh',
+        height: '100svh',
         scale: 1.005,
         rotation: 0,
         clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Animate to full
