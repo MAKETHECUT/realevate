@@ -1387,8 +1387,8 @@ video {
   }
 }
 
-.home .home-properties {
-  padding-top: 10vw;
+.home-properties h1 {
+  padding-top: 8vw;
 }
 
 .home-properties-grid {
@@ -1571,10 +1571,6 @@ video {
     margin-top: 15vw;
     grid-gap: 15vw;
     padding: 8vw!important;
-  }
-
-  .home .home-properties {
-    padding-top: 15vw!important;
   }
   
   .home-properties .link-box {
