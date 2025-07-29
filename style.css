@@ -814,7 +814,7 @@ section:not(.hero):not(:has(.footer)) {
     padding-left: 4.5vw;
   }
 
-  section:has(.sticky-container), section:has(.home-properties) {
+  section:has(.sticky-container), .home section:has(.home-properties) {
     padding:0!important;
   }
 }
@@ -1370,8 +1370,6 @@ video {
 .home-properties {
   top: 0vw!important;
   left: 0vw!important;
-  min-width: 100vw;
-  padding: 3.819vw;
   width: var(--global-width-desktop);
   background-color: var(--lightgrey);
   z-index: 2;
@@ -1385,6 +1383,11 @@ video {
     max-width: 90%;
     margin: auto;
   }
+}
+
+.home .home-properties {
+    min-width: 100vw;
+    padding: 3.819vw;
 }
 
 .home-properties h1 {
@@ -1570,6 +1573,9 @@ video {
   .home-properties {
     margin-top: 15vw;
     grid-gap: 15vw;
+  }
+
+  .home .home-properties {
     padding: 8vw!important;
   }
   
