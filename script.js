@@ -989,12 +989,24 @@ function initGsapAnimations() {
     ensureProperScrollPosition();
 
   // Common animations for all pages
-  gsap.fromTo(".clipping-video", 
+  gsap.fromTo(".clipping-video, .about-hero-image", 
     { clipPath: "inset(100% 0% 0% 0%)" }, 
     { 
       clipPath: "inset(0% 0% 0% 0%)", 
       delay: 0.6,
       duration: 1.5, 
+      ease: "power4.inOut" 
+    }
+  );
+
+
+  gsap.fromTo(".about-hero-image, .about-values .image", 
+    { clipPath: "inset(0% 0% 0% 100%)" }, 
+    { 
+      clipPath: "inset(0% 0% 0% 0%)", 
+      delay: 0.4,
+      duration: 2, 
+      stagger: 0.1,
       ease: "power4.inOut" 
     }
   );
@@ -1098,10 +1110,13 @@ function initGsapAnimations() {
   }
 
   // Image parallax animations
-  document.querySelectorAll('.home-container .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
-    gsap.from(img, {
-      yPercent: -15,
+  document.querySelectorAll('.home-container .image img, .about-hero-image img, .about-values .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
+    gsap.fromTo(img, {
+      yPercent: -10,
       transformOrigin: "center center",
+    }, {
+      yPercent: 10,
+      transformOrigin: "center center", 
       ease: "none",
       scrollTrigger: {
         trigger: img,
