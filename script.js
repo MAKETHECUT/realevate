@@ -1287,7 +1287,7 @@ function initGsapAnimations() {
             
             // Animate the ::after pseudo-element from opacity 0 to 0.5
             gsap.set(container, {
-              '--after-opacity': progress * 0.5
+              '--after-opacity': progress * 0.2
             });
           },
           onEnter: () => {
