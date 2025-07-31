@@ -1544,13 +1544,14 @@ video {
   }
 
   .home-container .first,
-  .home-container .third,
-  .home-container .second, 
-  .home-container .forth {
+  .home-container .third {
     display: flex;
-    flex-direction: column-reverse!important;
+    flex-direction: column-reverse !important;
   }
 
+  .home-container.forth, .home-container.second {
+    flex-direction: column-reverse !important;
+  }
   
   .home-container .image {
     width: unset;
