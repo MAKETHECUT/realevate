@@ -2726,7 +2726,7 @@ Display Toggle and Gallery View Styles
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100svh;
   background: #1E1F24;
   z-index: 9998;
   overflow: hidden;
