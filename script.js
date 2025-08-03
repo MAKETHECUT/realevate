@@ -2737,7 +2737,16 @@ function initDisplayToggle() {
     // Add click handler
     slide.addEventListener('click', (e) => {
       if (e.target.closest('.gallery-nav')) return;
-      if (link) window.location.href = link;
+      if (link) {
+        e.preventDefault();
+        // Use the same page transition as other links
+        if (typeof handleNavigation === 'function') {
+          handleNavigation(link);
+        } else {
+          // Fallback to direct navigation if handleNavigation is not available
+          window.location.href = link;
+        }
+      }
     });
     
     slider.appendChild(slide);
