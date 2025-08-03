@@ -2747,8 +2747,7 @@ function initDisplayToggle() {
     // Add the link wrapper to the slide
     slide.appendChild(linkWrapper);
     
-    // Let the global event listener handle the navigation
-    // This ensures the same SVG wave animation as other site links
+    // Handle gallery slide link clicks with mega-menu-overlay exit animation
     linkWrapper.addEventListener('click', (e) => {
       // Don't handle clicks on gallery navigation elements
       if (e.target.closest('.gallery-nav')) {
@@ -2757,8 +2756,37 @@ function initDisplayToggle() {
         return;
       }
       
-      // For gallery slide links, let the global event listener handle the navigation
-      // This ensures the same SVG wave animation as other site links
+      // If we're in gallery view and a slide link is clicked, animate the overlay out first
+      if (currentView === 'gallery' && link && link !== '#') {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Animate mega-menu-overlay opacity back to 0 (exit animation)
+        const overlay = document.querySelector('.mega-menu-overlay');
+        if (overlay) {
+          gsap.to(overlay, {
+            opacity: 0,
+            duration: 1.2,
+            ease: 'power4.inOut',
+            onComplete: () => {
+              // After overlay animation completes, trigger the page navigation
+              if (typeof handleNavigation === 'function') {
+                handleNavigation(link);
+              } else {
+                window.location.href = link;
+              }
+            }
+          });
+        } else {
+          // If no overlay found, navigate immediately
+          if (typeof handleNavigation === 'function') {
+            handleNavigation(link);
+          } else {
+            window.location.href = link;
+          }
+        }
+      }
+      // For grid view or other cases, let the global event listener handle it
     });
     
     slider.appendChild(slide);
