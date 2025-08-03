@@ -2719,8 +2719,8 @@ function initDisplayToggle() {
       }
     }
     
-    // Ensure all gallery slide links are properly integrated with global page transition system
-    ensureGalleryLinksUseGlobalNavigation();
+    // Gallery slide links will be handled by the global event listener
+    // This ensures the same SVG wave animation as other site links
   }
 
   function createGallerySlide(slider, indicators, img, name, price, info, link, index) {
@@ -2747,62 +2747,24 @@ function initDisplayToggle() {
     // Add the link wrapper to the slide
     slide.appendChild(linkWrapper);
     
-    // Ensure the link uses the global page transition handling
-    // This prevents default browser navigation and uses our custom handleNavigation
+    // Let the global event listener handle the navigation
+    // This ensures the same SVG wave animation as other site links
     linkWrapper.addEventListener('click', (e) => {
       // Don't handle clicks on gallery navigation elements
-      if (e.target.closest('.gallery-nav')) return;
-      
-      // Prevent default browser navigation
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (link && link !== '#') {
-        // Use the global page transition system
-        if (typeof handleNavigation === 'function') {
-          handleNavigation(link);
-        } else {
-          // Fallback to direct navigation if handleNavigation is not available
-          window.location.href = link;
-        }
+      if (e.target.closest('.gallery-nav')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
       }
+      
+      // For gallery slide links, let the global event listener handle the navigation
+      // This ensures the same SVG wave animation as other site links
     });
     
     slider.appendChild(slide);
   }
 
-  function ensureGalleryLinksUseGlobalNavigation() {
-    // Get all gallery slide links
-    const galleryLinks = document.querySelectorAll('.gallery-slide-link');
-    
-    galleryLinks.forEach(link => {
-      // Remove any existing click handlers to prevent conflicts
-      link.removeEventListener('click', handleGalleryLinkClick);
-      
-      // Add the global navigation handler
-      link.addEventListener('click', handleGalleryLinkClick);
-    });
-  }
 
-  function handleGalleryLinkClick(e) {
-    // Don't handle clicks on gallery navigation elements
-    if (e.target.closest('.gallery-nav')) return;
-    
-    // Prevent default browser navigation
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const href = this.getAttribute('href');
-    if (href && href !== '#') {
-      // Use the global page transition system
-      if (typeof handleNavigation === 'function') {
-        handleNavigation(href);
-      } else {
-        // Fallback to direct navigation if handleNavigation is not available
-        window.location.href = href;
-      }
-    }
-  }
 
   function switchToGrid() {
     // Kill any ongoing gallery animations
