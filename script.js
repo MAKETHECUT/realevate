@@ -2747,7 +2747,8 @@ function initDisplayToggle() {
     // Add the link wrapper to the slide
     slide.appendChild(linkWrapper);
     
-    // Handle gallery slide link clicks with mega-menu-overlay exit animation
+    // Let the global event listener handle the navigation
+    // This ensures the same SVG wave animation as other site links
     linkWrapper.addEventListener('click', (e) => {
       // Don't handle clicks on gallery navigation elements
       if (e.target.closest('.gallery-nav')) {
@@ -2756,37 +2757,18 @@ function initDisplayToggle() {
         return;
       }
       
-      // If we're in gallery view and a slide link is clicked, animate the overlay out first
-      if (currentView === 'gallery' && link && link !== '#') {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Animate mega-menu-overlay opacity back to 0 (exit animation)
-        const overlay = document.querySelector('.mega-menu-overlay');
-        if (overlay) {
-          gsap.to(overlay, {
-            opacity: 0,
-            duration: 1.2,
-            ease: 'power4.inOut',
-            onComplete: () => {
-              // After overlay animation completes, trigger the page navigation
-              if (typeof handleNavigation === 'function') {
-                handleNavigation(link);
-              } else {
-                window.location.href = link;
-              }
-            }
-          });
-        } else {
-          // If no overlay found, navigate immediately
-          if (typeof handleNavigation === 'function') {
-            handleNavigation(link);
-          } else {
-            window.location.href = link;
-          }
-        }
+      // Animate mega-menu-overlay to opacity 0 when gallery slide is clicked
+      const overlay = document.querySelector('.mega-menu-overlay');
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 0,
+          duration: 1.2,
+          ease: 'power4.inOut'
+        });
       }
-      // For grid view or other cases, let the global event listener handle it
+      
+      // For gallery slide links, let the global event listener handle the navigation
+      // This ensures the same SVG wave animation as other site links
     });
     
     slider.appendChild(slide);
