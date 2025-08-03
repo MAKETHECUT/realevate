@@ -196,6 +196,7 @@ async function startApp() {
     initInfinityGallery();
   }
 }
+// Initialize the application when DOM is loaded
 document.addEventListener("DOMContentLoaded", startApp);
 // --- END DYNAMIC LOADER ---
 
@@ -593,60 +594,30 @@ function initCustomSmoothScrolling() {
 
 function initPageTransitions() {
   
-
-  
-    const loader = gsap.timeline();
-    let isAnimating = false;
-    let nextPageHTML = '';
-    let pendingNavigation = null;
-    let lastNavigationTime = 0;
-    const NAVIGATION_COOLDOWN = 1000;
-
-    if (!document.querySelector('.transition')) {
-        const div = document.createElement('div');
-        div.className = 'transition';
-        div.innerHTML = `
-            <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
-                <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
-            </svg>
-        `;
-        document.body.appendChild(div);
-    }
-
-    const swipeup = document.querySelector('.swipeup');
-    const transition = document.querySelector('.transition');
-    const cursor = document.querySelector('.cursor');
-
-    function canNavigate() {
-        const now = Date.now();
-        if (now - lastNavigationTime < NAVIGATION_COOLDOWN) return false;
-        lastNavigationTime = now;
-        return true;
-    }
-
-    async function handleNavigation(url, isPopState = false) {
+    // Make handleNavigation globally accessible
+    window.handleNavigation = async function(url, isPopState = false) {
         if (window.transitioning) {
-            pendingNavigation = { url, isPopState };
+            window.pendingNavigation = { url, isPopState };
             return;
         }
 
-        if (!canNavigate()) return;
+        if (!window.canNavigate()) return;
 
         window.transitioning = true;
-        isAnimating = true;
+        window.isAnimating = true;
 
         // 1. Start the transition animation immediately
         let transitionDone;
         const transitionPromise = new Promise((resolve) => {
             const tl = gsap.timeline({ onComplete: resolve });
-            tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
-            tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-            tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-            tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+            tl.set(window.transition, { display: 'block', visibility: 'visible', opacity: 1 });
+            tl.set(window.swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+            tl.to(window.swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+            tl.to(window.swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
             tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
             tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
-            tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
-            tl.set(cursor, { visibility: "hidden" }, 0.2);
+            tl.to(window.cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+            tl.set(window.cursor, { visibility: "hidden" }, 0.2);
         });
 
         // 2. Start fetching the next page in parallel
@@ -675,7 +646,7 @@ function initPageTransitions() {
         }
 
         // 4. Now swap the content and finish the transition
-        nextPageHTML = nextPage.nextWrapper.innerHTML;
+        window.nextPageHTML = nextPage.nextWrapper.innerHTML;
         const doc = nextPage.doc;
 
         // Keep transition visible while updating content
@@ -686,13 +657,12 @@ function initPageTransitions() {
         cleanupAllPageAnimations();
 
         document.title = doc.querySelector('title')?.textContent || document.title;
-        container.innerHTML = nextPageHTML;
+        container.innerHTML = window.nextPageHTML;
 
         // Ensure proper scroll position
         ensureProperScrollPosition();
 
-        
-                // Initialize new page content
+        // Initialize new page content
         initInfinityGallery();
         initDisplayToggle();
         moveShowAllIntoCollectionList();
@@ -724,58 +694,65 @@ function initPageTransitions() {
           
           // Refresh ScrollTrigger after all animations are set up
           setTimeout(() => {
-            ScrollTrigger.refresh(true);
-          }, 50);
-        }, 150);
-
-        
-
-        // Complete the transition animation (outro)
-        const tl = gsap.timeline();
-        tl.to(swipeup, {
-            duration: 0.6,
-            ease: 'power4.in',
-            attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
-        });
-
-        tl.to(swipeup, {
-            duration: 0.4,
-            ease: 'power2',
-            attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
-            onComplete: () => {
-                // Reset cursor to hidden state first
-                gsap.set(cursor, { scale: 0, visibility: "visible" });
-                gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
-                gsap.set(".menu-toggle", { opacity: 0 });
-
-                const inTl = gsap.timeline();
-                inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-                inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
-                inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
-
-                // Only hide transition after all animations are complete
-                transition.style.opacity = '0';
-                transition.style.visibility = 'hidden';
-                isAnimating = false;
-                window.transitioning = false;
-
-                // Initialize cursor after transition is complete
-                if (!window.cursorInitialized) {
-                    initInteractiveCursor();
-                }
-
-                if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
-                    window.navbarShowHide = initNavbarShowHide();
-                }
-
-                if (pendingNavigation) {
-                    const { url, isPopState } = pendingNavigation;
-                    pendingNavigation = null;
-                    setTimeout(() => handleNavigation(url, isPopState), 100);
-                }
+            if (typeof ScrollTrigger !== 'undefined') {
+              ScrollTrigger.refresh();
             }
+          }, 1500);
+        }, 100);
+
+        // 5. Finish the transition animation
+        const finishTransition = new Promise((resolve) => {
+            const tl = gsap.timeline({ onComplete: resolve });
+            tl.to(window.swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' } });
+            tl.to(window.swipeup, { duration: 0.5, ease: 'power4.out', attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+            tl.set(window.transition, { display: 'none', visibility: 'hidden', opacity: 0 });
+            tl.set(window.cursor, { visibility: "visible" }, 0.5);
+            tl.to(window.cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0.5);
         });
+
+        await finishTransition;
+
+        window.transitioning = false;
+        window.isAnimating = false;
+
+        // Handle any pending navigation
+        if (window.pendingNavigation) {
+            const pending = window.pendingNavigation;
+            window.pendingNavigation = null;
+            setTimeout(() => window.handleNavigation(pending.url, pending.isPopState), 100);
+        }
+    };
+
+    // Make variables globally accessible
+    window.transitioning = false;
+    window.isAnimating = false;
+    window.nextPageHTML = '';
+    window.pendingNavigation = null;
+    window.lastNavigationTime = 0;
+    window.NAVIGATION_COOLDOWN = 1000;
+
+    // Make canNavigate globally accessible
+    window.canNavigate = function() {
+        const now = Date.now();
+        if (now - window.lastNavigationTime < window.NAVIGATION_COOLDOWN) return false;
+        window.lastNavigationTime = now;
+        return true;
+    };
+
+    if (!document.querySelector('.transition')) {
+        const div = document.createElement('div');
+        div.className = 'transition';
+        div.innerHTML = `
+            <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
+                <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
+            </svg>
+        `;
+        document.body.appendChild(div);
     }
+
+    window.swipeup = document.querySelector('.swipeup');
+    window.transition = document.querySelector('.transition');
+    window.cursor = document.querySelector('.cursor');
 
     document.body.addEventListener('click', (e) => {
         const link = e.target.closest('a[href]');
@@ -792,28 +769,21 @@ function initPageTransitions() {
 
         e.preventDefault();
         history.pushState({ title: document.title }, '', href);
-        handleNavigation(href);
+        window.handleNavigation(href);
     });
 
     window.addEventListener('popstate', () => {
         if (window.transitioning) {
-            pendingNavigation = { url: location.href, isPopState: true };
+            window.pendingNavigation = { url: location.href, isPopState: true };
             return;
         }
-        handleNavigation(location.href, true);
+        window.handleNavigation(location.href, true);
     });
 
     window.addEventListener('DOMContentLoaded', () => {
         history.replaceState({ title: document.title }, '', location.href);
     });
 }
-
-
-
-
-
-
-
 
 /* ==============================================
 Show/Hide Grid on Keypress
@@ -2293,12 +2263,12 @@ const SCRIPT_VERSIONS = {
 const CACHE_BUSTER = `?v=${Date.now()}`;
 
 // Retry logic
-async function loadScriptWithRetry(src, options = {}, maxRetries = 3) {
+async function loadScriptWithRetry(src, maxRetries = 3) {
     let retries = 0;
     
     while (retries < maxRetries) {
         try {
-            return await loadScript(src, options);
+            return await loadScript(src);
         } catch (error) {
             retries++;
             if (retries === maxRetries) throw error;
@@ -2309,18 +2279,18 @@ async function loadScriptWithRetry(src, options = {}, maxRetries = 3) {
 
 function loadScriptsSequentially(scripts) {
     return scripts.reduce((promiseChain, script) => {
-        return promiseChain.then(() => loadScriptWithRetry(script.src, script.options));
+        return promiseChain.then(() => loadScriptWithRetry(script.src));
     }, Promise.resolve());
 }
 
 // Lazy loading utility
-function lazyLoadScript(src, options = {}) {
+function lazyLoadScript(src) {
     return new Promise((resolve) => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     observer.disconnect();
-                    loadScriptWithRetry(src, options)
+                    loadScriptWithRetry(src)
                         .then(resolve)
                         .catch(console.error);
                 }
@@ -2740,8 +2710,10 @@ function initDisplayToggle() {
       if (link) {
         e.preventDefault();
         // Use the same page transition as other links
-        if (typeof handleNavigation === 'function') {
-          handleNavigation(link);
+        if (typeof window.handleNavigation === 'function') {
+          // Update browser history and trigger navigation
+          history.pushState({ title: document.title }, '', link);
+          window.handleNavigation(link);
         } else {
           // Fallback to direct navigation if handleNavigation is not available
           window.location.href = link;
@@ -3108,11 +3080,39 @@ document.addEventListener('DOMContentLoaded', () => {
   initDisplayToggle();
 });
 
-// Add to the existing initialization functions
+// Application initialization function
 function initializeApplication() {
-  // ... existing initialization code ...
-  
-  // Initialize display toggle
+  // Initialize all core functionality
+  refreshbreakingpoints();
+  initInteractiveCursor();
+  initMegaMenu();
+  initPageTransitions();
+  initInfinityGallery();
+  moveShowAllIntoCollectionList();
   initDisplayToggle();
+  
+  requestAnimationFrame(() => {
+    initNavbarShowHide();
+    initGsapAnimations();
+    initSplitTextAnimations();
+    
+    // Initialize type-list radio button handler
+    if (typeof initTypeListRadioHandler === 'function') {
+      initTypeListRadioHandler();
+    }
+    
+    // Only initialize cursor if not already initialized
+    if (!window.cursorInitialized) {
+        initInteractiveCursor();
+    }
+    
+    if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+    if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+    
+    // Initialize video after all other animations are set up
+    setTimeout(() => {
+      initHomeVideo();
+    }, 1000); // Increased delay to ensure page is fully loaded
+  });
 }
 
