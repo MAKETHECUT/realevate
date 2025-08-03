@@ -694,6 +694,7 @@ function initPageTransitions() {
         
                 // Initialize new page content
         initInfinityGallery();
+        initDisplayToggle();
         moveShowAllIntoCollectionList();
         
         // Delay initialization to ensure proper scroll position
