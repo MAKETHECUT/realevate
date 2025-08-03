@@ -2770,7 +2770,7 @@ Display Toggle and Gallery View Styles
 
 .gallery-slide img {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   object-fit: cover;
 }
 
@@ -2942,4 +2942,9 @@ Display Toggle and Gallery View Styles
     width: 2vw;
     height: 2vw;
   }
+}
+
+/* Gallery Slide Link Styles */
+.gallery-slide-link {
+  cursor: pointer;
 }
