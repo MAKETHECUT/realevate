@@ -697,6 +697,11 @@ function initPageTransitions() {
         initDisplayToggle();
         moveShowAllIntoCollectionList();
         
+        // Initialize projects page filter handler
+        if (typeof handleProjectsPageFilterChanges === 'function') {
+          handleProjectsPageFilterChanges();
+        }
+        
         // Delay initialization to ensure proper scroll position
         setTimeout(() => {
           // Ensure proper scroll position
@@ -713,8 +718,14 @@ function initPageTransitions() {
           setTimeout(() => {
             if (typeof initSplitTextAnimations === 'function') {
               try {
-                initSplitTextAnimations();
-                console.log('SplitText animations initialized successfully');
+                // For projects page, add extra delay to ensure CMS filter is loaded
+                const isProjectsPage = window.location.pathname.includes('/all-projects') || window.location.pathname.includes('/projects/');
+                const extraDelay = isProjectsPage ? 500 : 0;
+                
+                setTimeout(() => {
+                  initSplitTextAnimations();
+                  console.log('SplitText animations initialized successfully');
+                }, extraDelay);
               } catch (error) {
                 console.warn('Error initializing SplitText animations:', error);
                 // Retry once after a longer delay
@@ -936,9 +947,78 @@ function initSplitTextAnimations(scope = document) {
     return;
   }
 
-  const elements = scope.querySelectorAll(
-    "h1, h2, h3, h4, h5, h6, p, .logo img, .btn, .nav, #email-form label, .text-link, .link-box, #email-form form div"
-  );
+  // Check if we're on a page that might have different structure
+  const isProjectsPage = window.location.pathname.includes('/all-projects') || window.location.pathname.includes('/projects/');
+  const isContactPage = window.location.pathname.includes('/contact');
+  const isAboutPage = window.location.pathname.includes('/about');
+
+  // More specific and robust element selection
+  const elementSelectors = [
+    "h1", "h2", "h3", "h4", "h5", "h6", 
+    "p:not(.w-form-done):not(.w-form-fail)", // Exclude form messages
+    ".logo img", 
+    ".btn", 
+    ".nav a", 
+    "#email-form label", 
+    ".text-link", 
+    ".link-box", 
+    "#email-form form div",
+    ".property .name",
+    ".property .price", 
+    ".property .info",
+    ".bottom-cta h3",
+    ".bottom-cta .button-link"
+  ];
+
+  // Add page-specific selectors
+  if (isProjectsPage) {
+    elementSelectors.push(
+      ".projects h1",
+      ".projects .center h1",
+      ".projects .property .name",
+      ".projects .property .price",
+      ".projects .property .info",
+      ".projects .bottom-cta h3",
+      ".projects .bottom-cta .button-link"
+    );
+  }
+
+  // Try to find elements safely
+  let elements = [];
+  elementSelectors.forEach(selector => {
+    try {
+      const found = scope.querySelectorAll(selector);
+      if (found.length > 0) {
+        elements = elements.concat(Array.from(found));
+      }
+    } catch (error) {
+      console.warn(`Selector "${selector}" not found or invalid:`, error);
+    }
+  });
+
+  // Remove duplicates
+  elements = [...new Set(elements)];
+
+  console.log(`Found ${elements.length} elements for SplitText animation on ${window.location.pathname}`);
+
+  // If no elements found, try a more general approach
+  if (elements.length === 0) {
+    console.log('No specific elements found, trying general text elements...');
+    try {
+      const generalElements = scope.querySelectorAll('h1, h2, h3, h4, h5, h6, p');
+      elements = Array.from(generalElements).filter(el => 
+        el.textContent.trim() && 
+        !el.querySelector('.line') && 
+        !el._splitTextInstance
+      );
+      console.log(`Found ${elements.length} general elements for SplitText animation`);
+    } catch (error) {
+      console.warn('Error finding general elements:', error);
+    }
+  }
+
+  let successCount = 0;
+  let errorCount = 0;
 
   elements.forEach((element) => {
     // Skip if element already has SplitText applied or if it's empty
@@ -948,6 +1028,12 @@ function initSplitTextAnimations(scope = document) {
 
     // Skip if element already has a SplitText instance
     if (element._splitTextInstance) {
+      return;
+    }
+
+    // Skip if element is not visible or has no dimensions
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
       return;
     }
 
@@ -1013,14 +1099,19 @@ function initSplitTextAnimations(scope = document) {
         delay: element.closest(".hero, .delay") ? 0.5 : 0,
         ease: "power4.out"
       });
+
+      successCount++;
     } catch (error) {
       console.warn('Error applying SplitText to element:', element, error);
+      errorCount++;
       // Clean up any partial state
       if (element._splitTextInstance) {
         delete element._splitTextInstance;
       }
     }
   });
+
+  console.log(`SplitText animation complete: ${successCount} successful, ${errorCount} failed`);
 }
 
 
@@ -3245,5 +3336,30 @@ function debugSplitTextStatus() {
   };
 }
 
+window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
+
 window.debugSplitTextStatus = debugSplitTextStatus;
+
+// Handle CMS filter interactions on projects page
+function handleProjectsPageFilterChanges() {
+  const isProjectsPage = window.location.pathname.includes('/all-projects') || window.location.pathname.includes('/projects/');
+  
+  if (isProjectsPage) {
+    // Listen for CMS filter changes
+    document.addEventListener('click', (e) => {
+      const radioButton = e.target.closest('.w-radio input[type="radio"]');
+      if (radioButton) {
+        // Wait for the filter to complete and then reinitialize SplitText
+        setTimeout(() => {
+          if (typeof initSplitTextAnimations === 'function') {
+            console.log('Reinitializing SplitText after filter change...');
+            initSplitTextAnimations();
+          }
+        }, 1000); // Give CMS filter time to update the DOM
+      }
+    });
+  }
+}
+
+window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
 
