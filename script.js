@@ -662,59 +662,40 @@ function initPageTransitions() {
         // Ensure proper scroll position
         ensureProperScrollPosition();
 
-        
-                // Initialize new page content
+        // Initialize new page content immediately
         initInfinityGallery();
         initDisplayToggle();
         moveShowAllIntoCollectionList();
         
-
-        
-        // Delay initialization to ensure proper scroll position
-        setTimeout(() => {
-          // Ensure proper scroll position
-          ensureProperScrollPosition();
-          
-          // Re-register GSAP plugins to ensure they're available
-          if (typeof gsap !== 'undefined') {
-            if (typeof ScrollTrigger !== 'undefined') {
-              gsap.registerPlugin(ScrollTrigger);
-            }
-            if (typeof SplitText !== 'undefined') {
-              gsap.registerPlugin(SplitText);
-            }
+        // Re-register GSAP plugins immediately
+        if (typeof gsap !== 'undefined') {
+          if (typeof ScrollTrigger !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
           }
-          
-          initGsapAnimations();
-          initNavbarShowHide();
-          initCustomSmoothScrolling();
-          initTypeListRadioHandler();
-          reloadFinsweetCMS();
-          
-          // Initialize SplitText animations
-          setTimeout(() => {
-            if (typeof initSplitTextAnimations === 'function') {
-              console.log('Initializing SplitText animations...');
-              initSplitTextAnimations();
-            }
-          }, 200);
-         
-
-          // Initialize video after all other animations are set up
-          setTimeout(() => {
-            initHomeVideo();
-          }, 1000);
-          
-          // Refresh ScrollTrigger after SplitText animations are set up
-          setTimeout(() => {
-            if (typeof ScrollTrigger !== 'undefined') {
-              console.log('Refreshing ScrollTrigger...');
-              ScrollTrigger.refresh(true);
-            }
-          }, 400); // Increased delay to ensure SplitText is ready
-        }, 150);
-
+          if (typeof SplitText !== 'undefined') {
+            gsap.registerPlugin(SplitText);
+          }
+        }
         
+        // Initialize everything immediately without delays
+        initGsapAnimations();
+        initNavbarShowHide();
+        initCustomSmoothScrolling();
+        initTypeListRadioHandler();
+        reloadFinsweetCMS();
+        initSplitTextAnimations();
+        
+        // Initialize video after all other animations are set up
+        setTimeout(() => {
+          initHomeVideo();
+        }, 500);
+        
+        // Refresh ScrollTrigger after everything is set up
+        setTimeout(() => {
+          if (typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.refresh(true);
+          }
+        }, 100);
 
         // Complete the transition animation (outro)
         const tl = gsap.timeline();
@@ -2695,8 +2676,13 @@ function initDisplayToggle() {
         });
       }
       
-      // For gallery slide links, let the global event listener handle the navigation
-      // This ensures the same SVG wave animation as other site links
+      // Ensure proper navigation for gallery slide links
+      // The global event listener should handle this, but let's make sure
+      if (link && link !== '#') {
+        e.preventDefault();
+        history.pushState({ title: document.title }, '', link);
+        handleNavigation(link);
+      }
     });
     
     slider.appendChild(slide);
