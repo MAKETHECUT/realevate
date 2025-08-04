@@ -697,10 +697,7 @@ function initPageTransitions() {
         initDisplayToggle();
         moveShowAllIntoCollectionList();
         
-        // Initialize projects page filter handler
-        if (typeof handleProjectsPageFilterChanges === 'function') {
-          handleProjectsPageFilterChanges();
-        }
+
         
         // Delay initialization to ensure proper scroll position
         setTimeout(() => {
@@ -712,52 +709,26 @@ function initPageTransitions() {
           initCustomSmoothScrolling();
           initTypeListRadioHandler();
           reloadFinsweetCMS();
-          initTypeListRadioHandler();
           
-          // Initialize SplitText animations with a longer delay to ensure DOM is ready
+          // Initialize SplitText animations
           setTimeout(() => {
             if (typeof initSplitTextAnimations === 'function') {
-              try {
-                // For projects page, add extra delay to ensure CMS filter is loaded
-                const isProjectsPage = window.location.pathname.includes('/all-projects') || window.location.pathname.includes('/projects/');
-                const extraDelay = isProjectsPage ? 500 : 0;
-                
-                setTimeout(() => {
-                  initSplitTextAnimations();
-                  console.log('SplitText animations initialized successfully');
-                }, extraDelay);
-              } catch (error) {
-                console.warn('Error initializing SplitText animations:', error);
-                // Retry once after a longer delay
-                setTimeout(() => {
-                  try {
-                    initSplitTextAnimations();
-                    console.log('SplitText animations initialized on retry');
-                  } catch (retryError) {
-                    console.warn('SplitText animations failed on retry:', retryError);
-                    // Final fallback - force refresh all SplitText animations
-                    if (typeof forceRefreshSplitTextAnimations === 'function') {
-                      forceRefreshSplitTextAnimations();
-                      console.log('Force refresh SplitText animations executed');
-                    }
-                  }
-                }, 500);
-              }
+              initSplitTextAnimations();
             }
-          }, 300); // Increased delay for better DOM readiness
+          }, 200);
          
 
           // Initialize video after all other animations are set up
           setTimeout(() => {
             initHomeVideo();
-          }, 1000); // Increased delay to ensure page is fully loaded
+          }, 1000);
           
           // Refresh ScrollTrigger after all animations are set up
           setTimeout(() => {
             if (typeof ScrollTrigger !== 'undefined') {
               ScrollTrigger.refresh(true);
             }
-          }, 100); // Increased delay to ensure all animations are set up
+          }, 100);
         }, 150);
 
         
@@ -881,7 +852,7 @@ function truncateByWords(el, wordLimit = 43) {
 }
 
 function cleanupAllPageAnimations() {
-  // Kill ALL ScrollTriggers (only during page transitions)
+  // Kill ALL ScrollTriggers
   if (typeof ScrollTrigger !== 'undefined') {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
@@ -889,7 +860,7 @@ function cleanupAllPageAnimations() {
   // Kill all GSAP animations
   gsap.killTweensOf("*");
   
-  // Clean up SplitText instances - look for elements with _splitTextInstance property
+  // Clean up SplitText instances
   if (typeof SplitText !== 'undefined') {
     // Find all elements that have SplitText instances attached
     const allElements = document.querySelectorAll('*');
@@ -904,11 +875,9 @@ function cleanupAllPageAnimations() {
       }
     });
     
-    // Remove any existing .line elements that might be orphaned
+    // Remove any existing .line elements
     document.querySelectorAll('.line').forEach(line => {
-      if (!line.parentElement || !line.parentElement._splitTextInstance) {
-        line.remove();
-      }
+      line.remove();
     });
   }
   
@@ -947,78 +916,8 @@ function initSplitTextAnimations(scope = document) {
     return;
   }
 
-  // Check if we're on a page that might have different structure
-  const isProjectsPage = window.location.pathname.includes('/all-projects') || window.location.pathname.includes('/projects/');
-  const isContactPage = window.location.pathname.includes('/contact');
-  const isAboutPage = window.location.pathname.includes('/about');
-
-  // More specific and robust element selection
-  const elementSelectors = [
-    "h1", "h2", "h3", "h4", "h5", "h6", 
-    "p:not(.w-form-done):not(.w-form-fail)", // Exclude form messages
-    ".logo img", 
-    ".btn", 
-    ".nav a", 
-    "#email-form label", 
-    ".text-link", 
-    ".link-box", 
-    "#email-form form div",
-    ".property .name",
-    ".property .price", 
-    ".property .info",
-    ".bottom-cta h3",
-    ".bottom-cta .button-link"
-  ];
-
-  // Add page-specific selectors
-  if (isProjectsPage) {
-    elementSelectors.push(
-      ".projects h1",
-      ".projects .center h1",
-      ".projects .property .name",
-      ".projects .property .price",
-      ".projects .property .info",
-      ".projects .bottom-cta h3",
-      ".projects .bottom-cta .button-link"
-    );
-  }
-
-  // Try to find elements safely
-  let elements = [];
-  elementSelectors.forEach(selector => {
-    try {
-      const found = scope.querySelectorAll(selector);
-      if (found.length > 0) {
-        elements = elements.concat(Array.from(found));
-      }
-    } catch (error) {
-      console.warn(`Selector "${selector}" not found or invalid:`, error);
-    }
-  });
-
-  // Remove duplicates
-  elements = [...new Set(elements)];
-
-  console.log(`Found ${elements.length} elements for SplitText animation on ${window.location.pathname}`);
-
-  // If no elements found, try a more general approach
-  if (elements.length === 0) {
-    console.log('No specific elements found, trying general text elements...');
-    try {
-      const generalElements = scope.querySelectorAll('h1, h2, h3, h4, h5, h6, p');
-      elements = Array.from(generalElements).filter(el => 
-        el.textContent.trim() && 
-        !el.querySelector('.line') && 
-        !el._splitTextInstance
-      );
-      console.log(`Found ${elements.length} general elements for SplitText animation`);
-    } catch (error) {
-      console.warn('Error finding general elements:', error);
-    }
-  }
-
-  let successCount = 0;
-  let errorCount = 0;
+  // Simple element selection - target all text elements
+  const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
 
   elements.forEach((element) => {
     // Skip if element already has SplitText applied or if it's empty
@@ -1031,18 +930,6 @@ function initSplitTextAnimations(scope = document) {
       return;
     }
 
-    // Skip if element is not visible or has no dimensions
-    const rect = element.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) {
-      return;
-    }
-
-    // Apply word truncation for specific elements but still allow animation
-    if (element.closest(".home-properties-grid") && element.matches("p.info")) {
-      truncateByWords(element, 43);
-      // Don't return here - continue with SplitText animation
-    }
-
     try {
       // Create SplitText instance
       const split = new SplitText(element, { type: "lines", linesClass: "line" });
@@ -1052,7 +939,6 @@ function initSplitTextAnimations(scope = document) {
 
       // Ensure lines exist before proceeding
       if (!split.lines || split.lines.length === 0) {
-        console.warn('No lines created for element:', element);
         return;
       }
 
@@ -1077,18 +963,11 @@ function initSplitTextAnimations(scope = document) {
           trigger: element,
           start: "top bottom",
           once: true,
-          id: `splittext-${Math.random()}`, // Add unique ID
+          id: `splittext-${Math.random()}`,
           onEnter: () => tl.play()
         },
         paused: true
       });
-
-      // Add a small delay to prevent immediate triggering
-      setTimeout(() => {
-        if (tl.scrollTrigger && !tl.scrollTrigger.isInViewport) {
-          tl.scrollTrigger.refresh();
-        }
-      }, 100);
 
       tl.to(split.lines, {
         yPercent: 0,
@@ -1099,19 +978,14 @@ function initSplitTextAnimations(scope = document) {
         delay: element.closest(".hero, .delay") ? 0.5 : 0,
         ease: "power4.out"
       });
-
-      successCount++;
     } catch (error) {
       console.warn('Error applying SplitText to element:', element, error);
-      errorCount++;
       // Clean up any partial state
       if (element._splitTextInstance) {
         delete element._splitTextInstance;
       }
     }
   });
-
-  console.log(`SplitText animation complete: ${successCount} successful, ${errorCount} failed`);
 }
 
 
@@ -3340,26 +3214,18 @@ window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
 
 window.debugSplitTextStatus = debugSplitTextStatus;
 
-// Handle CMS filter interactions on projects page
-function handleProjectsPageFilterChanges() {
-  const isProjectsPage = window.location.pathname.includes('/all-projects') || window.location.pathname.includes('/projects/');
-  
-  if (isProjectsPage) {
-    // Listen for CMS filter changes
-    document.addEventListener('click', (e) => {
-      const radioButton = e.target.closest('.w-radio input[type="radio"]');
-      if (radioButton) {
-        // Wait for the filter to complete and then reinitialize SplitText
-        setTimeout(() => {
-          if (typeof initSplitTextAnimations === 'function') {
-            console.log('Reinitializing SplitText after filter change...');
-            initSplitTextAnimations();
-          }
-        }, 1000); // Give CMS filter time to update the DOM
+// Simple global handler for all radio button changes (including CMS filters)
+document.addEventListener('click', (e) => {
+  const radioButton = e.target.closest('.w-radio input[type="radio"]');
+  if (radioButton) {
+    // Wait for any dynamic content to update and then reinitialize SplitText
+    setTimeout(() => {
+      if (typeof initSplitTextAnimations === 'function') {
+        initSplitTextAnimations();
       }
-    });
+    }, 500);
   }
-}
+});
 
-window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
+
 
