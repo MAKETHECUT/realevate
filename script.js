@@ -286,7 +286,8 @@ function initCustomSmoothScrolling() {
     // Mobile-specific optimizations
     const isMobile = window.innerWidth < 650;
     if (isMobile) {
-        // Use simpler smooth scrolling on mobile for better performance
+        // On mobile, use native scrolling but still initialize basic functionality
+        // This prevents conflicts with GSAP ScrollTrigger
         return;
     }
 
@@ -751,6 +752,11 @@ function initPageTransitions() {
           }
           gsap.killTweensOf("*");
         }
+        
+        // Ensure proper scroll position and reset any scroll-related state
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
 
         // 8. Re-register GSAP plugins
         if (typeof gsap !== 'undefined') {
@@ -1009,6 +1015,13 @@ function initializePageAfterTransition() {
       ScrollTrigger.refresh(true);
     }
   }, 200);
+  
+  // Final refresh to ensure all ScrollTriggers are working properly
+  setTimeout(() => {
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+  }, 500);
 }
 
 function initSplitTextAnimations(scope = document) {
@@ -1107,6 +1120,15 @@ function initGsapAnimations() {
     ensureProperScrollPosition();
     
     const isMobile = window.innerWidth < 650;
+    
+    // Kill any existing ScrollTriggers to prevent conflicts
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.getAll().forEach(trigger => {
+        if (trigger.vars.id && trigger.vars.id.includes('gsap-animation')) {
+          trigger.kill();
+        }
+      });
+    }
 
   // Common animations for all pages
   gsap.fromTo(".clipping-video, .about-hero-image", 
@@ -1150,7 +1172,8 @@ function initGsapAnimations() {
         start: "top top",
         end: `+=${scrollEnd}`,
         scrub: 0.5,
-        invalidateOnRefresh: true
+        invalidateOnRefresh: true,
+        id: "gsap-animation-video-visual"
       }
     });
 
@@ -1166,15 +1189,24 @@ function initGsapAnimations() {
       pinSpacing: true,
       scrub: 0.5,
       anticipatePin: 0,
-      onEnter: () => ScrollTrigger.getAll().forEach(st => {
-        if (st.trigger !== document.querySelector(".hero")) st.disable();
-      }),
-      onLeave: () => ScrollTrigger.getAll().forEach(st => st.enable())
+      id: "hero-pin",
+      onEnter: () => {
+        // Only disable other ScrollTriggers that are not essential
+        ScrollTrigger.getAll().forEach(st => {
+          if (st.vars.id && !st.vars.id.includes('hero') && !st.vars.id.includes('splittext')) {
+            st.disable();
+          }
+        });
+      },
+      onLeave: () => {
+        // Re-enable all ScrollTriggers
+        ScrollTrigger.getAll().forEach(st => st.enable());
+      }
     });
   }
 
   // Work thumbnail animations
-  document.querySelectorAll('.work-thumbnail .image-wrapper img').forEach(img => {
+  document.querySelectorAll('.work-thumbnail .image-wrapper img').forEach((img, index) => {
     gsap.fromTo(img, 
       { y: '-10%', scale: 1.1 }, 
       {
@@ -1185,7 +1217,8 @@ function initGsapAnimations() {
           trigger: img,
           start: 'top bottom',
           end: 'bottom top',
-          scrub: 1.2
+          scrub: 1.2,
+          id: `gsap-animation-thumbnail-${index}`
         }
       }
     );
@@ -1193,7 +1226,7 @@ function initGsapAnimations() {
 
   // Logo animations
   gsap.set(".home-about .logo", { opacity: 0, visibility: "hidden" });
-  gsap.utils.toArray(".home-about .logo").forEach((logo) => {
+  gsap.utils.toArray(".home-about .logo").forEach((logo, index) => {
     gsap.to(logo, {
       opacity: 1,
       visibility: "visible",
@@ -1202,7 +1235,8 @@ function initGsapAnimations() {
       scrollTrigger: {
         trigger: logo,
         start: "top 80%",
-        toggleActions: "play none none none"
+        toggleActions: "play none none none",
+        id: `gsap-animation-logo-${index}`
       }
     });
   });
@@ -1224,13 +1258,14 @@ function initGsapAnimations() {
           start: "top 1%",
           end: "bottom 0%",
           scrub: 0.5,
+          id: "gsap-animation-hero-headline"
         }
       }
     );
   }
 
   // Image parallax animations
-  document.querySelectorAll('.home-container .image img, .about-hero-image img, .about-values .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
+  document.querySelectorAll('.home-container .image img, .about-hero-image img, .about-values .image img, .property .image img, .place .image img, .footer-image img').forEach((img, index) => {
     gsap.fromTo(img, {
       yPercent: -10,
       transformOrigin: "center center",
@@ -1243,12 +1278,13 @@ function initGsapAnimations() {
         start: "top bottom",
         end: "bottom top",
         scrub: 1,
+        id: `gsap-animation-parallax-${index}`
       }
     });
   });
 
   // Left to right animations
-  gsap.utils.toArray(".left-to-right").forEach((img) => {
+  gsap.utils.toArray(".left-to-right").forEach((img, index) => {
     gsap.fromTo(img, 
       { clipPath: "inset(0 100% 0 0)" }, 
       {
@@ -1259,14 +1295,15 @@ function initGsapAnimations() {
         scrollTrigger: {
           trigger: img,
           start: "top 95%",
-          toggleActions: "play none none none"
+          toggleActions: "play none none none",
+          id: `gsap-animation-left-right-${index}`
         }
       }
     );
   });
 
   // Right to left animations
-  gsap.utils.toArray(".right-to-left").forEach((img) => {
+  gsap.utils.toArray(".right-to-left").forEach((img, index) => {
     gsap.fromTo(img, 
       { clipPath: "inset(0 0 0 100%)" }, 
       {
@@ -1277,14 +1314,15 @@ function initGsapAnimations() {
         scrollTrigger: {
           trigger: img,
           start: "top 95%",
-          toggleActions: "play none none none"
+          toggleActions: "play none none none",
+          id: `gsap-animation-right-left-${index}`
         }
       }
     );
   });
 
   // Icon animations
-  gsap.utils.toArray(".content .icon").forEach(icon => {
+  gsap.utils.toArray(".content .icon").forEach((icon, index) => {
     gsap.fromTo(icon, 
       { clipPath: "circle(0% at 50% 50%)" }, 
       {
@@ -1294,7 +1332,8 @@ function initGsapAnimations() {
         scrollTrigger: {
           trigger: icon,
           start: "top 85%",
-          toggleActions: "play none none none"
+          toggleActions: "play none none none",
+          id: `gsap-animation-icon-${index}`
         }
       }
     );
@@ -1335,12 +1374,13 @@ function initGsapAnimations() {
   });
 
   // Bullet animations
-  document.querySelectorAll(".bullet").forEach((el) => {
+  document.querySelectorAll(".bullet").forEach((el, index) => {
     gsap.from(el, {
       scrollTrigger: {
         trigger: el,
         start: "top 80%",
-        toggleActions: "play none none none"
+        toggleActions: "play none none none",
+        id: `gsap-animation-bullet-${index}`
       },
       opacity: 0,
       y: 100,
@@ -1351,7 +1391,7 @@ function initGsapAnimations() {
   });
   
   
-  document.querySelectorAll(".w-input, .w-select").forEach((el) => {
+  document.querySelectorAll(".w-input, .w-select").forEach((el, index) => {
     gsap.fromTo(el, {
       clipPath: "inset(0 0 0 100%)"
     }, {
@@ -1361,7 +1401,8 @@ function initGsapAnimations() {
       scrollTrigger: {
         trigger: el,
         start: "top 90%",
-        toggleActions: "play none none none"
+        toggleActions: "play none none none",
+        id: `gsap-animation-input-${index}`
       }
     });
   });
@@ -1375,7 +1416,8 @@ function initGsapAnimations() {
     scrollTrigger: {
       trigger: ".collection-list-1",
       start: "top 90%",
-      toggleActions: "play none none none"
+      toggleActions: "play none none none",
+      id: "gsap-animation-collection-list"
     }
   });
 
@@ -1399,11 +1441,10 @@ function initGsapAnimations() {
           end: `+=${window.innerHeight * 2}`,
           pin: true,
           pinSpacing: false,
+          id: `gsap-animation-stack-${index}`,
           onUpdate: (self) => {
             // Calculate progress and apply stacking effect
             const progress = self.progress;
-            
-
             
             // Animate the ::after pseudo-element from opacity 0 to 0.5
             gsap.set(container, {
@@ -1434,7 +1475,8 @@ function initGsapAnimations() {
           start: "top top",
           end: "bottom top",
           pin: true,
-          pinSpacing: true
+          pinSpacing: true,
+          id: `gsap-animation-stack-pin-${index}`
         });
       }
     });
@@ -1447,6 +1489,7 @@ function initGsapAnimations() {
       start: "top top",
       end: "+=200px",
       scrub: true,
+      id: "gsap-animation-display-toggle",
       onUpdate: self => {
         const el = document.querySelector(".display-toggle");
         if (self.progress >= 1) {
@@ -3378,6 +3421,11 @@ function ensureScrollTriggerRefresh() {
       if (typeof initSplitTextAnimations === 'function') {
         initSplitTextAnimations();
       }
+      
+      // Additional refresh after a delay to ensure everything is properly set up
+      setTimeout(() => {
+        ScrollTrigger.refresh(true);
+      }, 100);
     }, 50);
   }
 }
