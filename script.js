@@ -1,3 +1,12 @@
+window.history.scrollRestoration = "manual";
+
+window.addEventListener("beforeunload", () => {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+});
+
+
 // --- DYNAMIC LIBRARY LOADER  ---
 function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -87,13 +96,7 @@ function loadScript(src) {
   document.addEventListener("DOMContentLoaded", startApp);
   // --- END DYNAMIC LOADER ---
 
-window.history.scrollRestoration = "manual";
 
-window.addEventListener("beforeunload", () => {
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-});
 
 
 // --- PAGE LOADER OVERLAY WITH COUNTER ---
