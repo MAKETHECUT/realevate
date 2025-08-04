@@ -562,71 +562,198 @@ function initCustomSmoothScrolling() {
 
 
 function initPageTransitions() {
-  
+  // Create transition element if it doesn't exist
+  if (!document.querySelector('.transition')) {
+    const div = document.createElement('div');
+    div.className = 'transition';
+    div.innerHTML = `
+      <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
+        <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
+      </svg>
+    `;
+    document.body.appendChild(div);
+  }
 
-  
-    const loader = gsap.timeline();
-    let isAnimating = false;
-    let nextPageHTML = '';
-    let pendingNavigation = null;
-    let lastNavigationTime = 0;
-    const NAVIGATION_COOLDOWN = 1000;
-
-    if (!document.querySelector('.transition')) {
-        const div = document.createElement('div');
-        div.className = 'transition';
-        div.innerHTML = `
-            <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
-                <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
-            </svg>
-        `;
-        document.body.appendChild(div);
+  // Global page transition function
+  function globalPageTransition(url, isPopState = false) {
+    if (window.transitioning) {
+      window.pendingNavigation = { url, isPopState };
+      return;
     }
 
-    const swipeup = document.querySelector('.swipeup');
+    window.transitioning = true;
+    
+    // Check if this is internal project navigation (staying within projects)
+    const isInternalProjectNav = url.includes('/projects/') && window.location.pathname.includes('/projects/');
+    
+    // 2. Start transition animation
     const transition = document.querySelector('.transition');
+    const swipeup = document.querySelector('.swipeup');
     const cursor = document.querySelector('.cursor');
-
-    function canNavigate() {
-        const now = Date.now();
-        if (now - lastNavigationTime < NAVIGATION_COOLDOWN) return false;
-        lastNavigationTime = now;
-        return true;
-    }
-
-    async function handleNavigation(url, isPopState = false) {
-        globalPageTransition(url, isPopState);
-    }
-
-    document.body.addEventListener('click', (e) => {
-        const link = e.target.closest('a[href]');
-        if (!link) return;
-
-        const href = link.getAttribute('href');
-        if (
-            link.target === '_blank' ||
-            href.startsWith('mailto:') ||
-            href.startsWith('tel:') ||
-            href.startsWith('#') ||
-            (href.startsWith('http') && !href.includes(location.hostname))
-        ) return;
-
-        e.preventDefault();
-        history.pushState({ title: document.title }, '', href);
-        handleNavigation(href);
+    
+    const transitionPromise = new Promise((resolve) => {
+      const tl = gsap.timeline({ onComplete: resolve });
+      tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
+      tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+      tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+      tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+      tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
+      tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
+      tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+      tl.set(cursor, { visibility: "hidden" }, 0.2);
     });
 
-    window.addEventListener('popstate', () => {
-        if (window.transitioning) {
-            pendingNavigation = { url: location.href, isPopState: true };
-            return;
+    // 3. Fetch new page content
+    const fetchPromise = fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.text();
+      })
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const nextWrapper = doc.querySelector('.page-wrapper');
+        if (!nextWrapper) throw new Error('No .page-wrapper found');
+        return { html, doc, nextWrapper };
+      });
+
+    // 4. Wait for both animation and fetch
+    Promise.all([transitionPromise, fetchPromise])
+      .then(([_, nextPage]) => {
+        // 5. Swap content
+        const container = document.querySelector('.page-wrapper');
+        if (!container) return;
+
+        document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
+        container.innerHTML = nextPage.nextWrapper.innerHTML;
+
+        // 6. Ensure proper scroll position
+        ensureProperScrollPosition();
+
+        // 7. Clean up ALL animations and instances (AFTER animation, BEFORE new functions)
+        if (!isInternalProjectNav) {
+          cleanupAllPageAnimations();
+        } else {
+          // For internal project navigation, only kill ScrollTriggers but preserve SplitText
+          if (typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+          }
+          gsap.killTweensOf("*");
         }
-        handleNavigation(location.href, true);
-    });
 
-    window.addEventListener('DOMContentLoaded', () => {
-        history.replaceState({ title: document.title }, '', location.href);
-    });
+        // 8. Re-register GSAP plugins
+        if (typeof gsap !== 'undefined') {
+          if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
+          if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
+        }
+
+        // 9. Initialize everything with a small delay to ensure DOM is ready
+        setTimeout(() => {
+          initInfinityGallery();
+          initDisplayToggle();
+          moveShowAllIntoCollectionList();
+          initGsapAnimations();
+          initNavbarShowHide();
+          initCustomSmoothScrolling();
+          initTypeListRadioHandler();
+          reloadFinsweetCMS();
+          
+          // For internal project navigation, don't re-initialize SplitText
+          if (!isInternalProjectNav) {
+            initSplitTextAnimations();
+          }
+
+          // Initialize video after animations
+          setTimeout(() => initHomeVideo(), 500);
+
+          // Refresh ScrollTrigger
+          setTimeout(() => {
+            if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+          }, 100);
+        }, 50); // Small delay to ensure DOM is ready
+
+        // 10. Complete transition
+        const tl = gsap.timeline();
+        tl.to(swipeup, {
+          duration: 0.6,
+          ease: 'power4.in',
+          attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
+        });
+
+        tl.to(swipeup, {
+          duration: 0.4,
+          ease: 'power2',
+          attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
+          onComplete: () => {
+            // Reset cursor
+            gsap.set(cursor, { scale: 0, visibility: "visible" });
+            gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
+            gsap.set(".menu-toggle", { opacity: 0 });
+
+            const inTl = gsap.timeline();
+            inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+            inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
+            inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
+
+            // Hide transition
+            transition.style.opacity = '0';
+            transition.style.visibility = 'hidden';
+            window.transitioning = false;
+
+            // Initialize cursor
+            if (!window.cursorInitialized) {
+              initInteractiveCursor();
+            }
+
+            if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
+              window.navbarShowHide = initNavbarShowHide();
+            }
+
+            // Handle pending navigation
+            if (window.pendingNavigation) {
+              const { url, isPopState } = window.pendingNavigation;
+              window.pendingNavigation = null;
+              setTimeout(() => globalPageTransition(url, isPopState), 100);
+            }
+          }
+        });
+      })
+      .catch(err => {
+        console.error('Navigation error:', err);
+        window.location.href = url;
+      });
+  }
+
+  // Set up global event listeners
+  document.body.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+
+    const href = link.getAttribute('href');
+    if (
+      link.target === '_blank' ||
+      href.startsWith('mailto:') ||
+      href.startsWith('tel:') ||
+      href.startsWith('#') ||
+      (href.startsWith('http') && !href.includes(location.hostname))
+    ) return;
+
+    e.preventDefault();
+    history.pushState({ title: document.title }, '', href);
+    globalPageTransition(href);
+  });
+
+  window.addEventListener('popstate', () => {
+    if (window.transitioning) {
+      window.pendingNavigation = { url: location.href, isPopState: true };
+      return;
+    }
+    globalPageTransition(location.href, true);
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    history.replaceState({ title: document.title }, '', location.href);
+  });
 }
 
 
@@ -3014,139 +3141,6 @@ window.addEventListener('resize', () => {
     }
   }, 100);
 });
-
-// Global unified page transition system
-function globalPageTransition(url, isPopState = false) {
-  if (window.transitioning) {
-    window.pendingNavigation = { url, isPopState };
-    return;
-  }
-
-  window.transitioning = true;
-  
-  // 1. Clean up ALL animations and instances
-  cleanupAllPageAnimations();
-  
-  // 2. Start transition animation
-  const transition = document.querySelector('.transition');
-  const swipeup = document.querySelector('.swipeup');
-  const cursor = document.querySelector('.cursor');
-  
-  const transitionPromise = new Promise((resolve) => {
-    const tl = gsap.timeline({ onComplete: resolve });
-    tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
-    tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-    tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-    tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-    tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
-    tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
-    tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
-    tl.set(cursor, { visibility: "hidden" }, 0.2);
-  });
-
-  // 3. Fetch new page content
-  const fetchPromise = fetch(url)
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return response.text();
-    })
-    .then(html => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const nextWrapper = doc.querySelector('.page-wrapper');
-      if (!nextWrapper) throw new Error('No .page-wrapper found');
-      return { html, doc, nextWrapper };
-    });
-
-  // 4. Wait for both animation and fetch
-  Promise.all([transitionPromise, fetchPromise])
-    .then(([_, nextPage]) => {
-      // 5. Swap content
-      const container = document.querySelector('.page-wrapper');
-      if (!container) return;
-
-      document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
-      container.innerHTML = nextPage.nextWrapper.innerHTML;
-
-      // 6. Ensure proper scroll position
-      ensureProperScrollPosition();
-
-      // 7. Re-register GSAP plugins
-      if (typeof gsap !== 'undefined') {
-        if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
-        if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
-      }
-
-      // 8. Initialize everything immediately
-      initInfinityGallery();
-      initDisplayToggle();
-      moveShowAllIntoCollectionList();
-      initGsapAnimations();
-      initNavbarShowHide();
-      initCustomSmoothScrolling();
-      initTypeListRadioHandler();
-      reloadFinsweetCMS();
-      initSplitTextAnimations();
-
-      // 9. Initialize video after animations
-      setTimeout(() => initHomeVideo(), 500);
-
-      // 10. Refresh ScrollTrigger
-      setTimeout(() => {
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-      }, 100);
-
-      // 11. Complete transition
-      const tl = gsap.timeline();
-      tl.to(swipeup, {
-        duration: 0.6,
-        ease: 'power4.in',
-        attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
-      });
-
-      tl.to(swipeup, {
-        duration: 0.4,
-        ease: 'power2',
-        attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
-        onComplete: () => {
-          // Reset cursor
-          gsap.set(cursor, { scale: 0, visibility: "visible" });
-          gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
-          gsap.set(".menu-toggle", { opacity: 0 });
-
-          const inTl = gsap.timeline();
-          inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-          inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
-          inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
-
-          // Hide transition
-          transition.style.opacity = '0';
-          transition.style.visibility = 'hidden';
-          window.transitioning = false;
-
-          // Initialize cursor
-          if (!window.cursorInitialized) {
-            initInteractiveCursor();
-          }
-
-          if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
-            window.navbarShowHide = initNavbarShowHide();
-          }
-
-          // Handle pending navigation
-          if (window.pendingNavigation) {
-            const { url, isPopState } = window.pendingNavigation;
-            window.pendingNavigation = null;
-            setTimeout(() => globalPageTransition(url, isPopState), 100);
-          }
-        }
-      });
-    })
-    .catch(err => {
-      console.error('Navigation error:', err);
-      window.location.href = url;
-    });
-}
 
 
 
