@@ -21,13 +21,28 @@ function loadScript(src) {
   
   async function loadAllLibraries() {
     try {
+      console.log('Loading GSAP...');
       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
+      
+      console.log('Loading ScrollTrigger...');
       await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
+      
+      console.log('Loading SplitText...');
       await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
+      
+      console.log('Loading ScrollToPlugin...');
       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
+      
+      console.log('Loading ImagesLoaded...');
       await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
+      
+      console.log('Loading Lottie...');
       await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+      
+      console.log('Loading CMS Filter...');
       await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
+      
+      console.log('All libraries loaded successfully');
     } catch (error) {
       console.error('Error loading libraries:', error);
       // Continue with basic functionality even if some libraries fail to load
@@ -38,15 +53,36 @@ function loadScript(src) {
   
   async function startApp() {
     try {
+      console.log('Starting app initialization...');
+      
+      // Load all libraries first
       await loadAllLibraries();
       
-      // Register GSAP plugins
-      if (typeof gsap !== 'undefined') {
-        gsap.registerPlugin(ScrollTrigger, SplitText);
-        if (typeof ScrollToPlugin !== 'undefined') {
-          gsap.registerPlugin(ScrollToPlugin);
-        }
+      // Wait a bit to ensure all scripts are properly loaded
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verify GSAP and plugins are loaded
+      if (typeof gsap === 'undefined') {
+        throw new Error('GSAP not loaded');
       }
+      
+      if (typeof ScrollTrigger === 'undefined') {
+        throw new Error('ScrollTrigger not loaded');
+      }
+      
+      if (typeof SplitText === 'undefined') {
+        throw new Error('SplitText not loaded');
+      }
+      
+      console.log('GSAP and plugins verified');
+      
+      // Register GSAP plugins
+      gsap.registerPlugin(ScrollTrigger, SplitText);
+      if (typeof ScrollToPlugin !== 'undefined') {
+        gsap.registerPlugin(ScrollToPlugin);
+      }
+      
+      console.log('GSAP plugins registered');
   
       // UserWay widget
       (function(d) {
@@ -56,8 +92,10 @@ function loadScript(src) {
         (d.body || d.head).appendChild(s);
       })(document);
   
-      // Start the loader animation
+      // Start the loader animation with proper initialization sequence
       animateLoaderCounter(() => {
+        console.log('Loader completed, initializing functions...');
+        
         // Initialize functions after loader completes
         refreshbreakingpoints();
         
@@ -69,6 +107,7 @@ function loadScript(src) {
         
         // Initialize mobile-specific features
         const isMobile = window.innerWidth < 650;
+        console.log('Is mobile:', isMobile);
         
         if (!isMobile) {
           // Desktop-only features
@@ -79,28 +118,44 @@ function loadScript(src) {
         // Initialize display toggle (works on both mobile and desktop)
         initDisplayToggle();
         
-        // Initialize animations
-        initGsapAnimations();
-        initSplitTextAnimations();
+        // Initialize animations with proper delays
+        setTimeout(() => {
+          console.log('Initializing GSAP animations...');
+          initGsapAnimations();
+          
+          setTimeout(() => {
+            console.log('Initializing SplitText animations...');
+            initSplitTextAnimations();
+            
+            // Initialize type-list radio button handler
+            if (typeof initTypeListRadioHandler === 'function') {
+              initTypeListRadioHandler();
+            }
+            
+            // Only initialize cursor if not already initialized and not mobile
+            if (!window.cursorInitialized && !isMobile) {
+                initInteractiveCursor();
+            }
+            
+            // Refresh ScrollTrigger after all animations are set up
+            if (typeof ScrollTrigger !== 'undefined') {
+              console.log('Refreshing ScrollTrigger...');
+              ScrollTrigger.refresh(true);
+            }
+            
+            // Initialize smooth scrolling (works on both mobile and desktop)
+            if (typeof initCustomSmoothScrolling === 'function') {
+              initCustomSmoothScrolling();
+            }
+            
+            // Initialize video immediately without delay
+            initHomeVideo();
+            
+            console.log('All functions initialized successfully');
+          }, 200);
+        }, 100);
         
-        // Initialize type-list radio button handler
-        if (typeof initTypeListRadioHandler === 'function') {
-          initTypeListRadioHandler();
-        }
-        
-        // Only initialize cursor if not already initialized and not mobile
-        if (!window.cursorInitialized && !isMobile) {
-            initInteractiveCursor();
-        }
-        
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-        
-        // Initialize smooth scrolling (works on both mobile and desktop)
-        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
-        
-        // Initialize video immediately without delay
-        initHomeVideo();
-      }, window.innerWidth < 650 ? 200 : 400); // Faster loader on mobile
+      }, window.innerWidth < 650 ? 300 : 500); // Longer loader to ensure everything is ready
   
     } catch (error) {
       console.error('Error starting app:', error);
@@ -108,6 +163,7 @@ function loadScript(src) {
       // Fallback initialization if script loading fails
       setTimeout(() => {
         try {
+          console.log('Running fallback initialization...');
           refreshbreakingpoints();
           initMegaMenu();
           initPageTransitions();
@@ -973,6 +1029,7 @@ function ensureProperScrollPosition() {
 
 function initializePageAfterTransition() {
   const isMobile = window.innerWidth < 650;
+  console.log('Initializing page after transition, mobile:', isMobile);
   
   // First, initialize core functionality
   moveShowAllIntoCollectionList();
@@ -993,41 +1050,72 @@ function initializePageAfterTransition() {
   initTypeListRadioHandler();
   reloadFinsweetCMS();
   
-  // Then initialize GSAP animations
-  initGsapAnimations();
-  
-  // Finally, initialize SplitText animations with a small delay to ensure DOM is fully ready
+  // Then initialize GSAP animations with proper verification
   setTimeout(() => {
-    initSplitTextAnimations();
+    console.log('Initializing GSAP animations after transition...');
     
-    // Refresh ScrollTrigger after all animations are set up
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
+    // Verify GSAP is available
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+      console.error('GSAP or ScrollTrigger not available after transition');
+      return;
     }
     
-    // Initialize video after all animations
-    setTimeout(() => initHomeVideo(), 50);
+    initGsapAnimations();
+    
+    // Finally, initialize SplitText animations with a small delay to ensure DOM is fully ready
+    setTimeout(() => {
+      console.log('Initializing SplitText animations after transition...');
+      
+      if (typeof SplitText === 'undefined') {
+        console.error('SplitText not available after transition');
+        return;
+      }
+      
+      initSplitTextAnimations();
+      
+      // Refresh ScrollTrigger after all animations are set up
+      if (typeof ScrollTrigger !== 'undefined') {
+        console.log('Refreshing ScrollTrigger after transition...');
+        ScrollTrigger.refresh(true);
+      }
+      
+      // Initialize video after all animations
+      setTimeout(() => initHomeVideo(), 50);
+    }, 200);
+    
+    // Additional ScrollTrigger refresh after a longer delay to ensure everything is properly set up
+    setTimeout(() => {
+      if (typeof ScrollTrigger !== 'undefined') {
+        console.log('Additional ScrollTrigger refresh after transition...');
+        ScrollTrigger.refresh(true);
+      }
+    }, 500);
+    
+    // Final refresh to ensure all ScrollTriggers are working properly
+    setTimeout(() => {
+      if (typeof ScrollTrigger !== 'undefined') {
+        console.log('Final ScrollTrigger refresh after transition...');
+        ScrollTrigger.refresh(true);
+      }
+    }, 1000);
   }, 100);
-  
-  // Additional ScrollTrigger refresh after a longer delay to ensure everything is properly set up
-  setTimeout(() => {
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
-    }
-  }, 200);
-  
-  // Final refresh to ensure all ScrollTriggers are working properly
-  setTimeout(() => {
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
-    }
-  }, 500);
 }
 
 function initSplitTextAnimations(scope = document) {
-  if (typeof SplitText === 'undefined') return;
+  console.log('Initializing SplitText animations...');
+  
+  if (typeof SplitText === 'undefined') {
+    console.error('SplitText not available for animations');
+    return;
+  }
+  
+  if (typeof ScrollTrigger === 'undefined') {
+    console.error('ScrollTrigger not available for SplitText animations');
+    return;
+  }
   
   const isMobile = window.innerWidth < 650;
+  console.log('SplitText animations - mobile:', isMobile);
 
   const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
   
@@ -1116,19 +1204,31 @@ Page GSAP Animations
 
 
 function initGsapAnimations() {
+    console.log('Initializing GSAP animations...');
+    
+    // Verify GSAP and ScrollTrigger are available
+    if (typeof gsap === 'undefined') {
+      console.error('GSAP not available for animations');
+      return;
+    }
+    
+    if (typeof ScrollTrigger === 'undefined') {
+      console.error('ScrollTrigger not available for animations');
+      return;
+    }
+    
     // Ensure we're at the top of the page before creating animations
     ensureProperScrollPosition();
     
     const isMobile = window.innerWidth < 650;
+    console.log('GSAP animations - mobile:', isMobile);
     
     // Kill any existing ScrollTriggers to prevent conflicts
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.getAll().forEach(trigger => {
-        if (trigger.vars.id && trigger.vars.id.includes('gsap-animation')) {
-          trigger.kill();
-        }
-      });
-    }
+    ScrollTrigger.getAll().forEach(trigger => {
+      if (trigger.vars.id && trigger.vars.id.includes('gsap-animation')) {
+        trigger.kill();
+      }
+    });
 
   // Common animations for all pages
   gsap.fromTo(".clipping-video, .about-hero-image", 
@@ -3432,6 +3532,67 @@ function ensureScrollTriggerRefresh() {
 
 // Make the function globally available
 window.ensureScrollTriggerRefresh = ensureScrollTriggerRefresh;
+
+// Function to verify all scripts are properly loaded
+function verifyScriptsLoaded() {
+  const scripts = {
+    gsap: typeof gsap !== 'undefined',
+    scrollTrigger: typeof ScrollTrigger !== 'undefined',
+    splitText: typeof SplitText !== 'undefined',
+    scrollToPlugin: typeof ScrollToPlugin !== 'undefined'
+  };
+  
+  console.log('Script loading status:', scripts);
+  
+  return Object.values(scripts).every(loaded => loaded);
+}
+
+// Make verification function globally available
+window.verifyScriptsLoaded = verifyScriptsLoaded;
+
+// Function to force reinitialize everything
+function forceReinitializeAll() {
+  console.log('Force reinitializing all functions...');
+  
+  // Verify scripts are loaded
+  if (!verifyScriptsLoaded()) {
+    console.error('Scripts not loaded, cannot reinitialize');
+    return;
+  }
+  
+  // Clean up everything first
+  cleanupAllPageAnimations();
+  
+  // Reinitialize everything
+  setTimeout(() => {
+    initMegaMenu();
+    initPageTransitions();
+    moveShowAllIntoCollectionList();
+    initNavbarShowHide();
+    initDisplayToggle();
+    initTypeListRadioHandler();
+    reloadFinsweetCMS();
+    
+    setTimeout(() => {
+      initGsapAnimations();
+      
+      setTimeout(() => {
+        initSplitTextAnimations();
+        
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh(true);
+        }
+        
+        initHomeVideo();
+        
+        console.log('Force reinitialization complete');
+      }, 200);
+    }, 100);
+  }, 50);
+}
+
+// Make force reinitialize function globally available
+window.forceReinitializeAll = forceReinitializeAll;
 
 
 
