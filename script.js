@@ -98,64 +98,34 @@ function loadScript(src) {
         
         // Initialize functions after loader completes
         refreshbreakingpoints();
-        
-        // Initialize core functionality first
+        initInteractiveCursor();
         initMegaMenu();
         initPageTransitions();
+        initInfinityGallery();
         moveShowAllIntoCollectionList();
+        initDisplayToggle();
         initNavbarShowHide();
+        initGsapAnimations();
+        initSplitTextAnimations();
         
-        // Initialize mobile-specific features
-        const isMobile = window.innerWidth < 650;
-        console.log('Is mobile:', isMobile);
-        
-        if (!isMobile) {
-          // Desktop-only features
-          initInteractiveCursor();
-          initInfinityGallery();
+        // Initialize type-list radio button handler
+        if (typeof initTypeListRadioHandler === 'function') {
+          initTypeListRadioHandler();
         }
         
-        // Initialize display toggle (works on both mobile and desktop)
-        initDisplayToggle();
+        // Only initialize cursor if not already initialized
+        if (!window.cursorInitialized) {
+            initInteractiveCursor();
+        }
         
-        // Initialize animations with proper delays
-        setTimeout(() => {
-          console.log('Initializing GSAP animations...');
-          initGsapAnimations();
-          
-          setTimeout(() => {
-            console.log('Initializing SplitText animations...');
-            initSplitTextAnimations();
-            
-            // Initialize type-list radio button handler
-            if (typeof initTypeListRadioHandler === 'function') {
-              initTypeListRadioHandler();
-            }
-            
-            // Only initialize cursor if not already initialized and not mobile
-            if (!window.cursorInitialized && !isMobile) {
-                initInteractiveCursor();
-            }
-            
-            // Refresh ScrollTrigger after all animations are set up
-            if (typeof ScrollTrigger !== 'undefined') {
-              console.log('Refreshing ScrollTrigger...');
-              ScrollTrigger.refresh(true);
-            }
-            
-            // Initialize smooth scrolling (works on both mobile and desktop)
-            if (typeof initCustomSmoothScrolling === 'function') {
-              initCustomSmoothScrolling();
-            }
-            
-            // Initialize video immediately without delay
-            initHomeVideo();
-            
-            console.log('All functions initialized successfully');
-          }, 200);
-        }, 100);
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
         
-      }, window.innerWidth < 650 ? 300 : 500); // Longer loader to ensure everything is ready
+        // Initialize video immediately without delay
+        initHomeVideo();
+        
+        console.log('All functions initialized successfully');
+      }, 400); // Standard loader duration
   
     } catch (error) {
       console.error('Error starting app:', error);
@@ -338,14 +308,6 @@ function initCustomSmoothScrolling() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    
-    // Mobile-specific optimizations
-    const isMobile = window.innerWidth < 650;
-    if (isMobile) {
-        // On mobile, use native scrolling but still initialize basic functionality
-        // This prevents conflicts with GSAP ScrollTrigger
-        return;
-    }
 
     class S {
         constructor() {
@@ -748,19 +710,16 @@ function initPageTransitions() {
     const swipeup = document.querySelector('.swipeup');
     const cursor = document.querySelector('.cursor');
     
-    const isMobile = window.innerWidth < 650;
     const transitionPromise = new Promise((resolve) => {
       const tl = gsap.timeline({ onComplete: resolve });
       tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
       tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-      tl.to(swipeup, { duration: isMobile ? 0.3 : 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-      tl.to(swipeup, { duration: isMobile ? 0.2 : 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-      tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: isMobile ? 0.3 : 0.5, stagger: isMobile ? 0.03 : 0.06, ease: "power1.out" }, 0);
-      tl.to(".menu-toggle", { opacity: 0, duration: isMobile ? 0.3 : 0.5, ease: "power1.out" }, 0);
-      if (!isMobile) {
-        tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
-        tl.set(cursor, { visibility: "hidden" }, 0.2);
-      }
+      tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+      tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+      tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
+      tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
+      tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+      tl.set(cursor, { visibility: "hidden" }, 0.2);
     });
 
     // 3. Fetch new page content
@@ -1028,77 +987,28 @@ function ensureProperScrollPosition() {
 }
 
 function initializePageAfterTransition() {
-  const isMobile = window.innerWidth < 650;
-  console.log('Initializing page after transition, mobile:', isMobile);
+  console.log('Initializing page after transition...');
   
-  // First, initialize core functionality
+  // Initialize everything in proper sequence
+  initInfinityGallery();
+  initDisplayToggle();
   moveShowAllIntoCollectionList();
   initNavbarShowHide();
-  
-  // Initialize mobile-specific features
-  if (!isMobile) {
-    initInfinityGallery();
-  }
-  
-  initDisplayToggle();
-  
-  // Initialize smooth scrolling with a small delay to ensure DOM is ready
-  setTimeout(() => {
-    initCustomSmoothScrolling();
-  }, 10);
-  
+  initCustomSmoothScrolling();
   initTypeListRadioHandler();
   reloadFinsweetCMS();
+  initGsapAnimations();
+  initSplitTextAnimations();
   
-  // Then initialize GSAP animations with proper verification
-  setTimeout(() => {
-    console.log('Initializing GSAP animations after transition...');
-    
-    // Verify GSAP is available
-    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-      console.error('GSAP or ScrollTrigger not available after transition');
-      return;
-    }
-    
-    initGsapAnimations();
-    
-    // Finally, initialize SplitText animations with a small delay to ensure DOM is fully ready
-    setTimeout(() => {
-      console.log('Initializing SplitText animations after transition...');
-      
-      if (typeof SplitText === 'undefined') {
-        console.error('SplitText not available after transition');
-        return;
-      }
-      
-      initSplitTextAnimations();
-      
-      // Refresh ScrollTrigger after all animations are set up
-      if (typeof ScrollTrigger !== 'undefined') {
-        console.log('Refreshing ScrollTrigger after transition...');
-        ScrollTrigger.refresh(true);
-      }
-      
-      // Initialize video after all animations
-      setTimeout(() => initHomeVideo(), 50);
-    }, 200);
-    
-    // Additional ScrollTrigger refresh after a longer delay to ensure everything is properly set up
-    setTimeout(() => {
-      if (typeof ScrollTrigger !== 'undefined') {
-        console.log('Additional ScrollTrigger refresh after transition...');
-        ScrollTrigger.refresh(true);
-      }
-    }, 500);
-    
-    // Final refresh to ensure all ScrollTriggers are working properly
-    setTimeout(() => {
-      if (typeof ScrollTrigger !== 'undefined') {
-        console.log('Final ScrollTrigger refresh after transition...');
-        ScrollTrigger.refresh(true);
-      }
-    }, 1000);
-  }, 100);
+  // Refresh ScrollTrigger after all animations are set up
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.refresh(true);
+  }
+  
+  // Initialize video after all animations
+  setTimeout(() => initHomeVideo(), 50);
+  
+  console.log('Page transition initialization complete');
 }
 
 function initSplitTextAnimations(scope = document) {
@@ -1113,9 +1023,6 @@ function initSplitTextAnimations(scope = document) {
     console.error('ScrollTrigger not available for SplitText animations');
     return;
   }
-  
-  const isMobile = window.innerWidth < 650;
-  console.log('SplitText animations - mobile:', isMobile);
 
   const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
   
@@ -1184,9 +1091,9 @@ function initSplitTextAnimations(scope = document) {
         yPercent: 0,
         clipPath: "inset(-20% -10% -20% 0%)",
         opacity: 1,
-        stagger: isMobile ? 0.08 : 0.12,
-        duration: isMobile ? 0.8 : 1.2,
-        delay: element.closest(".hero, .delay") ? (isMobile ? 0.3 : 0.5) : 0,
+        stagger: 0.12,
+        duration: 1.2,
+        delay: element.closest(".hero, .delay") ? 0.5 : 0,
         ease: "power4.out"
       });
     } catch (error) {
@@ -1220,9 +1127,6 @@ function initGsapAnimations() {
     // Ensure we're at the top of the page before creating animations
     ensureProperScrollPosition();
     
-    const isMobile = window.innerWidth < 650;
-    console.log('GSAP animations - mobile:', isMobile);
-    
     // Kill any existing ScrollTriggers to prevent conflicts
     ScrollTrigger.getAll().forEach(trigger => {
       if (trigger.vars.id && trigger.vars.id.includes('gsap-animation')) {
@@ -1235,8 +1139,8 @@ function initGsapAnimations() {
     { clipPath: "inset(100% 0% 0% 0%)" }, 
     { 
       clipPath: "inset(0% 0% 0% 0%)", 
-      delay: isMobile ? 0.3 : 0.6,
-      duration: isMobile ? 0.8 : 1.2, 
+      delay: 0.6,
+      duration: 1.2, 
       ease: "power4.inOut" 
     }
   );
@@ -1660,7 +1564,6 @@ function resetInteractiveCursor() {
 }
 
 function initInteractiveCursor() {
-  if (window.innerWidth <= 650) return;
 
   const cursor = document.querySelector("#cursor");
   if (!cursor) return;
@@ -1941,12 +1844,6 @@ function refreshbreakingpoints() {
 
 function initInfinityGallery() {
   try {
-    // Skip on mobile for better performance
-    const isMobile = window.innerWidth < 650;
-    if (isMobile) {
-      return;
-    }
-    
     // Destroy the previous instance if it exists
     if (window.infinitySliderInstance) {
       window.infinitySliderInstance.destroy();
@@ -2858,30 +2755,7 @@ function initHomeVideo() {
             return;
         }
 
-        const isMobile = window.innerWidth < 650;
-
-        const videoSrc = isMobile
-          ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
-          : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
-        
-        // Mobile-specific video optimizations
-        if (isMobile) {
-            // Use lower quality video on mobile for better performance
-            const video = document.createElement("video");
-            video.autoplay = true;
-            video.muted = true;
-            video.loop = true;
-            video.playsInline = true;
-            video.preload = "metadata"; // Only load metadata on mobile
-            
-            const source = document.createElement("source");
-            source.src = videoSrc;
-            source.type = "video/mp4";
-            
-            video.appendChild(source);
-            videoContainer.appendChild(video);
-            return;
-        }
+        const videoSrc = "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
 
         const video = document.createElement("video");
         video.autoplay = true;
