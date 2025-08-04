@@ -161,6 +161,9 @@ async function startApp() {
       initInfinityGallery();
       moveShowAllIntoCollectionList();
       initDisplayToggle();
+      loadWeglotIfNeeded(); // Load Weglot if needed
+      initWeglot(); // Initialize Weglot
+      setupWeglotEventListeners(); // Setup Weglot event listeners
       
       requestAnimationFrame(() => {
         initNavbarShowHide();
@@ -697,6 +700,14 @@ function initPageTransitions() {
         initDisplayToggle();
         moveShowAllIntoCollectionList();
         
+        // Re-translate content with Weglot
+        reTranslateContent();
+        
+        // Re-initialize Weglot if needed
+        setTimeout(() => {
+          reinitializeWeglot();
+        }, 300);
+        
         // Delay initialization to ensure proper scroll position
         setTimeout(() => {
           // Ensure proper scroll position
@@ -722,7 +733,7 @@ function initPageTransitions() {
             initHomeVideo();
           }, 1000); // Increased delay to ensure page is fully loaded
           
-          // Refresh ScrollTrigger after all animations are set up
+          // Refresh ScrollTrigger after all other animations are set up
           setTimeout(() => {
             ScrollTrigger.refresh(true);
           }, 50);
@@ -3138,4 +3149,187 @@ function initializeApplication() {
   
   // Initialize display toggle
   initDisplayToggle();
+}
+
+// --- WEGLOT INTEGRATION FOR SEAMLESS PAGE FETCHING ---
+function initWeglot() {
+  // Initialize Weglot if it exists
+  if (typeof Weglot !== 'undefined') {
+    Weglot.initialize({
+      api_key: 'wg_d364a578f310b7757c5e30422c9d04a04',
+      // Configure Weglot to work with seamless page fetching
+      auto_switch_display: true,
+      // Ensure Weglot translates content inside page-wrapper
+      include_selector: '.page-wrapper',
+      // Exclude elements that shouldn't be translated
+      exclude_selector: '.no-translate, .mega-menu, .header',
+      // Enable dynamic content translation
+      dynamic_content: true
+    });
+  } else {
+    // If Weglot is not available yet, wait for it
+    const checkWeglot = setInterval(() => {
+      if (typeof Weglot !== 'undefined') {
+        Weglot.initialize({
+          api_key: 'wg_d364a578f310b7757c5e30422c9d04a04',
+          // Configure Weglot to work with seamless page fetching
+          auto_switch_display: true,
+          // Ensure Weglot translates content inside page-wrapper
+          include_selector: '.page-wrapper',
+          // Exclude elements that shouldn't be translated
+          exclude_selector: '.no-translate, .mega-menu, .header',
+          // Enable dynamic content translation
+          dynamic_content: true
+        });
+        clearInterval(checkWeglot);
+      }
+    }, 100);
+    
+    // Stop checking after 10 seconds
+    setTimeout(() => {
+      clearInterval(checkWeglot);
+    }, 10000);
+  }
+}
+
+function reinitializeWeglot() {
+  // Re-initialize Weglot after page transitions
+  if (typeof Weglot !== 'undefined') {
+    // Destroy existing instance if it exists
+    if (Weglot.weglot_switcher && Weglot.weglot_switcher.destroy) {
+      Weglot.weglot_switcher.destroy();
+    }
+    
+    // Re-initialize with the same configuration
+    Weglot.initialize({
+      api_key: 'wg_d364a578f310b7757c5e30422c9d04a04',
+      // Configure Weglot to work with seamless page fetching
+      auto_switch_display: true,
+      // Ensure Weglot translates content inside page-wrapper
+      include_selector: '.page-wrapper',
+      // Exclude elements that shouldn't be translated
+      exclude_selector: '.no-translate, .mega-menu, .header',
+      // Enable dynamic content translation
+      dynamic_content: true
+    });
+  }
+}
+
+function loadWeglotIfNeeded() {
+  // Load Weglot script if not already loaded
+  if (typeof Weglot === 'undefined' && !document.querySelector('script[src*="weglot.min.js"]')) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.weglot.com/weglot.min.js';
+    script.async = true;
+    script.onload = () => {
+      // Initialize Weglot after script loads
+      setTimeout(() => {
+        initWeglot();
+      }, 100);
+    };
+    document.head.appendChild(script);
+  }
+}
+
+function reTranslateContent() {
+  // Re-translate content after page transition
+  if (typeof Weglot !== 'undefined' && Weglot.weglot_switcher) {
+    // Force Weglot to re-translate the new content
+    setTimeout(() => {
+      // Method 1: Use Weglot's translate method if available
+      if (Weglot.weglot_switcher && Weglot.weglot_switcher.translate) {
+        Weglot.weglot_switcher.translate();
+      }
+      
+      // Method 2: Trigger a custom event for Weglot
+      const event = new CustomEvent('weglot:retranslate', {
+        detail: { target: document.querySelector('.page-wrapper') }
+      });
+      document.dispatchEvent(event);
+      
+      // Method 3: Force DOM re-parsing by temporarily hiding and showing content
+      const pageWrapper = document.querySelector('.page-wrapper');
+      if (pageWrapper) {
+        const originalVisibility = pageWrapper.style.visibility;
+        pageWrapper.style.visibility = 'hidden';
+        setTimeout(() => {
+          pageWrapper.style.visibility = originalVisibility;
+        }, 50);
+      }
+      
+      // Method 4: Trigger Weglot's internal refresh
+      if (Weglot.weglot_switcher && Weglot.weglot_switcher.refresh) {
+        Weglot.weglot_switcher.refresh();
+      }
+      
+      // Method 5: Specifically target page-wrapper content
+      forceTranslatePageWrapper();
+    }, 100);
+  }
+}
+
+function forceTranslatePageWrapper() {
+  // Specifically force translation of page-wrapper content
+  const pageWrapper = document.querySelector('.page-wrapper');
+  if (!pageWrapper || typeof Weglot === 'undefined') return;
+  
+  // Get all translatable elements within page-wrapper
+  const translatableElements = pageWrapper.querySelectorAll('[data-wg-translate]');
+  
+  // Force re-translation of each element
+  translatableElements.forEach(element => {
+    // Remove and re-add the data-wg-translate attribute to force re-translation
+    const originalAttr = element.getAttribute('data-wg-translate');
+    if (originalAttr) {
+      element.removeAttribute('data-wg-translate');
+      setTimeout(() => {
+        element.setAttribute('data-wg-translate', originalAttr);
+      }, 10);
+    }
+  });
+  
+  // Trigger Weglot to re-parse the page-wrapper
+  if (Weglot.weglot_switcher && Weglot.weglot_switcher.parse) {
+    Weglot.weglot_switcher.parse(pageWrapper);
+  }
+}
+
+function setupWeglotEventListeners() {
+  // Listen for Weglot language changes
+  document.addEventListener('weglot:language_changed', () => {
+    // Re-translate content when language is changed
+    reTranslateContent();
+  });
+  
+  // Listen for Weglot initialization
+  document.addEventListener('weglot:initialized', () => {
+    console.log('Weglot initialized successfully');
+  });
+  
+  // Listen for Weglot translation events
+  document.addEventListener('weglot:translated', (event) => {
+    console.log('Weglot translation completed', event.detail);
+  });
+  
+  // Handle manual language switching
+  document.addEventListener('click', (e) => {
+    const languageLink = e.target.closest('[data-wg-lang]');
+    if (languageLink) {
+      // Prevent default behavior
+      e.preventDefault();
+      
+      // Get the target language
+      const targetLang = languageLink.getAttribute('data-wg-lang');
+      
+      // Switch language using Weglot API
+      if (typeof Weglot !== 'undefined' && Weglot.weglot_switcher) {
+        Weglot.weglot_switcher.switchTo(targetLang);
+        
+        // Re-translate content after language switch
+        setTimeout(() => {
+          reTranslateContent();
+        }, 200);
+      }
+    }
+  });
 }
