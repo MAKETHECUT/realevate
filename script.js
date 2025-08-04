@@ -2755,7 +2755,11 @@ function initHomeVideo() {
             return;
         }
 
-        const videoSrc = "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
+        const isMobile = window.innerWidth < 650;
+
+        const videoSrc = isMobile
+          ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
+          : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
 
         const video = document.createElement("video");
         video.autoplay = true;
