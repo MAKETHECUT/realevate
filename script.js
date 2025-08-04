@@ -61,8 +61,6 @@ function loadScript(src) {
         initInfinityGallery();
         moveShowAllIntoCollectionList();
         initDisplayToggle();
-        
-        // Initialize everything immediately without requestAnimationFrame
         initNavbarShowHide();
         initGsapAnimations();
         initSplitTextAnimations();
@@ -85,12 +83,8 @@ function loadScript(src) {
       }, 400); // Reduced loader duration from 800ms to 400ms
   
     } catch (error) {
-      console.error('Error in startApp:', error);
-      // Fallback initialization without loader
-      refreshbreakingpoints();
-      initPageTransitions();
-      initHomeVideo();
-      initInfinityGallery();
+
+
     }
   }
   document.addEventListener("DOMContentLoaded", startApp);
@@ -652,6 +646,7 @@ function initPageTransitions() {
 
         // 9. Initialize everything with a small delay to ensure DOM is ready
         setTimeout(() => {
+            
           initInfinityGallery();
           initDisplayToggle();
           moveShowAllIntoCollectionList();
@@ -660,19 +655,12 @@ function initPageTransitions() {
           initCustomSmoothScrolling();
           initTypeListRadioHandler();
           reloadFinsweetCMS();
-          
-          // For internal project navigation, don't re-initialize SplitText
-          if (!isInternalProjectNav) {
-            initSplitTextAnimations();
-          }
+          initSplitTextAnimations();
+
 
           // Initialize video after animations
-          setTimeout(() => initHomeVideo(), 500);
+          setTimeout(() => initHomeVideo(), 50);
 
-          // Refresh ScrollTrigger
-          setTimeout(() => {
-            if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-          }, 100);
         }, 50); // Small delay to ensure DOM is ready
 
         // 10. Complete transition
@@ -722,7 +710,6 @@ function initPageTransitions() {
         });
       })
       .catch(err => {
-        console.error('Navigation error:', err);
         window.location.href = url;
       });
   }
@@ -1594,20 +1581,15 @@ function refreshbreakingpoints() {
 
 function initInfinityGallery() {
   try {
-    console.log('initInfinityGallery called');
-
     // Destroy the previous instance if it exists
     if (window.infinitySliderInstance) {
       window.infinitySliderInstance.destroy();
       window.infinitySliderInstance = null;
-      console.log('Previous infinity slider instance destroyed.');
     }
 
     const sliderWrapper = document.querySelector(".slider-wrapper");
-    console.log('Slider wrapper found:', sliderWrapper);
     
     if (!sliderWrapper) {
-      console.log('Slider wrapper not found - skipping infinity gallery initialization');
       return;
     }
   
@@ -1664,11 +1646,8 @@ function initInfinityGallery() {
     }
 
     setupFullscreenModal() {
-      console.log('Setting up fullscreen modal...');
-      
       // Create modal container if it doesn't exist
       if (!document.querySelector('.fullscreen-modal')) {
-        console.log('Creating fullscreen modal...');
         const modal = document.createElement('div');
         modal.className = 'fullscreen-modal';
         document.body.appendChild(modal);
@@ -1702,33 +1681,24 @@ function initInfinityGallery() {
       }
 
       // Add expand icons to all slider items
-      console.log('Items found:', this.items.length);
       this.items.forEach((item, index) => {
-        console.log(`Processing item ${index}:`, item);
         if (!item.querySelector('.expand-icon')) {
-          console.log(`Creating expand icon for item ${index}`);
           const expandIcon = document.createElement('div');
           expandIcon.className = 'expand-icon';
           item.appendChild(expandIcon);
           
           // Use both click and touchend for better Safari support
           const handleExpand = (e) => {
-            console.log('Expand icon clicked!');
             e.preventDefault();
             e.stopPropagation();
             const img = item.querySelector('img');
-            console.log('Image found:', img);
             this.openFullscreen(img);
           };
           
           expandIcon.addEventListener('click', handleExpand);
           expandIcon.addEventListener('touchend', handleExpand);
-        } else {
-          console.log(`Expand icon already exists for item ${index}`);
         }
       });
-      
-      console.log('Fullscreen modal setup complete');
     }
 
     openFullscreen(img) {
@@ -1737,8 +1707,6 @@ function initInfinityGallery() {
       if (this.currentAnimation) {
         this.currentAnimation.kill();
       }
-
-      console.log('Opening fullscreen for:', img);
       
       // Set fullscreen state and disable scrolling
       this.isFullscreenOpen = true;
@@ -1827,8 +1795,6 @@ function initInfinityGallery() {
       const img = this.modal.querySelector('img');
       if (!img) return;
 
-      console.log('Closing fullscreen');
-
       // Get the original image position and size
       const rect = this.originalImage.getBoundingClientRect();
 
@@ -1891,13 +1857,11 @@ function initInfinityGallery() {
     disableScroll() {
       // Disable the infinity gallery scrolling
       this.scrollEnabled = false;
-      console.log('Slider scrolling disabled');
     }
 
     enableScroll() {
       // Re-enable the infinity gallery scrolling
       this.scrollEnabled = true;
-      console.log('Slider scrolling enabled');
     }
 
     cloneItems() {
@@ -2178,14 +2142,12 @@ function initInfinityGallery() {
       this.items = null;
       this.modal = null;
       this.originalImage = null; // Prevent stale references
-
-      console.log("InfiniteHorizontalScroll instance destroyed.");
     }
   }
 
       window.infinitySliderInstance = new InfiniteHorizontalScroll(sliderWrapper);
   } catch (error) {
-    console.log('Infinity gallery initialization skipped:', error.message);
+    // Infinity gallery initialization skipped
   }
 }
 
@@ -2236,7 +2198,7 @@ function lazyLoadScript(src, options = {}) {
                     observer.disconnect();
                     loadScriptWithRetry(src, options)
                         .then(resolve)
-                        .catch(console.error);
+                        .catch(() => {});
                 }
             });
         });
@@ -2527,7 +2489,6 @@ function initHomeVideo() {
     try {
         const videoContainer = document.getElementById("video-container");
         if (!videoContainer) {
-            console.log('Video container not found, skipping video initialization');
             return;
         }
 
@@ -2553,9 +2514,8 @@ function initHomeVideo() {
         // Add video to container immediately
         videoContainer.appendChild(video);
         
-        console.log('Home video initialized successfully');
     } catch (error) {
-        console.log('Home video initialization skipped:', error.message);
+        // Home video initialization skipped
     }
 }
 
@@ -2574,7 +2534,6 @@ function initDisplayToggle() {
   window.isGalleryOpen = false;
   
   if (!displayToggle || !gridBtn || !galleryBtn || !fullscreenGallery) {
-    console.log('Display toggle elements not found');
     return;
   }
 
@@ -3067,14 +3026,14 @@ function forceRefreshSplitTextAnimations() {
   // Clean up any existing SplitText instances
   const allElements = document.querySelectorAll('*');
   allElements.forEach(element => {
-    if (element._splitTextInstance && element._splitTextInstance.revert) {
-      try {
-        element._splitTextInstance.revert();
-      } catch (error) {
-        console.warn('Error reverting SplitText instance during force refresh:', error);
+          if (element._splitTextInstance && element._splitTextInstance.revert) {
+        try {
+          element._splitTextInstance.revert();
+        } catch (error) {
+          // Error reverting SplitText instance during force refresh
+        }
+        delete element._splitTextInstance;
       }
-      delete element._splitTextInstance;
-    }
   });
   
   // Remove any orphaned .line elements
@@ -3098,13 +3057,6 @@ function debugSplitTextStatus() {
   const elementsWithSplitText = document.querySelectorAll('*').length;
   const lineElements = document.querySelectorAll('.line').length;
   const scrollTriggers = typeof ScrollTrigger !== 'undefined' ? ScrollTrigger.getAll().filter(t => t.vars && t.vars.id && t.vars.id.includes('splittext')).length : 0;
-  
-  console.log('SplitText Debug Info:', {
-    totalElements: elementsWithSplitText,
-    lineElements: lineElements,
-    splitTextScrollTriggers: scrollTriggers,
-    splitTextAvailable: typeof SplitText !== 'undefined'
-  });
   
   return {
     totalElements: elementsWithSplitText,
