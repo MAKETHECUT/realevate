@@ -20,13 +20,18 @@ function loadScript(src) {
   }
   
   async function loadAllLibraries() {
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
-    await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
-    await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
-    await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
-    await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
+    try {
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
+      await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
+      await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
+      await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+      await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
+    } catch (error) {
+      console.error('Error loading libraries:', error);
+      // Continue with basic functionality even if some libraries fail to load
+    }
   }
   
   
@@ -55,13 +60,26 @@ function loadScript(src) {
       animateLoaderCounter(() => {
         // Initialize functions after loader completes
         refreshbreakingpoints();
-        initInteractiveCursor();
+        
+        // Initialize core functionality first
         initMegaMenu();
         initPageTransitions();
-        initInfinityGallery();
         moveShowAllIntoCollectionList();
-        initDisplayToggle();
         initNavbarShowHide();
+        
+        // Initialize mobile-specific features
+        const isMobile = window.innerWidth < 650;
+        
+        if (!isMobile) {
+          // Desktop-only features
+          initInteractiveCursor();
+          initInfinityGallery();
+        }
+        
+        // Initialize display toggle (works on both mobile and desktop)
+        initDisplayToggle();
+        
+        // Initialize animations
         initGsapAnimations();
         initSplitTextAnimations();
         
@@ -70,21 +88,37 @@ function loadScript(src) {
           initTypeListRadioHandler();
         }
         
-        // Only initialize cursor if not already initialized
-        if (!window.cursorInitialized) {
+        // Only initialize cursor if not already initialized and not mobile
+        if (!window.cursorInitialized && !isMobile) {
             initInteractiveCursor();
         }
         
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+        
+        // Initialize smooth scrolling (works on both mobile and desktop)
         if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
         
         // Initialize video immediately without delay
         initHomeVideo();
-      }, 400); // Reduced loader duration from 800ms to 400ms
+      }, window.innerWidth < 650 ? 200 : 400); // Faster loader on mobile
   
     } catch (error) {
-
-
+      console.error('Error starting app:', error);
+      
+      // Fallback initialization if script loading fails
+      setTimeout(() => {
+        try {
+          refreshbreakingpoints();
+          initMegaMenu();
+          initPageTransitions();
+          moveShowAllIntoCollectionList();
+          initNavbarShowHide();
+          initDisplayToggle();
+          initHomeVideo();
+        } catch (fallbackError) {
+          console.error('Fallback initialization failed:', fallbackError);
+        }
+      }, 1000);
     }
   }
   document.addEventListener("DOMContentLoaded", startApp);
@@ -248,6 +282,13 @@ function initCustomSmoothScrolling() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    
+    // Mobile-specific optimizations
+    const isMobile = window.innerWidth < 650;
+    if (isMobile) {
+        // Use simpler smooth scrolling on mobile for better performance
+        return;
+    }
 
     class S {
         constructor() {
@@ -650,16 +691,19 @@ function initPageTransitions() {
     const swipeup = document.querySelector('.swipeup');
     const cursor = document.querySelector('.cursor');
     
+    const isMobile = window.innerWidth < 650;
     const transitionPromise = new Promise((resolve) => {
       const tl = gsap.timeline({ onComplete: resolve });
       tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
       tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-      tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-      tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-      tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
-      tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
-      tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
-      tl.set(cursor, { visibility: "hidden" }, 0.2);
+      tl.to(swipeup, { duration: isMobile ? 0.3 : 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+      tl.to(swipeup, { duration: isMobile ? 0.2 : 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+      tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: isMobile ? 0.3 : 0.5, stagger: isMobile ? 0.03 : 0.06, ease: "power1.out" }, 0);
+      tl.to(".menu-toggle", { opacity: 0, duration: isMobile ? 0.3 : 0.5, ease: "power1.out" }, 0);
+      if (!isMobile) {
+        tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+        tl.set(cursor, { visibility: "hidden" }, 0.2);
+      }
     });
 
     // 3. Fetch new page content
@@ -922,11 +966,18 @@ function ensureProperScrollPosition() {
 }
 
 function initializePageAfterTransition() {
+  const isMobile = window.innerWidth < 650;
+  
   // First, initialize core functionality
-  initInfinityGallery();
-  initDisplayToggle();
   moveShowAllIntoCollectionList();
   initNavbarShowHide();
+  
+  // Initialize mobile-specific features
+  if (!isMobile) {
+    initInfinityGallery();
+  }
+  
+  initDisplayToggle();
   
   // Initialize smooth scrolling with a small delay to ensure DOM is ready
   setTimeout(() => {
@@ -962,6 +1013,8 @@ function initializePageAfterTransition() {
 
 function initSplitTextAnimations(scope = document) {
   if (typeof SplitText === 'undefined') return;
+  
+  const isMobile = window.innerWidth < 650;
 
   const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
   
@@ -1030,9 +1083,9 @@ function initSplitTextAnimations(scope = document) {
         yPercent: 0,
         clipPath: "inset(-20% -10% -20% 0%)",
         opacity: 1,
-        stagger: 0.12,
-        duration: 1.2,
-        delay: element.closest(".hero, .delay") ? 0.5 : 0,
+        stagger: isMobile ? 0.08 : 0.12,
+        duration: isMobile ? 0.8 : 1.2,
+        delay: element.closest(".hero, .delay") ? (isMobile ? 0.3 : 0.5) : 0,
         ease: "power4.out"
       });
     } catch (error) {
@@ -1052,14 +1105,16 @@ Page GSAP Animations
 function initGsapAnimations() {
     // Ensure we're at the top of the page before creating animations
     ensureProperScrollPosition();
+    
+    const isMobile = window.innerWidth < 650;
 
   // Common animations for all pages
   gsap.fromTo(".clipping-video, .about-hero-image", 
     { clipPath: "inset(100% 0% 0% 0%)" }, 
     { 
       clipPath: "inset(0% 0% 0% 0%)", 
-      delay: 0.6,
-      duration: 1.2, 
+      delay: isMobile ? 0.3 : 0.6,
+      duration: isMobile ? 0.8 : 1.2, 
       ease: "power4.inOut" 
     }
   );
@@ -1743,6 +1798,12 @@ function refreshbreakingpoints() {
 
 function initInfinityGallery() {
   try {
+    // Skip on mobile for better performance
+    const isMobile = window.innerWidth < 650;
+    if (isMobile) {
+      return;
+    }
+    
     // Destroy the previous instance if it exists
     if (window.infinitySliderInstance) {
       window.infinitySliderInstance.destroy();
@@ -2659,6 +2720,25 @@ function initHomeVideo() {
         const videoSrc = isMobile
           ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
           : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
+        
+        // Mobile-specific video optimizations
+        if (isMobile) {
+            // Use lower quality video on mobile for better performance
+            const video = document.createElement("video");
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = true;
+            video.playsInline = true;
+            video.preload = "metadata"; // Only load metadata on mobile
+            
+            const source = document.createElement("source");
+            source.src = videoSrc;
+            source.type = "video/mp4";
+            
+            video.appendChild(source);
+            videoContainer.appendChild(video);
+            return;
+        }
 
         const video = document.createElement("video");
         video.autoplay = true;
