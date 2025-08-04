@@ -238,6 +238,16 @@ function initCustomSmoothScrolling() {
     let d = false;
     let i = null;
     let p = 0;
+    
+    // Clean up any existing smooth scrolling instance
+    if (window.customSmoothScroll && typeof window.customSmoothScroll.destroy === 'function') {
+        window.customSmoothScroll.destroy();
+    }
+    
+    // Ensure scroll position is reset before initializing
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
     class S {
         constructor() {
@@ -542,9 +552,56 @@ function initCustomSmoothScrolling() {
             window.removeEventListener("mouseup", this.emd);
             window.removeEventListener("resize", this.ud);
         }
+        
+        destroy() {
+            // Stop the animation loop
+            if (this.animationFrameId) {
+                cancelAnimationFrame(this.animationFrameId);
+                this.animationFrameId = null;
+            }
+            
+            // Reset all state
+            this.se = false;
+            this.dr = false;
+            this.isDragging = false;
+            this.sliderTouchActive = false;
+            
+            // Reset scroll position
+            this.ts = 0;
+            this.cs = 0;
+            this.smoothScrollX = 0;
+            
+            // Clean up DOM styles
+            document.body.style.overflow = "";
+            document.body.style.position = "";
+            document.body.style.width = "";
+            document.body.style.top = "";
+            document.body.style.height = "";
+            document.documentElement.style.scrollBehavior = "";
+            document.documentElement.style.touchAction = "pan-x pan-y";
+            
+            // Remove all event listeners
+            window.removeEventListener("wheel", this.handleWheel);
+            window.removeEventListener("touchstart", this.handleTouchStart);
+            window.removeEventListener("touchmove", this.handleTouchMove);
+            window.removeEventListener("touchend", this.handleTouchEnd);
+            window.removeEventListener("touchcancel", this.handleTouchEnd);
+            window.removeEventListener("mousedown", this.handleDragStart);
+            window.removeEventListener("mousemove", this.handleDragMove);
+            window.removeEventListener("mouseup", this.handleDragEnd);
+            window.removeEventListener("resize", this.calculateDimensions);
+            
+            // Reset scroll position to top
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }
     }
 
     i = new S();
+    
+    // Store the instance globally for cleanup
+    window.customSmoothScroll = i;
 
     window.toggleSmoothScroll = (e) => {
         if (i) {
@@ -579,6 +636,11 @@ function initPageTransitions() {
     }
 
     window.transitioning = true;
+    
+    // Temporarily disable smooth scrolling during transition to prevent conflicts
+    if (window.customSmoothScroll) {
+      window.customSmoothScroll.se = false;
+    }
     
     // Check if this is internal project navigation (staying within projects)
     const isInternalProjectNav = url.includes('/projects/') && window.location.pathname.includes('/projects/');
@@ -624,8 +686,16 @@ function initPageTransitions() {
         document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
         container.innerHTML = nextPage.nextWrapper.innerHTML;
 
-        // 6. Ensure proper scroll position
+        // 6. Ensure proper scroll position and reset smooth scrolling state
         ensureProperScrollPosition();
+        
+        // Reset smooth scrolling state to prevent conflicts
+        if (window.customSmoothScroll) {
+          window.customSmoothScroll.se = false;
+          window.customSmoothScroll.dr = false;
+          window.customSmoothScroll.isDragging = false;
+          window.customSmoothScroll.sliderTouchActive = false;
+        }
 
         // 7. Clean up ALL animations and instances (AFTER animation, BEFORE new functions)
         if (!isInternalProjectNav) {
@@ -644,23 +714,9 @@ function initPageTransitions() {
           if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
         }
 
-        // 9. Initialize everything with a small delay to ensure DOM is ready
+        // 9. Initialize everything with proper sequencing
         setTimeout(() => {
-            
-          initInfinityGallery();
-          initDisplayToggle();
-          moveShowAllIntoCollectionList();
-          initGsapAnimations();
-          initNavbarShowHide();
-          initCustomSmoothScrolling();
-          initTypeListRadioHandler();
-          reloadFinsweetCMS();
-          initSplitTextAnimations();
-
-
-          // Initialize video after animations
-          setTimeout(() => initHomeVideo(), 50);
-
+          initializePageAfterTransition();
         }, 50); // Small delay to ensure DOM is ready
 
         // 10. Complete transition
@@ -700,6 +756,11 @@ function initPageTransitions() {
               window.navbarShowHide = initNavbarShowHide();
             }
 
+            // Re-enable smooth scrolling after transition is complete
+            if (window.customSmoothScroll) {
+              window.customSmoothScroll.se = true;
+            }
+            
             // Handle pending navigation
             if (window.pendingNavigation) {
               const { url, isPopState } = window.pendingNavigation;
@@ -786,7 +847,7 @@ function truncateByWords(el, wordLimit = 43) {
 }
 
 function cleanupAllPageAnimations() {
-  // Kill ALL ScrollTriggers
+  // Kill ALL ScrollTriggers first
   if (typeof ScrollTrigger !== 'undefined') {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
@@ -794,33 +855,109 @@ function cleanupAllPageAnimations() {
   // Kill all GSAP animations
   gsap.killTweensOf("*");
   
-  // Clean up SplitText instances
+  // Clean up SplitText instances more thoroughly
   if (typeof SplitText !== 'undefined') {
+    // First, revert all SplitText instances
     document.querySelectorAll('*').forEach(element => {
       if (element._splitTextInstance?.revert) {
-        try { element._splitTextInstance.revert(); } catch (e) {}
+        try { 
+          element._splitTextInstance.revert(); 
+        } catch (e) {
+          // If revert fails, manually clean up
+          if (element._splitTextInstance.lines) {
+            element._splitTextInstance.lines.forEach(line => {
+              if (line && line.parentNode) {
+                line.parentNode.removeChild(line);
+              }
+            });
+          }
+        }
         delete element._splitTextInstance;
       }
     });
     
-    // Remove .line elements
-    document.querySelectorAll('.line').forEach(line => line.remove());
+    // Remove all .line elements that might be orphaned
+    document.querySelectorAll('.line').forEach(line => {
+      if (line && line.parentNode) {
+        line.parentNode.removeChild(line);
+      }
+    });
+    
+    // Also remove any .word elements that might be left over
+    document.querySelectorAll('.word').forEach(word => {
+      if (word && word.parentNode) {
+        word.parentNode.removeChild(word);
+      }
+    });
   }
   
   // Clean up custom instances
-  if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
+  if (window.customSmoothScroll?.destroy) {
+    window.customSmoothScroll.destroy();
+    window.customSmoothScroll = null;
+  }
   if (window.cleanupCursor) window.cleanupCursor();
   if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
+  if (window.infinitySliderInstance?.destroy) window.infinitySliderInstance.destroy();
   
   // Reset initialization flags
   window.cursorInitialized = false;
+  
+  // Force a reflow to ensure cleanup is complete
+  document.documentElement.offsetHeight;
 }
 
 function ensureProperScrollPosition() {
+  // Reset smooth scrolling state if it exists
+  if (window.customSmoothScroll) {
+    window.customSmoothScroll.ts = 0;
+    window.customSmoothScroll.cs = 0;
+    window.customSmoothScroll.smoothScrollX = 0;
+  }
+  
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
   document.documentElement.offsetHeight; // force reflow
+}
+
+function initializePageAfterTransition() {
+  // First, initialize core functionality
+  initInfinityGallery();
+  initDisplayToggle();
+  moveShowAllIntoCollectionList();
+  initNavbarShowHide();
+  
+  // Initialize smooth scrolling with a small delay to ensure DOM is ready
+  setTimeout(() => {
+    initCustomSmoothScrolling();
+  }, 10);
+  
+  initTypeListRadioHandler();
+  reloadFinsweetCMS();
+  
+  // Then initialize GSAP animations
+  initGsapAnimations();
+  
+  // Finally, initialize SplitText animations with a small delay to ensure DOM is fully ready
+  setTimeout(() => {
+    initSplitTextAnimations();
+    
+    // Refresh ScrollTrigger after all animations are set up
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+    
+    // Initialize video after all animations
+    setTimeout(() => initHomeVideo(), 50);
+  }, 100);
+  
+  // Additional ScrollTrigger refresh after a longer delay to ensure everything is properly set up
+  setTimeout(() => {
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+  }, 200);
 }
 
 function initSplitTextAnimations(scope = document) {
@@ -829,7 +966,32 @@ function initSplitTextAnimations(scope = document) {
   const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
   
   elements.forEach((element) => {
-    if (element.querySelector('.line') || !element.textContent.trim() || element._splitTextInstance) return;
+    // Skip if element already has SplitText or no content
+    if (!element.textContent.trim()) return;
+    
+    // Clean up any existing SplitText instance first
+    if (element._splitTextInstance?.revert) {
+      try {
+        element._splitTextInstance.revert();
+      } catch (e) {
+        // If revert fails, manually clean up
+        if (element._splitTextInstance.lines) {
+          element._splitTextInstance.lines.forEach(line => {
+            if (line && line.parentNode) {
+              line.parentNode.removeChild(line);
+            }
+          });
+        }
+      }
+      delete element._splitTextInstance;
+    }
+    
+    // Remove any existing .line elements
+    element.querySelectorAll('.line').forEach(line => {
+      if (line && line.parentNode) {
+        line.parentNode.removeChild(line);
+      }
+    });
 
     try {
       const split = new SplitText(element, { type: "lines", linesClass: "line" });
@@ -3026,25 +3188,39 @@ function forceRefreshSplitTextAnimations() {
   // Clean up any existing SplitText instances
   const allElements = document.querySelectorAll('*');
   allElements.forEach(element => {
-          if (element._splitTextInstance && element._splitTextInstance.revert) {
-        try {
-          element._splitTextInstance.revert();
-        } catch (error) {
-          // Error reverting SplitText instance during force refresh
-        }
-        delete element._splitTextInstance;
+    if (element._splitTextInstance && element._splitTextInstance.revert) {
+      try {
+        element._splitTextInstance.revert();
+      } catch (error) {
+        // Error reverting SplitText instance during force refresh
       }
+      delete element._splitTextInstance;
+    }
   });
   
   // Remove any orphaned .line elements
   document.querySelectorAll('.line').forEach(line => {
-    line.remove();
+    if (line && line.parentNode) {
+      line.parentNode.removeChild(line);
+    }
+  });
+  
+  // Also remove any .word elements that might be left over
+  document.querySelectorAll('.word').forEach(word => {
+    if (word && word.parentNode) {
+      word.parentNode.removeChild(word);
+    }
   });
   
   // Re-initialize SplitText animations
   setTimeout(() => {
     if (typeof initSplitTextAnimations === 'function') {
       initSplitTextAnimations();
+      
+      // Refresh ScrollTrigger after re-initialization
+      if (typeof ScrollTrigger !== 'undefined') {
+        ScrollTrigger.refresh(true);
+      }
     }
   }, 100);
 }
@@ -3065,6 +3241,20 @@ function debugSplitTextStatus() {
     splitTextAvailable: typeof SplitText !== 'undefined'
   };
 }
+
+// Function to properly clean up and reinitialize everything
+function cleanupAndReinitializeAll() {
+  // First, clean up everything
+  cleanupAllPageAnimations();
+  
+  // Then reinitialize everything in the proper sequence
+  setTimeout(() => {
+    initializePageAfterTransition();
+  }, 50);
+}
+
+// Make cleanup and reinitialize function globally available
+window.cleanupAndReinitializeAll = cleanupAndReinitializeAll;
 
 window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
 
@@ -3096,6 +3286,24 @@ window.addEventListener('resize', () => {
     }
   }, 100);
 });
+
+// Function to ensure proper ScrollTrigger refresh after page transitions
+function ensureScrollTriggerRefresh() {
+  if (typeof ScrollTrigger !== 'undefined') {
+    // Force a refresh of all ScrollTriggers
+    ScrollTrigger.refresh(true);
+    
+    // Also refresh any SplitText animations that might need it
+    setTimeout(() => {
+      if (typeof initSplitTextAnimations === 'function') {
+        initSplitTextAnimations();
+      }
+    }, 50);
+  }
+}
+
+// Make the function globally available
+window.ensureScrollTriggerRefresh = ensureScrollTriggerRefresh;
 
 
 
