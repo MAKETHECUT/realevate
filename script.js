@@ -2605,6 +2605,7 @@ function initDisplayToggle() {
     
     if (!gallerySlider || properties.length === 0) return;
 
+    // Clear existing slides and event listeners
     gallerySlider.innerHTML = '';
     
     properties.forEach((property, index) => {
@@ -2627,9 +2628,6 @@ function initDisplayToggle() {
         totalSlidesSpan.textContent = totalSlides;
       }
     }
-    
-    // Gallery slide links will be handled by the global event listener
-    // This ensures the same SVG wave animation as other site links
   }
 
   function createGallerySlide(slider, indicators, img, name, price, info, link, index) {
@@ -2694,6 +2692,12 @@ function initDisplayToggle() {
     // Kill any ongoing gallery animations
     gsap.killTweensOf(fullscreenGallery);
     
+    // Destroy existing gallery instance if it exists
+    if (galleryInstance && typeof galleryInstance.destroy === 'function') {
+      galleryInstance.destroy();
+      galleryInstance = null;
+    }
+    
     isToggleAnimating = true;
     currentView = 'grid';
     window.isGalleryOpen = false; // Reset global flag for smooth scrolling
@@ -2736,11 +2740,6 @@ function initDisplayToggle() {
       }
     });
     
-    if (galleryInstance) {
-      galleryInstance.destroy();
-      galleryInstance = null;
-    }
-    
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }
@@ -2748,6 +2747,12 @@ function initDisplayToggle() {
   function switchToGallery() {
     // Kill any ongoing gallery animations
     gsap.killTweensOf(fullscreenGallery);
+    
+    // Destroy existing gallery instance if it exists
+    if (galleryInstance && typeof galleryInstance.destroy === 'function') {
+      galleryInstance.destroy();
+      galleryInstance = null;
+    }
     
     isToggleAnimating = true;
     currentView = 'gallery';
@@ -2795,10 +2800,12 @@ function initDisplayToggle() {
         // Hide grid after gallery entrance completes
         if (homeProperties) homeProperties.style.display = 'none';
         isToggleAnimating = false; // Re-enable toggle after animation
+        
+        // Create new gallery instance after animation completes
+        galleryInstance = new FullscreenGallery();
       }
     });
     
-    galleryInstance = new FullscreenGallery();
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
   }
