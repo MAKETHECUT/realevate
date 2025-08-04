@@ -308,6 +308,8 @@ function initCustomSmoothScrolling() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    
+
 
     class S {
         constructor() {
@@ -989,24 +991,49 @@ function ensureProperScrollPosition() {
 function initializePageAfterTransition() {
   console.log('Initializing page after transition...');
   
+  const isMobile = window.innerWidth < 650;
+  console.log('Page transition - mobile:', isMobile);
+  
   // Initialize everything in proper sequence
   initInfinityGallery();
   initDisplayToggle();
   moveShowAllIntoCollectionList();
   initNavbarShowHide();
-  initCustomSmoothScrolling();
   initTypeListRadioHandler();
   reloadFinsweetCMS();
-  initGsapAnimations();
-  initSplitTextAnimations();
   
-  // Refresh ScrollTrigger after all animations are set up
-  if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.refresh(true);
-  }
+  // Initialize smooth scrolling (disabled on mobile to prevent conflicts)
+  initCustomSmoothScrolling();
   
-  // Initialize video after all animations
-  setTimeout(() => initHomeVideo(), 50);
+  // Initialize animations with proper delays for mobile
+  setTimeout(() => {
+    console.log('Initializing GSAP animations after transition...');
+    initGsapAnimations();
+    
+    setTimeout(() => {
+      console.log('Initializing SplitText animations after transition...');
+      initSplitTextAnimations();
+      
+      // Refresh ScrollTrigger after all animations are set up
+      if (typeof ScrollTrigger !== 'undefined') {
+        console.log('Refreshing ScrollTrigger after transition...');
+        ScrollTrigger.refresh(true);
+      }
+      
+      // Additional refresh for mobile to ensure everything works
+      if (isMobile) {
+        setTimeout(() => {
+          if (typeof ScrollTrigger !== 'undefined') {
+            console.log('Additional ScrollTrigger refresh for mobile...');
+            ScrollTrigger.refresh(true);
+          }
+        }, 200);
+      }
+      
+      // Initialize video after all animations
+      setTimeout(() => initHomeVideo(), 50);
+    }, 100);
+  }, 50);
   
   console.log('Page transition initialization complete');
 }
@@ -1023,6 +1050,9 @@ function initSplitTextAnimations(scope = document) {
     console.error('ScrollTrigger not available for SplitText animations');
     return;
   }
+  
+  const isMobile = window.innerWidth < 650;
+  console.log('SplitText animations - mobile:', isMobile);
 
   const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
   
@@ -1127,12 +1157,23 @@ function initGsapAnimations() {
     // Ensure we're at the top of the page before creating animations
     ensureProperScrollPosition();
     
+    const isMobile = window.innerWidth < 650;
+    console.log('GSAP animations - mobile:', isMobile);
+    
     // Kill any existing ScrollTriggers to prevent conflicts
     ScrollTrigger.getAll().forEach(trigger => {
       if (trigger.vars.id && trigger.vars.id.includes('gsap-animation')) {
         trigger.kill();
       }
     });
+    
+    // For mobile, ensure native scrolling is enabled
+    if (isMobile) {
+      // Reset any custom scroll behavior that might interfere
+      document.body.style.overflow = '';
+      document.documentElement.style.scrollBehavior = '';
+      document.documentElement.style.touchAction = 'pan-x pan-y';
+    }
 
   // Common animations for all pages
   gsap.fromTo(".clipping-video, .about-hero-image", 
@@ -3388,6 +3429,18 @@ window.addEventListener('resize', () => {
   }, 100);
 });
 
+// Mobile scroll handler to refresh ScrollTrigger after scrolling
+let scrollTimeout;
+window.addEventListener('scroll', () => {
+  const isMobile = window.innerWidth < 650;
+  if (isMobile && typeof ScrollTrigger !== 'undefined') {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      ScrollTrigger.refresh(true);
+    }, 150);
+  }
+});
+
 // Function to ensure proper ScrollTrigger refresh after page transitions
 function ensureScrollTriggerRefresh() {
   if (typeof ScrollTrigger !== 'undefined') {
@@ -3471,6 +3524,23 @@ function forceReinitializeAll() {
 
 // Make force reinitialize function globally available
 window.forceReinitializeAll = forceReinitializeAll;
+
+// Function to force refresh ScrollTrigger for mobile after scrolling
+function forceRefreshScrollTriggerMobile() {
+  const isMobile = window.innerWidth < 650;
+  if (isMobile && typeof ScrollTrigger !== 'undefined') {
+    console.log('Force refreshing ScrollTrigger for mobile...');
+    ScrollTrigger.refresh(true);
+    
+    // Additional refresh after a delay
+    setTimeout(() => {
+      ScrollTrigger.refresh(true);
+    }, 100);
+  }
+}
+
+// Make mobile refresh function globally available
+window.forceRefreshScrollTriggerMobile = forceRefreshScrollTriggerMobile;
 
 
 
