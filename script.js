@@ -1,3 +1,92 @@
+// --- DYNAMIC LIBRARY LOADER  ---
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = false;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      document.head.appendChild(script);
+    });
+  }
+  
+  async function loadAllLibraries() {
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
+    await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
+    await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
+    await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+    await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
+  }
+  
+  
+  
+  async function startApp() {
+    try {
+      await loadAllLibraries();
+      
+      // Register GSAP plugins
+      if (typeof gsap !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger, SplitText);
+        if (typeof ScrollToPlugin !== 'undefined') {
+          gsap.registerPlugin(ScrollToPlugin);
+        }
+      }
+  
+      // UserWay widget
+      (function(d) {
+        var s = d.createElement("script");
+        s.setAttribute("data-account", "a37OvQJfVJ");
+        s.setAttribute("src", "https://cdn.userway.org/widget.js");
+        (d.body || d.head).appendChild(s);
+      })(document);
+  
+      // Start the loader animation
+      animateLoaderCounter(() => {
+        // Initialize functions after loader completes
+        refreshbreakingpoints();
+        initInteractiveCursor();
+        initMegaMenu();
+        initPageTransitions();
+        initInfinityGallery();
+        moveShowAllIntoCollectionList();
+        initDisplayToggle();
+        
+        // Initialize everything immediately without requestAnimationFrame
+        initNavbarShowHide();
+        initGsapAnimations();
+        initSplitTextAnimations();
+        
+        // Initialize type-list radio button handler
+        if (typeof initTypeListRadioHandler === 'function') {
+          initTypeListRadioHandler();
+        }
+        
+        // Only initialize cursor if not already initialized
+        if (!window.cursorInitialized) {
+            initInteractiveCursor();
+        }
+        
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+        
+        // Initialize video immediately without delay
+        initHomeVideo();
+      }, 400); // Reduced loader duration from 800ms to 400ms
+  
+    } catch (error) {
+      console.error('Error in startApp:', error);
+      // Fallback initialization without loader
+      refreshbreakingpoints();
+      initPageTransitions();
+      initHomeVideo();
+      initInfinityGallery();
+    }
+  }
+  document.addEventListener("DOMContentLoaded", startApp);
+  // --- END DYNAMIC LOADER ---
+
 window.history.scrollRestoration = "manual";
 
 window.addEventListener("beforeunload", () => {
@@ -19,7 +108,7 @@ window.addEventListener("beforeunload", () => {
   document.body.appendChild(loader);
 })();
 
-function animateLoaderCounter(onComplete, duration = 100) {
+function animateLoaderCounter(onComplete, duration = 50) {
   document.documentElement.style.visibility = "visible";
   document.body.style.visibility = "visible";
 
@@ -32,22 +121,16 @@ function animateLoaderCounter(onComplete, duration = 100) {
     return;
   }
 
-  // Create loading line
-  const loadingLine = document.createElement('div');
-  loadingLine.className = 'loading-line';
-  document.body.appendChild(loadingLine);
-      
   const target = 100;
       
   // Set initial state
   gsap.set(counter, {
-    opacity: 0,
-    y: 100,
+    opacity: 1,
+    y: 30,
+    clipPath: "inset(0 0 100% 0)",
     visibility: "hidden",
     textContent: 0
   });
-
-  gsap.set(loadingLine, { width: "0%" });
   
   // Create main timeline
   const tl = gsap.timeline({
@@ -60,14 +143,13 @@ function animateLoaderCounter(onComplete, duration = 100) {
          
       // Animate counter up and fade out
       exitTl.to(counter, {
-        y: -100,
+        y: -300,
         opacity: 0,
-        duration: 0.8,
+        clipPath: "inset(0 0 100% 0)",
+        duration: 1.2,
         ease: "power2.in"
       }, 0);
 
-
-         
       // Then animate the clip-path
       exitTl.to(loader, {
         clipPath: "inset(0 0 100% 0)", // From bottom to top
@@ -75,7 +157,6 @@ function animateLoaderCounter(onComplete, duration = 100) {
         ease: "expo.inOut",
         onComplete: () => {
           loader.remove();
-          loadingLine.remove();
         }
       }, 0);
     }
@@ -84,6 +165,7 @@ function animateLoaderCounter(onComplete, duration = 100) {
   // Fade in and slide up
   tl.to(counter, {
     y: 0,
+    clipPath: "inset(0 0 3% 0)",
     opacity: 1,
     duration: 1.2,
     visibility: "visible",
@@ -92,127 +174,30 @@ function animateLoaderCounter(onComplete, duration = 100) {
 
   // Animate the counter
   tl.to(counter, {
-    duration: duration / 1000,
+    duration: duration / 500,
     textContent: target,
     snap: { textContent: 1 },
     ease: "none"
   });
 
-  // Animate the loading line with power4.inOut
-  tl.to(loadingLine, {
-    width: "100%",
-    duration: duration / 1000,
-    ease: "power4.inOut"
-  }, "<");
-}
-
-
-// --- DYNAMIC LIBRARY LOADER (at the very top) ---
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = false;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-    document.head.appendChild(script);
-  });
-}
-
-async function loadAllLibraries() {
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
-  await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
-  await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
-  await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
-  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
-  await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
 }
 
 
 
-async function startApp() {
-  try {
-    await loadAllLibraries();
-    
-    // Register GSAP plugins
-    if (typeof gsap !== 'undefined') {
-      gsap.registerPlugin(ScrollTrigger, SplitText);
-      if (typeof ScrollToPlugin !== 'undefined') {
-        gsap.registerPlugin(ScrollToPlugin);
-      }
-    }
-
-    // UserWay widget
-    (function(d) {
-      var s = d.createElement("script");
-      s.setAttribute("data-account", "a37OvQJfVJ");
-      s.setAttribute("src", "https://cdn.userway.org/widget.js");
-      (d.body || d.head).appendChild(s);
-    })(document);
-
-    // Start the loader animation
-    animateLoaderCounter(() => {
-      // Initialize functions after loader completes
-      refreshbreakingpoints();
-      initInteractiveCursor();
-      initMegaMenu();
-      initPageTransitions();
-      initInfinityGallery();
-      moveShowAllIntoCollectionList();
-      initDisplayToggle();
-      
-      requestAnimationFrame(() => {
-        initNavbarShowHide();
-        initGsapAnimations();
-        initSplitTextAnimations();
-        
-        // Initialize type-list radio button handler
-        if (typeof initTypeListRadioHandler === 'function') {
-          initTypeListRadioHandler();
-        }
-        
-        // Only initialize cursor if not already initialized
-        if (!window.cursorInitialized) {
-            initInteractiveCursor();
-        }
-        
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
-        
-        // Initialize video after all other animations are set up
-        setTimeout(() => {
-          initHomeVideo();
-        }, 1000); // Increased delay to ensure page is fully loaded
-      });
-    }, 800); // 0.8 second loader duration
-
-  } catch (error) {
-    console.error('Error in startApp:', error);
-    // Fallback initialization without loader
-    refreshbreakingpoints();
-    initPageTransitions();
-    initHomeVideo();
-    initInfinityGallery();
-  }
-}
-document.addEventListener("DOMContentLoaded", startApp);
-// --- END DYNAMIC LOADER ---
 
 
 
 function moveShowAllIntoCollectionList() {
   const showAll = document.querySelector(".show-all");
   const typeItem = document.querySelector(".collection-list-1");
-  const typeItemChildren = typeItem?.querySelectorAll("[role='listitem']");
   const collectionList = document.querySelector(".type-item .w-dyn-items");
 
   if (collectionList) {
     if (showAll) collectionList.prepend(showAll);
-    if (typeItemChildren && typeItemChildren.length) {
-      typeItemChildren.forEach(child => collectionList.appendChild(child));
+    if (typeItem) {
+      typeItem.querySelectorAll("[role='listitem']").forEach(child => collectionList.appendChild(child));
+      typeItem.remove();
     }
-    if (typeItem) typeItem.remove();
   }
 }
 
@@ -224,36 +209,22 @@ function moveShowAllIntoCollectionList() {
 Reload FinSweet CMS Filter
 ============================================== */
 function reloadFinsweetCMS() {
-
-    const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
-    if (oldScript) {
-    oldScript.remove();
-    }
-    const newScript = document.createElement("script");
-    newScript.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js";
-    newScript.async = true;
-    newScript.onload = () => {};
-    document.body.appendChild(newScript);
-    
-  }
+  const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
+  if (oldScript) oldScript.remove();
+  
+  const newScript = document.createElement("script");
+  newScript.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js";
+  newScript.async = true;
+  document.body.appendChild(newScript);
+}
 
 // Function to handle radio button selection in .type-list
 function initTypeListRadioHandler() {
-  // Listen for clicks on radio buttons in .type-list
   document.addEventListener('click', (e) => {
-    const radioButton = e.target.closest('.type-list .w-radio input[type="radio"]');
-    if (radioButton) {
+    if (e.target.closest('.type-list .w-radio input[type="radio"]')) {
       setTimeout(() => {
-
-        
-        if (typeof initSplitTextAnimations === 'function') {
-          initSplitTextAnimations();
-        }
-        
-        // Refresh ScrollTrigger
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.refresh(true);
-        }
+        if (typeof initSplitTextAnimations === 'function') initSplitTextAnimations();
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
       }, 100);
     }
   });
@@ -704,6 +675,16 @@ function initPageTransitions() {
           // Ensure proper scroll position
           ensureProperScrollPosition();
           
+          // Re-register GSAP plugins to ensure they're available
+          if (typeof gsap !== 'undefined') {
+            if (typeof ScrollTrigger !== 'undefined') {
+              gsap.registerPlugin(ScrollTrigger);
+            }
+            if (typeof SplitText !== 'undefined') {
+              gsap.registerPlugin(SplitText);
+            }
+          }
+          
           initGsapAnimations();
           initNavbarShowHide();
           initCustomSmoothScrolling();
@@ -713,6 +694,7 @@ function initPageTransitions() {
           // Initialize SplitText animations
           setTimeout(() => {
             if (typeof initSplitTextAnimations === 'function') {
+              console.log('Initializing SplitText animations...');
               initSplitTextAnimations();
             }
           }, 200);
@@ -723,12 +705,13 @@ function initPageTransitions() {
             initHomeVideo();
           }, 1000);
           
-          // Refresh ScrollTrigger after all animations are set up
+          // Refresh ScrollTrigger after SplitText animations are set up
           setTimeout(() => {
             if (typeof ScrollTrigger !== 'undefined') {
+              console.log('Refreshing ScrollTrigger...');
               ScrollTrigger.refresh(true);
             }
-          }, 100);
+          }, 400); // Increased delay to ensure SplitText is ready
         }, 150);
 
         
@@ -844,8 +827,7 @@ Split Text Animations
 ============================================== */
 
 function truncateByWords(el, wordLimit = 43) {
-  const text = el.textContent.trim();
-  const words = text.split(/\s+/);
+  const words = el.textContent.trim().split(/\s+/);
   if (words.length > wordLimit) {
     el.textContent = words.slice(0, wordLimit).join(' ') + '...';
   }
@@ -862,28 +844,20 @@ function cleanupAllPageAnimations() {
   
   // Clean up SplitText instances
   if (typeof SplitText !== 'undefined') {
-    // Find all elements that have SplitText instances attached
-    const allElements = document.querySelectorAll('*');
-    allElements.forEach(element => {
-      if (element._splitTextInstance && element._splitTextInstance.revert) {
-        try {
-          element._splitTextInstance.revert();
-        } catch (error) {
-          console.warn('Error reverting SplitText instance:', error);
-        }
+    document.querySelectorAll('*').forEach(element => {
+      if (element._splitTextInstance?.revert) {
+        try { element._splitTextInstance.revert(); } catch (e) {}
         delete element._splitTextInstance;
       }
     });
     
-    // Remove any existing .line elements
-    document.querySelectorAll('.line').forEach(line => {
-      line.remove();
-    });
+    // Remove .line elements
+    document.querySelectorAll('.line').forEach(line => line.remove());
   }
   
   // Clean up custom instances
   if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
-  if (window.cleanupCursor && typeof window.cleanupCursor === 'function') window.cleanupCursor();
+  if (window.cleanupCursor) window.cleanupCursor();
   if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
   
   // Reset initialization flags
@@ -891,56 +865,25 @@ function cleanupAllPageAnimations() {
 }
 
 function ensureProperScrollPosition() {
-  // Force scroll to top with multiple methods
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-  
-  // Force a reflow to ensure the scroll position is applied
-  document.documentElement.offsetHeight;
-  
-  // Double-check scroll position
-  if (window.pageYOffset > 0) {
-    requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    });
-  }
+  document.documentElement.offsetHeight; // force reflow
 }
 
 function initSplitTextAnimations(scope = document) {
-  // Check if SplitText is available
-  if (typeof SplitText === 'undefined') {
-    console.warn('SplitText not available, skipping text animations');
-    return;
-  }
+  if (typeof SplitText === 'undefined') return;
 
-  // Simple element selection - target all text elements
   const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
-
+  
   elements.forEach((element) => {
-    // Skip if element already has SplitText applied or if it's empty
-    if (element.querySelector('.line') || !element.textContent.trim()) {
-      return;
-    }
-
-    // Skip if element already has a SplitText instance
-    if (element._splitTextInstance) {
-      return;
-    }
+    if (element.querySelector('.line') || !element.textContent.trim() || element._splitTextInstance) return;
 
     try {
-      // Create SplitText instance
       const split = new SplitText(element, { type: "lines", linesClass: "line" });
-      
-      // Store the SplitText instance for potential cleanup
       element._splitTextInstance = split;
 
-      // Ensure lines exist before proceeding
-      if (!split.lines || split.lines.length === 0) {
-        return;
-      }
+      if (!split.lines || split.lines.length === 0) return;
 
       split.lines.forEach((line) => {
         line.style.display = "inline-block";
@@ -979,11 +922,7 @@ function initSplitTextAnimations(scope = document) {
         ease: "power4.out"
       });
     } catch (error) {
-      console.warn('Error applying SplitText to element:', element, error);
-      // Clean up any partial state
-      if (element._splitTextInstance) {
-        delete element._splitTextInstance;
-      }
+      if (element._splitTextInstance) delete element._splitTextInstance;
     }
   });
 }
@@ -2627,15 +2566,6 @@ function initHomeVideo() {
             return;
         }
 
-        // Check if page is fully loaded
-        if (document.readyState !== 'complete') {
-            console.log('Page not fully loaded, delaying video initialization');
-            window.addEventListener('load', () => {
-                setTimeout(initHomeVideo, 500); // Additional delay after load
-            });
-            return;
-        }
-
         const isMobile = window.innerWidth < 650;
 
         const videoSrc = isMobile
@@ -2647,7 +2577,7 @@ function initHomeVideo() {
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
-        video.preload = "metadata"; // Only load metadata initially
+        video.preload = "auto"; // Load video immediately
 
         const source = document.createElement("source");
         source.src = videoSrc;
@@ -2655,20 +2585,8 @@ function initHomeVideo() {
 
         video.appendChild(source);
         
-        // Add video to container
+        // Add video to container immediately
         videoContainer.appendChild(video);
-        
-        // Load video data when it's in viewport
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    video.preload = "auto";
-                    observer.unobserve(video);
-                }
-            });
-        });
-        
-        observer.observe(video);
         
         console.log('Home video initialized successfully');
     } catch (error) {
@@ -3225,6 +3143,20 @@ document.addEventListener('click', (e) => {
       }
     }, 500);
   }
+});
+
+// Global resize handler for all GSAP functions
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+    if (typeof gsap !== 'undefined') {
+      gsap.set("*", { clearProps: "transform" });
+    }
+  }, 100);
 });
 
 
