@@ -161,9 +161,6 @@ async function startApp() {
       initInfinityGallery();
       moveShowAllIntoCollectionList();
       initDisplayToggle();
-      loadWeglotIfNeeded(); // Load Weglot if needed
-      initWeglot(); // Initialize Weglot
-      setupWeglotEventListeners(); // Setup Weglot event listeners
       
       requestAnimationFrame(() => {
         initNavbarShowHide();
@@ -700,14 +697,6 @@ function initPageTransitions() {
         initDisplayToggle();
         moveShowAllIntoCollectionList();
         
-        // Re-translate content with Weglot
-        reTranslateContent();
-        
-        // Re-initialize Weglot if needed
-        setTimeout(() => {
-          reinitializeWeglot();
-        }, 300);
-        
         // Delay initialization to ensure proper scroll position
         setTimeout(() => {
           // Ensure proper scroll position
@@ -723,9 +712,28 @@ function initPageTransitions() {
           // Initialize SplitText animations with a longer delay to ensure DOM is ready
           setTimeout(() => {
             if (typeof initSplitTextAnimations === 'function') {
-              initSplitTextAnimations();
+              try {
+                initSplitTextAnimations();
+                console.log('SplitText animations initialized successfully');
+              } catch (error) {
+                console.warn('Error initializing SplitText animations:', error);
+                // Retry once after a longer delay
+                setTimeout(() => {
+                  try {
+                    initSplitTextAnimations();
+                    console.log('SplitText animations initialized on retry');
+                  } catch (retryError) {
+                    console.warn('SplitText animations failed on retry:', retryError);
+                    // Final fallback - force refresh all SplitText animations
+                    if (typeof forceRefreshSplitTextAnimations === 'function') {
+                      forceRefreshSplitTextAnimations();
+                      console.log('Force refresh SplitText animations executed');
+                    }
+                  }
+                }, 500);
+              }
             }
-          }, 200);
+          }, 300); // Increased delay for better DOM readiness
          
 
           // Initialize video after all other animations are set up
@@ -733,10 +741,12 @@ function initPageTransitions() {
             initHomeVideo();
           }, 1000); // Increased delay to ensure page is fully loaded
           
-          // Refresh ScrollTrigger after all other animations are set up
+          // Refresh ScrollTrigger after all animations are set up
           setTimeout(() => {
-            ScrollTrigger.refresh(true);
-          }, 50);
+            if (typeof ScrollTrigger !== 'undefined') {
+              ScrollTrigger.refresh(true);
+            }
+          }, 100); // Increased delay to ensure all animations are set up
         }, 150);
 
         
@@ -868,18 +878,26 @@ function cleanupAllPageAnimations() {
   // Kill all GSAP animations
   gsap.killTweensOf("*");
   
-  // Clean up SplitText instances
+  // Clean up SplitText instances - look for elements with _splitTextInstance property
   if (typeof SplitText !== 'undefined') {
-    document.querySelectorAll('[data-split-text]').forEach(element => {
+    // Find all elements that have SplitText instances attached
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(element => {
       if (element._splitTextInstance && element._splitTextInstance.revert) {
-        element._splitTextInstance.revert();
+        try {
+          element._splitTextInstance.revert();
+        } catch (error) {
+          console.warn('Error reverting SplitText instance:', error);
+        }
         delete element._splitTextInstance;
       }
     });
     
-    // Remove any existing .line elements
+    // Remove any existing .line elements that might be orphaned
     document.querySelectorAll('.line').forEach(line => {
-      line.remove();
+      if (!line.parentElement || !line.parentElement._splitTextInstance) {
+        line.remove();
+      }
     });
   }
   
@@ -923,8 +941,13 @@ function initSplitTextAnimations(scope = document) {
   );
 
   elements.forEach((element) => {
-    // Skip if element already has SplitText applied (double check)
-    if (element.querySelector('.line')) {
+    // Skip if element already has SplitText applied or if it's empty
+    if (element.querySelector('.line') || !element.textContent.trim()) {
+      return;
+    }
+
+    // Skip if element already has a SplitText instance
+    if (element._splitTextInstance) {
       return;
     }
 
@@ -935,10 +958,17 @@ function initSplitTextAnimations(scope = document) {
     }
 
     try {
+      // Create SplitText instance
       const split = new SplitText(element, { type: "lines", linesClass: "line" });
       
       // Store the SplitText instance for potential cleanup
       element._splitTextInstance = split;
+
+      // Ensure lines exist before proceeding
+      if (!split.lines || split.lines.length === 0) {
+        console.warn('No lines created for element:', element);
+        return;
+      }
 
       split.lines.forEach((line) => {
         line.style.display = "inline-block";
@@ -985,6 +1015,10 @@ function initSplitTextAnimations(scope = document) {
       });
     } catch (error) {
       console.warn('Error applying SplitText to element:', element, error);
+      // Clean up any partial state
+      if (element._splitTextInstance) {
+        delete element._splitTextInstance;
+      }
     }
   });
 }
@@ -3151,185 +3185,65 @@ function initializeApplication() {
   initDisplayToggle();
 }
 
-// --- WEGLOT INTEGRATION FOR SEAMLESS PAGE FETCHING ---
-function initWeglot() {
-  // Initialize Weglot if it exists
-  if (typeof Weglot !== 'undefined') {
-    Weglot.initialize({
-      api_key: 'wg_d364a578f310b7757c5e30422c9d04a04',
-      // Configure Weglot to work with seamless page fetching
-      auto_switch_display: true,
-      // Ensure Weglot translates content inside page-wrapper
-      include_selector: '.page-wrapper',
-      // Exclude elements that shouldn't be translated
-      exclude_selector: '.no-translate, .mega-menu, .header',
-      // Enable dynamic content translation
-      dynamic_content: true
-    });
-  } else {
-    // If Weglot is not available yet, wait for it
-    const checkWeglot = setInterval(() => {
-      if (typeof Weglot !== 'undefined') {
-        Weglot.initialize({
-          api_key: 'wg_d364a578f310b7757c5e30422c9d04a04',
-          // Configure Weglot to work with seamless page fetching
-          auto_switch_display: true,
-          // Ensure Weglot translates content inside page-wrapper
-          include_selector: '.page-wrapper',
-          // Exclude elements that shouldn't be translated
-          exclude_selector: '.no-translate, .mega-menu, .header',
-          // Enable dynamic content translation
-          dynamic_content: true
-        });
-        clearInterval(checkWeglot);
+function forceRefreshSplitTextAnimations() {
+  // Kill any existing SplitText animations
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach(trigger => {
+      if (trigger.vars && trigger.vars.id && trigger.vars.id.includes('splittext')) {
+        trigger.kill();
       }
-    }, 100);
-    
-    // Stop checking after 10 seconds
-    setTimeout(() => {
-      clearInterval(checkWeglot);
-    }, 10000);
-  }
-}
-
-function reinitializeWeglot() {
-  // Re-initialize Weglot after page transitions
-  if (typeof Weglot !== 'undefined') {
-    // Destroy existing instance if it exists
-    if (Weglot.weglot_switcher && Weglot.weglot_switcher.destroy) {
-      Weglot.weglot_switcher.destroy();
-    }
-    
-    // Re-initialize with the same configuration
-    Weglot.initialize({
-      api_key: 'wg_d364a578f310b7757c5e30422c9d04a04',
-      // Configure Weglot to work with seamless page fetching
-      auto_switch_display: true,
-      // Ensure Weglot translates content inside page-wrapper
-      include_selector: '.page-wrapper',
-      // Exclude elements that shouldn't be translated
-      exclude_selector: '.no-translate, .mega-menu, .header',
-      // Enable dynamic content translation
-      dynamic_content: true
     });
   }
-}
-
-function loadWeglotIfNeeded() {
-  // Load Weglot script if not already loaded
-  if (typeof Weglot === 'undefined' && !document.querySelector('script[src*="weglot.min.js"]')) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.weglot.com/weglot.min.js';
-    script.async = true;
-    script.onload = () => {
-      // Initialize Weglot after script loads
-      setTimeout(() => {
-        initWeglot();
-      }, 100);
-    };
-    document.head.appendChild(script);
-  }
-}
-
-function reTranslateContent() {
-  // Re-translate content after page transition
-  if (typeof Weglot !== 'undefined' && Weglot.weglot_switcher) {
-    // Force Weglot to re-translate the new content
-    setTimeout(() => {
-      // Method 1: Use Weglot's translate method if available
-      if (Weglot.weglot_switcher && Weglot.weglot_switcher.translate) {
-        Weglot.weglot_switcher.translate();
-      }
-      
-      // Method 2: Trigger a custom event for Weglot
-      const event = new CustomEvent('weglot:retranslate', {
-        detail: { target: document.querySelector('.page-wrapper') }
-      });
-      document.dispatchEvent(event);
-      
-      // Method 3: Force DOM re-parsing by temporarily hiding and showing content
-      const pageWrapper = document.querySelector('.page-wrapper');
-      if (pageWrapper) {
-        const originalVisibility = pageWrapper.style.visibility;
-        pageWrapper.style.visibility = 'hidden';
-        setTimeout(() => {
-          pageWrapper.style.visibility = originalVisibility;
-        }, 50);
-      }
-      
-      // Method 4: Trigger Weglot's internal refresh
-      if (Weglot.weglot_switcher && Weglot.weglot_switcher.refresh) {
-        Weglot.weglot_switcher.refresh();
-      }
-      
-      // Method 5: Specifically target page-wrapper content
-      forceTranslatePageWrapper();
-    }, 100);
-  }
-}
-
-function forceTranslatePageWrapper() {
-  // Specifically force translation of page-wrapper content
-  const pageWrapper = document.querySelector('.page-wrapper');
-  if (!pageWrapper || typeof Weglot === 'undefined') return;
   
-  // Get all translatable elements within page-wrapper
-  const translatableElements = pageWrapper.querySelectorAll('[data-wg-translate]');
-  
-  // Force re-translation of each element
-  translatableElements.forEach(element => {
-    // Remove and re-add the data-wg-translate attribute to force re-translation
-    const originalAttr = element.getAttribute('data-wg-translate');
-    if (originalAttr) {
-      element.removeAttribute('data-wg-translate');
-      setTimeout(() => {
-        element.setAttribute('data-wg-translate', originalAttr);
-      }, 10);
+  // Clean up any existing SplitText instances
+  const allElements = document.querySelectorAll('*');
+  allElements.forEach(element => {
+    if (element._splitTextInstance && element._splitTextInstance.revert) {
+      try {
+        element._splitTextInstance.revert();
+      } catch (error) {
+        console.warn('Error reverting SplitText instance during force refresh:', error);
+      }
+      delete element._splitTextInstance;
     }
   });
   
-  // Trigger Weglot to re-parse the page-wrapper
-  if (Weglot.weglot_switcher && Weglot.weglot_switcher.parse) {
-    Weglot.weglot_switcher.parse(pageWrapper);
-  }
+  // Remove any orphaned .line elements
+  document.querySelectorAll('.line').forEach(line => {
+    line.remove();
+  });
+  
+  // Re-initialize SplitText animations
+  setTimeout(() => {
+    if (typeof initSplitTextAnimations === 'function') {
+      initSplitTextAnimations();
+    }
+  }, 100);
 }
 
-function setupWeglotEventListeners() {
-  // Listen for Weglot language changes
-  document.addEventListener('weglot:language_changed', () => {
-    // Re-translate content when language is changed
-    reTranslateContent();
+// Make force refresh function globally available for debugging
+window.forceRefreshSplitTextAnimations = forceRefreshSplitTextAnimations;
+
+// Add debugging function to check SplitText status
+function debugSplitTextStatus() {
+  const elementsWithSplitText = document.querySelectorAll('*').length;
+  const lineElements = document.querySelectorAll('.line').length;
+  const scrollTriggers = typeof ScrollTrigger !== 'undefined' ? ScrollTrigger.getAll().filter(t => t.vars && t.vars.id && t.vars.id.includes('splittext')).length : 0;
+  
+  console.log('SplitText Debug Info:', {
+    totalElements: elementsWithSplitText,
+    lineElements: lineElements,
+    splitTextScrollTriggers: scrollTriggers,
+    splitTextAvailable: typeof SplitText !== 'undefined'
   });
   
-  // Listen for Weglot initialization
-  document.addEventListener('weglot:initialized', () => {
-    console.log('Weglot initialized successfully');
-  });
-  
-  // Listen for Weglot translation events
-  document.addEventListener('weglot:translated', (event) => {
-    console.log('Weglot translation completed', event.detail);
-  });
-  
-  // Handle manual language switching
-  document.addEventListener('click', (e) => {
-    const languageLink = e.target.closest('[data-wg-lang]');
-    if (languageLink) {
-      // Prevent default behavior
-      e.preventDefault();
-      
-      // Get the target language
-      const targetLang = languageLink.getAttribute('data-wg-lang');
-      
-      // Switch language using Weglot API
-      if (typeof Weglot !== 'undefined' && Weglot.weglot_switcher) {
-        Weglot.weglot_switcher.switchTo(targetLang);
-        
-        // Re-translate content after language switch
-        setTimeout(() => {
-          reTranslateContent();
-        }, 200);
-      }
-    }
-  });
+  return {
+    totalElements: elementsWithSplitText,
+    lineElements: lineElements,
+    splitTextScrollTriggers: scrollTriggers,
+    splitTextAvailable: typeof SplitText !== 'undefined'
+  };
 }
+
+window.debugSplitTextStatus = debugSplitTextStatus;
+
