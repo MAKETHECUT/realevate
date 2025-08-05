@@ -2542,13 +2542,8 @@ function initDisplayToggle() {
         });
       }
       
-      // Ensure proper navigation for gallery slide links
-      // The global event listener should handle this, but let's make sure
-      if (link && link !== '#') {
-        e.preventDefault();
-        history.pushState({ title: document.title }, '', link);
-        globalPageTransition(link);
-      }
+      // Let the global event listener handle the navigation
+      // No need to call globalPageTransition here - the global listener will handle it
     });
     
     slider.appendChild(slide);
@@ -3184,5 +3179,3 @@ function globalPageTransition(url, isPopState = false) {
       window.location.href = url;
     });
 }
-
-
