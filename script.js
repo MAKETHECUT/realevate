@@ -55,6 +55,13 @@ function loadScript(src) {
     try {
       console.log('Starting app initialization...');
       
+      // Prevent scrolling immediately
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = '0';
+      
       // Load all libraries first
       await loadAllLibraries();
       
@@ -125,6 +132,28 @@ function loadScript(src) {
         initHomeVideo();
         
         console.log('All functions initialized successfully');
+        
+        // Mark page as fully loaded after a short delay
+        setTimeout(() => {
+          window.pageFullyLoaded = true;
+          console.log('Page marked as fully loaded');
+          
+          // Re-enable scrolling after everything is loaded
+          setTimeout(() => {
+            // Double-check that ScrollTrigger and SplitText are loaded
+            if (typeof ScrollTrigger !== 'undefined' && typeof SplitText !== 'undefined') {
+              document.body.style.overflow = '';
+              document.documentElement.style.overflow = '';
+              document.body.style.position = '';
+              document.body.style.width = '';
+              document.body.style.top = '';
+              window.enableScrolling(); // Enable global scroll prevention
+              console.log('Scrolling re-enabled - ScrollTrigger and SplitText loaded');
+            } else {
+              console.log('ScrollTrigger or SplitText not loaded, keeping scroll disabled');
+            }
+          }, 300);
+        }, 200);
       }, 400); // Standard loader duration
   
     } catch (error) {
@@ -147,6 +176,35 @@ function loadScript(src) {
       }, 1000);
     }
   }
+  // Global scroll prevention until scripts are loaded
+  let scrollPreventionEnabled = true;
+  
+  // Prevent all scroll events until scripts are loaded
+  function preventScroll(e) {
+    if (scrollPreventionEnabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }
+  
+  // Add scroll prevention listeners
+  window.addEventListener('scroll', preventScroll, { passive: false });
+  window.addEventListener('wheel', preventScroll, { passive: false });
+  window.addEventListener('touchmove', preventScroll, { passive: false });
+  window.addEventListener('keydown', (e) => {
+    if (scrollPreventionEnabled && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'PageDown' || e.key === 'PageUp' || e.key === ' ')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  // Function to enable scrolling
+  window.enableScrolling = function() {
+    scrollPreventionEnabled = false;
+    console.log('Global scroll prevention disabled');
+  };
+  
   document.addEventListener("DOMContentLoaded", startApp);
   // --- END DYNAMIC LOADER ---
 
@@ -353,11 +411,47 @@ function initCustomSmoothScrolling() {
             this.as();
             this.ud();
             this.be();
+            
+            // Wait for page to be fully loaded before enabling smooth scrolling
+            const waitForPageLoad = () => {
+                // Check if all scripts are loaded
+                const scriptsLoaded = typeof gsap !== 'undefined' && 
+                                    typeof ScrollTrigger !== 'undefined' && 
+                                    typeof SplitText !== 'undefined';
+                
+                // Check if page is fully loaded
+                const pageLoaded = document.readyState === 'complete';
+                
+                // Check if all animations are initialized and page is marked as fully loaded
+                const animationsReady = !window.isInitializing && window.pageFullyLoaded;
+                
+                // Check if global scroll prevention is disabled
+                const scrollEnabled = !scrollPreventionEnabled;
+                
+                if (scriptsLoaded && pageLoaded && animationsReady && scrollEnabled) {
+                    console.log('Page fully loaded, enabling smooth scrolling...');
+                    this.se = true;
+                    this.fsu();
+                    this.sl();
+                } else {
+                    // Wait a bit more and check again
+                    setTimeout(waitForPageLoad, 100);
+                }
+            };
+            
+            // Start checking for page load
+            waitForPageLoad();
+            
+            // Fallback: Enable smooth scrolling after 5 seconds maximum
             setTimeout(() => {
-                this.se = true;
-                this.fsu();
-                this.sl();
-            }, 10);
+                if (!this.se) {
+                    console.log('Fallback: Enabling smooth scrolling after timeout');
+                    window.enableScrolling(); // Enable global scrolling
+                    this.se = true;
+                    this.fsu();
+                    this.sl();
+                }
+            }, 5000);
         }
 
         as() {
@@ -912,6 +1006,12 @@ function truncateByWords(el, wordLimit = 43) {
 }
 
 function cleanupAllPageAnimations() {
+  // Don't cleanup if we're in the middle of initialization or fast scrolling
+  if (window.isInitializing || window.isScrollingFast) {
+    console.log('Skipping cleanup during initialization or fast scrolling');
+    return;
+  }
+  
   // Kill ALL ScrollTriggers first
   if (typeof ScrollTrigger !== 'undefined') {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
@@ -3434,14 +3534,48 @@ window.addEventListener('resize', () => {
 
 // Enhanced mobile scroll handler to refresh ScrollTrigger after scrolling
 let scrollTimeout;
+let isScrollingFast = false;
+let scrollCount = 0;
+let lastScrollTime = 0;
+
 window.addEventListener('scroll', () => {
   const isMobile = window.innerWidth < 650;
-  if (isMobile && typeof ScrollTrigger !== 'undefined') {
+  const currentTime = Date.now();
+  
+  // Detect fast scrolling
+  if (currentTime - lastScrollTime < 50) {
+    scrollCount++;
+    if (scrollCount > 3) {
+      isScrollingFast = true;
+      window.isScrollingFast = true; // Set global flag
+    }
+  } else {
+    scrollCount = 0;
+    isScrollingFast = false;
+    window.isScrollingFast = false; // Clear global flag
+  }
+  
+  lastScrollTime = currentTime;
+  
+  if (isMobile && typeof ScrollTrigger !== 'undefined' && !isScrollingFast) {
     clearTimeout(scrollTimeout);
     scrollTimeout = setTimeout(() => {
-      forceRefreshScrollTriggerMobile();
-    }, 150);
+      // Only refresh if not scrolling fast
+      if (!isScrollingFast) {
+        forceRefreshScrollTriggerMobile();
+      }
+    }, 200); // Increased delay to prevent rapid refreshes
   }
+});
+
+// Reset fast scrolling flag when scrolling stops
+let scrollEndTimeout;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollEndTimeout);
+  scrollEndTimeout = setTimeout(() => {
+    isScrollingFast = false;
+    window.isScrollingFast = false;
+  }, 300);
 });
 
 // Function to ensure proper ScrollTrigger refresh after page transitions
@@ -3747,12 +3881,20 @@ function forceRefreshScrollTriggerMobile() {
   if (isMobile && typeof ScrollTrigger !== 'undefined') {
     console.log('Force refreshing ScrollTrigger for mobile...');
     
-    // Single refresh with minimal delay
-    ScrollTrigger.refresh(true);
-    
-    setTimeout(() => {
-      ScrollTrigger.refresh(true);
-    }, 100);
+    // Only refresh if there are active ScrollTriggers
+    const activeTriggers = ScrollTrigger.getAll().filter(trigger => trigger.isActive);
+    if (activeTriggers.length > 0) {
+      // Gentle refresh without killing existing instances
+      ScrollTrigger.refresh();
+      
+      setTimeout(() => {
+        // Only refresh again if still active
+        const stillActiveTriggers = ScrollTrigger.getAll().filter(trigger => trigger.isActive);
+        if (stillActiveTriggers.length > 0) {
+          ScrollTrigger.refresh();
+        }
+      }, 100);
+    }
   }
 }
 
@@ -3797,6 +3939,9 @@ window.addEventListener('load', () => {
   
   console.log('Window loaded, ensuring proper initialization...');
   
+  // Set a flag to prevent script killing during initialization
+  window.isInitializing = true;
+  
   setTimeout(() => {
     // Re-initialize SplitText animations
     if (typeof initSplitTextAnimations === 'function') {
@@ -3816,5 +3961,10 @@ window.addEventListener('load', () => {
         }
       }, 100);
     }
+    
+    // Clear the initialization flag
+    setTimeout(() => {
+      window.isInitializing = false;
+    }, 500);
   }, loadDelay);
 });
