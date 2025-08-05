@@ -215,7 +215,7 @@ function reloadFinsweetCMS() {
 function initTypeListRadioHandler() {
   document.addEventListener('click', (e) => {
     if (e.target.closest('.type-list .w-radio input[type="radio"]') && typeof ScrollTrigger !== 'undefined') {
-      setTimeout(() => ScrollTrigger.refresh(true), 100);
+      setTimeout(() => ScrollTrigger.refresh(true), 50);
     }
   });
 }
@@ -1067,6 +1067,20 @@ function initGsapAnimations() {
     }
   });
 
+
+
+  
+  gsap.to(".projects .display-toggle", {
+    scrollTrigger: {
+      trigger: ".display-toggle", 
+      start: "top top",
+      end: "+=200px",
+      scrub: true,
+    },
+    opacity: 0,
+  });
+
+
   // Sticky stacking cards effect for .home-container sections
   const homeContainers = document.querySelectorAll('.home-container');
   if (homeContainers.length > 1) {
@@ -1127,37 +1141,7 @@ function initGsapAnimations() {
       }
     });
   }
-/*
 
-  gsap.to(".display-toggle", {
-    scrollTrigger: {
-      trigger: ".display-toggle", 
-      start: "top top",
-      end: "+=200px",
-      scrub: true,
-      onUpdate: self => {
-        const el = document.querySelector(".display-toggle");
-        if (self.progress >= 1) {
-          el.style.visibility = "hidden";
-          el.style.pointerEvents = "none";
-        } else {
-          el.style.visibility = "visible"; 
-          el.style.pointerEvents = "auto";
-        }
-      }
-    },
-    opacity: 0,
-  });
-
-  gsap.from(".display-toggle", {
-    scale: 0,
-    y:50,
-    duration: 1.2,
-    ease: "power4.out",
-    delay: 0.5,
-  });
-
-  */
  
 }
 
