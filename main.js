@@ -755,14 +755,34 @@ Page GSAP Animations
 ============================================== */
 
 
+/* ==============================================
+Page GSAP Animations
+============================================== */
+
+
 function initGsapAnimations() {
+    // Ensure we're at the top of the page before creating animations
+    ensureProperScrollPosition();
+
   // Common animations for all pages
-  gsap.fromTo(".clipping-video", 
+  gsap.fromTo(".clipping-video, .about-hero-image", 
     { clipPath: "inset(100% 0% 0% 0%)" }, 
     { 
       clipPath: "inset(0% 0% 0% 0%)", 
       delay: 0.6,
-      duration: 1.5, 
+      duration: 1.2, 
+      ease: "power4.inOut" 
+    }
+  );
+
+
+  gsap.fromTo(".about-hero-image, .about-values .image", 
+    { clipPath: "inset(0% 0% 0% 100%)" }, 
+    { 
+      clipPath: "inset(0% 0% 0% 0%)", 
+      delay: 0.4,
+      duration: 1.2, 
+      stagger: 0.1,
       ease: "power4.inOut" 
     }
   );
@@ -866,10 +886,13 @@ function initGsapAnimations() {
   }
 
   // Image parallax animations
-  document.querySelectorAll('.home-container .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
-    gsap.from(img, {
-      yPercent: -15,
+  document.querySelectorAll('.home-container .image img, .about-hero-image img, .about-values .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
+    gsap.fromTo(img, {
+      yPercent: -10,
       transformOrigin: "center center",
+    }, {
+      yPercent: 10,
+      transformOrigin: "center center", 
       ease: "none",
       scrollTrigger: {
         trigger: img,
@@ -999,7 +1022,19 @@ function initGsapAnimations() {
     });
   });
 
-  
+
+  gsap.from(".collection-list-1 div, .collection-list-1 .w-dyn-items", {
+    yPercent: 200,
+    duration: 1,
+    ease: "power2.out",
+    stagger: 0.030,
+    scrollTrigger: {
+      trigger: ".collection-list-1",
+      start: "top 90%",
+      toggleActions: "play none none none"
+    }
+  });
+
   // Sticky stacking cards effect for .home-container sections
   const homeContainers = document.querySelectorAll('.home-container');
   if (homeContainers.length > 1) {
@@ -1062,7 +1097,6 @@ function initGsapAnimations() {
   }
 
 
-/*
   gsap.to(".display-toggle", {
     scrollTrigger: {
       trigger: ".display-toggle", 
@@ -1090,10 +1124,8 @@ function initGsapAnimations() {
     ease: "power4.out",
     delay: 0.5,
   });
-  */
 
 }
-
 
 
 
