@@ -688,7 +688,10 @@ function cleanupAllPageAnimations() {
   
   // Clean up instances
   if (window.cleanupCursor) window.cleanupCursor();
-  if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
+  if (window.navbarShowHide?.destroy) {
+    window.navbarShowHide.destroy();
+    window.navbarShowHide = null;
+  }
   
   window.cursorInitialized = false;
 }
@@ -1336,9 +1339,10 @@ Navbar Show/Hide
 ============================================== */
 
 function initNavbarShowHide() {
-    // Kill any existing instance
+    // Kill any existing instance and reset the variable
     if (window.navbarShowHide && typeof window.navbarShowHide.destroy === 'function') {
         window.navbarShowHide.destroy();
+        window.navbarShowHide = null;
     }
 
     const navElements = document.querySelectorAll(".header");
