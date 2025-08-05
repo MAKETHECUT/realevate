@@ -591,13 +591,14 @@ function initPageTransitions() {
             ease: 'power2',
             attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
             onComplete: () => {
-                gsap.set(cursor, { scale: 0 });
+                // Reset cursor to hidden state first
+                gsap.set(cursor, { scale: 0, visibility: "visible" });
                 gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
                 gsap.set(".menu-toggle", { opacity: 0 });
 
                 const inTl = gsap.timeline();
                 inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-                inTl.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" }, 0);
+                inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
                 inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
 
                 // Only hide transition after all animations are complete
@@ -605,6 +606,11 @@ function initPageTransitions() {
                 transition.style.visibility = 'hidden';
                 isAnimating = false;
                 window.transitioning = false;
+
+                // Initialize cursor after transition is complete
+                if (!window.cursorInitialized) {
+                    initInteractiveCursor();
+                }
 
                 if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
                     window.navbarShowHide = initNavbarShowHide();
