@@ -672,6 +672,7 @@ function cleanupAllPageAnimations() {
   gsap.killTweensOf(".header .logo img, .header .menu a, .menu-toggle, .cursor");
   
   // Clean up SplitText instances
+  /*
   if (typeof SplitText !== 'undefined') {
     document.querySelectorAll('*').forEach(element => {
       if (element._splitTextInstance?.revert) {
@@ -680,7 +681,10 @@ function cleanupAllPageAnimations() {
       }
     });
     document.querySelectorAll('.line').forEach(line => line.remove());
+
   }
+
+  */
   
   // Clean up instances
   if (window.cleanupCursor) window.cleanupCursor();
@@ -3133,7 +3137,7 @@ function globalPageTransition(url, isPopState = false) {
         attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
         onComplete: () => {
           // Clean up ALL animations and instances AFTER page transition animation completes
-         /* cleanupAllPageAnimations();*/
+         cleanupAllPageAnimations();
           
           // Reset cursor
           gsap.set(cursor, { scale: 0, visibility: "visible" });
