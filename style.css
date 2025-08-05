@@ -1293,7 +1293,7 @@ video {
 .sticky-container {
   display: flex;
   flex-direction: column;
-/*  grid-gap: 8vw;*/
+  /*grid-gap: 8vw;*/
   position: relative;
   z-index: 0;
   margin: auto!important;
