@@ -65,23 +65,10 @@ function loadScript(src) {
       // Load all libraries first
       await loadAllLibraries();
       
-      // Wait a bit to ensure all scripts are properly loaded
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
       // Verify GSAP and plugins are loaded
-      if (typeof gsap === 'undefined') {
-        throw new Error('GSAP not loaded');
+      if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' || typeof SplitText === 'undefined') {
+        throw new Error('Required scripts not loaded');
       }
-      
-      if (typeof ScrollTrigger === 'undefined') {
-        throw new Error('ScrollTrigger not loaded');
-      }
-      
-      if (typeof SplitText === 'undefined') {
-        throw new Error('SplitText not loaded');
-      }
-      
-      console.log('GSAP and plugins verified');
       
       // Register GSAP plugins
       gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -89,7 +76,7 @@ function loadScript(src) {
         gsap.registerPlugin(ScrollToPlugin);
       }
       
-      console.log('GSAP plugins registered');
+      console.log('All scripts loaded and verified');
   
       // UserWay widget
       (function(d) {
@@ -99,11 +86,11 @@ function loadScript(src) {
         (d.body || d.head).appendChild(s);
       })(document);
   
-      // Start the loader animation with proper initialization sequence
+      // Start the loader animation
       animateLoaderCounter(() => {
-        console.log('Loader completed, initializing functions...');
+        console.log('Initializing all functions...');
         
-        // Initialize functions after loader completes
+        // Initialize all functions
         refreshbreakingpoints();
         initInteractiveCursor();
         initMegaMenu();
@@ -114,95 +101,41 @@ function loadScript(src) {
         initNavbarShowHide();
         initGsapAnimations();
         initSplitTextAnimations();
-        
-        // Initialize type-list radio button handler
-        if (typeof initTypeListRadioHandler === 'function') {
-          initTypeListRadioHandler();
-        }
-        
-        // Only initialize cursor if not already initialized
-        if (!window.cursorInitialized) {
-            initInteractiveCursor();
-        }
-        
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
-        
-        // Initialize video immediately without delay
+        initTypeListRadioHandler();
+        initCustomSmoothScrolling();
         initHomeVideo();
         
-        console.log('All functions initialized successfully');
+        // Single ScrollTrigger refresh
+        ScrollTrigger.refresh(true);
         
-        // Mark page as fully loaded after a short delay
-        setTimeout(() => {
-          window.pageFullyLoaded = true;
-          console.log('Page marked as fully loaded');
-          
-          // Re-enable scrolling after everything is loaded
-          setTimeout(() => {
-            // Double-check that ScrollTrigger and SplitText are loaded
-            if (typeof ScrollTrigger !== 'undefined' && typeof SplitText !== 'undefined') {
-              document.body.style.overflow = '';
-              document.documentElement.style.overflow = '';
-              document.body.style.position = '';
-              document.body.style.width = '';
-              document.body.style.top = '';
-              window.enableScrolling(); // Enable global scroll prevention
-              console.log('Scrolling re-enabled - ScrollTrigger and SplitText loaded');
-            } else {
-              console.log('ScrollTrigger or SplitText not loaded, keeping scroll disabled');
-            }
-          }, 300);
-        }, 200);
-      }, 400); // Standard loader duration
+        console.log('All functions initialized');
+        
+        // Enable scrolling
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        window.enableScrolling();
+        
+        console.log('Page ready - scrolling enabled');
+      }, 400);
   
     } catch (error) {
       console.error('Error starting app:', error);
       
-      // Fallback initialization if script loading fails
-      setTimeout(() => {
-        try {
-          console.log('Running fallback initialization...');
-          refreshbreakingpoints();
-          initMegaMenu();
-          initPageTransitions();
-          moveShowAllIntoCollectionList();
-          initNavbarShowHide();
-          initDisplayToggle();
-          initHomeVideo();
-        } catch (fallbackError) {
-          console.error('Fallback initialization failed:', fallbackError);
-        }
-      }, 1000);
+      // Simple fallback
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      window.enableScrolling();
     }
   }
-  // Global scroll prevention until scripts are loaded
-  let scrollPreventionEnabled = true;
-  
-  // Prevent all scroll events until scripts are loaded
-  function preventScroll(e) {
-    if (scrollPreventionEnabled) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-  }
-  
-  // Add scroll prevention listeners
-  window.addEventListener('scroll', preventScroll, { passive: false });
-  window.addEventListener('wheel', preventScroll, { passive: false });
-  window.addEventListener('touchmove', preventScroll, { passive: false });
-  window.addEventListener('keydown', (e) => {
-    if (scrollPreventionEnabled && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'PageDown' || e.key === 'PageUp' || e.key === ' ')) {
-      e.preventDefault();
-      return false;
-    }
-  });
-  
-  // Function to enable scrolling
+  // Simple scroll prevention
   window.enableScrolling = function() {
-    scrollPreventionEnabled = false;
-    console.log('Global scroll prevention disabled');
+    console.log('Scrolling enabled');
   };
   
   document.addEventListener("DOMContentLoaded", startApp);
@@ -412,46 +345,10 @@ function initCustomSmoothScrolling() {
             this.ud();
             this.be();
             
-            // Wait for page to be fully loaded before enabling smooth scrolling
-            const waitForPageLoad = () => {
-                // Check if all scripts are loaded
-                const scriptsLoaded = typeof gsap !== 'undefined' && 
-                                    typeof ScrollTrigger !== 'undefined' && 
-                                    typeof SplitText !== 'undefined';
-                
-                // Check if page is fully loaded
-                const pageLoaded = document.readyState === 'complete';
-                
-                // Check if all animations are initialized and page is marked as fully loaded
-                const animationsReady = !window.isInitializing && window.pageFullyLoaded;
-                
-                // Check if global scroll prevention is disabled
-                const scrollEnabled = !scrollPreventionEnabled;
-                
-                if (scriptsLoaded && pageLoaded && animationsReady && scrollEnabled) {
-                    console.log('Page fully loaded, enabling smooth scrolling...');
-                    this.se = true;
-                    this.fsu();
-                    this.sl();
-                } else {
-                    // Wait a bit more and check again
-                    setTimeout(waitForPageLoad, 100);
-                }
-            };
-            
-            // Start checking for page load
-            waitForPageLoad();
-            
-            // Fallback: Enable smooth scrolling after 5 seconds maximum
-            setTimeout(() => {
-                if (!this.se) {
-                    console.log('Fallback: Enabling smooth scrolling after timeout');
-                    window.enableScrolling(); // Enable global scrolling
-                    this.se = true;
-                    this.fsu();
-                    this.sl();
-                }
-            }, 5000);
+            // Enable smooth scrolling immediately after initialization
+            this.se = true;
+            this.fsu();
+            this.sl();
         }
 
         as() {
