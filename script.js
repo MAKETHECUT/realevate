@@ -7,143 +7,6 @@ window.addEventListener("beforeunload", () => {
 });
 
 
-// --- DYNAMIC LIBRARY LOADER  ---
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = false;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-      document.head.appendChild(script);
-    });
-  }
-  
-  async function loadAllLibraries() {
-    try {
-      console.log('Loading GSAP...');
-      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
-      
-      console.log('Loading ScrollTrigger...');
-      await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
-      
-      console.log('Loading SplitText...');
-      await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
-      
-      console.log('Loading ScrollToPlugin...');
-      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
-      
-      console.log('Loading ImagesLoaded...');
-      await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
-      
-      console.log('Loading Lottie...');
-      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
-      
-      console.log('Loading CMS Filter...');
-      await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
-      
-      console.log('All libraries loaded successfully');
-    } catch (error) {
-      console.error('Error loading libraries:', error);
-      // Continue with basic functionality even if some libraries fail to load
-    }
-  }
-  
-  
-  
-  async function startApp() {
-    try {
-      console.log('Starting app initialization...');
-      
-      // Prevent scrolling immediately
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = '0';
-      
-      // Load all libraries first
-      await loadAllLibraries();
-      
-      // Verify GSAP and plugins are loaded
-      if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' || typeof SplitText === 'undefined') {
-        throw new Error('Required scripts not loaded');
-      }
-      
-      // Register GSAP plugins
-      gsap.registerPlugin(ScrollTrigger, SplitText);
-      if (typeof ScrollToPlugin !== 'undefined') {
-        gsap.registerPlugin(ScrollToPlugin);
-      }
-      
-      console.log('All scripts loaded and verified');
-  
-      // UserWay widget
-      (function(d) {
-        var s = d.createElement("script");
-        s.setAttribute("data-account", "a37OvQJfVJ");
-        s.setAttribute("src", "https://cdn.userway.org/widget.js");
-        (d.body || d.head).appendChild(s);
-      })(document);
-  
-      // Start the loader animation
-      animateLoaderCounter(() => {
-        console.log('Initializing all functions...');
-        
-        // Initialize all functions
-        refreshbreakingpoints();
-        initInteractiveCursor();
-        initMegaMenu();
-        initPageTransitions();
-        initInfinityGallery();
-        moveShowAllIntoCollectionList();
-        initDisplayToggle();
-        initNavbarShowHide();
-        initGsapAnimations();
-        initSplitTextAnimations();
-        initTypeListRadioHandler();
-        initCustomSmoothScrolling();
-        initHomeVideo();
-        
-        // Single ScrollTrigger refresh
-        ScrollTrigger.refresh(true);
-        
-        console.log('All functions initialized');
-        
-        // Enable scrolling
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.top = '';
-        window.enableScrolling();
-        
-        console.log('Page ready - scrolling enabled');
-      }, 400);
-  
-    } catch (error) {
-      console.error('Error starting app:', error);
-      
-      // Simple fallback
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      window.enableScrolling();
-    }
-  }
-  // Simple scroll prevention
-  window.enableScrolling = function() {
-    console.log('Scrolling enabled');
-  };
-  
-  document.addEventListener("DOMContentLoaded", startApp);
-  // --- END DYNAMIC LOADER ---
-
-
-
-
 // --- PAGE LOADER OVERLAY WITH COUNTER ---
 (function addPageLoader() {
   // Add loader on all pages
@@ -156,7 +19,7 @@ function loadScript(src) {
   document.body.appendChild(loader);
 })();
 
-function animateLoaderCounter(onComplete, duration = 50) {
+function animateLoaderCounter(onComplete, duration = 100) {
   document.documentElement.style.visibility = "visible";
   document.body.style.visibility = "visible";
 
@@ -169,6 +32,11 @@ function animateLoaderCounter(onComplete, duration = 50) {
     return;
   }
 
+  // Create loading line
+  const loadingLine = document.createElement('div');
+  loadingLine.className = 'loading-line';
+  document.body.appendChild(loadingLine);
+      
   const target = 100;
       
   // Set initial state
@@ -178,6 +46,8 @@ function animateLoaderCounter(onComplete, duration = 50) {
     visibility: "hidden",
     textContent: 0
   });
+
+  gsap.set(loadingLine, { width: "0%" });
   
   // Create main timeline
   const tl = gsap.timeline({
@@ -190,20 +60,22 @@ function animateLoaderCounter(onComplete, duration = 50) {
          
       // Animate counter up and fade out
       exitTl.to(counter, {
-        y: -300,
+        y: -100,
         opacity: 0,
-        clipPath: "inset(0 0 100% 0)",
-        duration: 1.2,
+        duration: 0.8,
         ease: "power2.in"
       }, 0);
 
+
+         
       // Then animate the clip-path
       exitTl.to(loader, {
         clipPath: "inset(0 0 100% 0)", // From bottom to top
-        duration: 1.2,
+        duration: 1.4,
         ease: "expo.inOut",
         onComplete: () => {
           loader.remove();
+          loadingLine.remove();
         }
       }, 0);
     }
@@ -218,33 +90,132 @@ function animateLoaderCounter(onComplete, duration = 50) {
     ease: "power2.inOut"
   });
 
-
   // Animate the counter
   tl.to(counter, {
-    duration: duration / 500,
+    duration: duration / 1000,
     textContent: target,
     snap: { textContent: 1 },
     ease: "none"
   });
 
+  // Animate the loading line with power4.inOut
+  tl.to(loadingLine, {
+    width: "100%",
+    duration: duration / 1000,
+    ease: "power4.inOut"
+  }, "<");
+}
+
+
+// --- DYNAMIC LIBRARY LOADER (at the very top) ---
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = false;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function loadAllLibraries() {
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js");
+  await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
+  await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.0/ScrollToPlugin.min.js");
+  await loadScript("https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js");
+  await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+  await loadScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
 }
 
 
 
+async function startApp() {
+  try {
+    await loadAllLibraries();
+    
+    // Register GSAP plugins
+    if (typeof gsap !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger, SplitText);
+      if (typeof ScrollToPlugin !== 'undefined') {
+        gsap.registerPlugin(ScrollToPlugin);
+      }
+    }
+
+    // UserWay widget
+    (function(d) {
+      var s = d.createElement("script");
+      s.setAttribute("data-account", "a37OvQJfVJ");
+      s.setAttribute("src", "https://cdn.userway.org/widget.js");
+      (d.body || d.head).appendChild(s);
+    })(document);
+
+    // Start the loader animation
+    animateLoaderCounter(() => {
+      // Initialize functions after loader completes
+      refreshbreakingpoints();
+      initInteractiveCursor();
+      initMegaMenu();
+      initPageTransitions();
+      initInfinityGallery();
+      moveShowAllIntoCollectionList();
+      initDisplayToggle();
+
+      
+
+      
+      requestAnimationFrame(() => {
+        initNavbarShowHide();
+        initGsapAnimations();
+        initSplitTextAnimations();
+        
+        // Initialize type-list radio button handler
+        if (typeof initTypeListRadioHandler === 'function') {
+          initTypeListRadioHandler();
+        }
+        
+        // Only initialize cursor if not already initialized
+        if (!window.cursorInitialized) {
+            initInteractiveCursor();
+        }
+        
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+        
+        // Initialize video after all other animations are set up
+        setTimeout(() => {
+          initHomeVideo();
+        }, 1000); // Increased delay to ensure page is fully loaded
+      });
+    }, 800); // 0.8 second loader duration
+
+  } catch (error) {
+    // Error handled silently
+    // Fallback initialization without loader
+    refreshbreakingpoints();
+    initPageTransitions();
+    initHomeVideo();
+    initInfinityGallery();
+  }
+}
+document.addEventListener("DOMContentLoaded", startApp);
+// --- END DYNAMIC LOADER ---
 
 
 
 function moveShowAllIntoCollectionList() {
   const showAll = document.querySelector(".show-all");
   const typeItem = document.querySelector(".collection-list-1");
+  const typeItemChildren = typeItem?.querySelectorAll("[role='listitem']");
   const collectionList = document.querySelector(".type-item .w-dyn-items");
 
   if (collectionList) {
     if (showAll) collectionList.prepend(showAll);
-    if (typeItem) {
-      typeItem.querySelectorAll("[role='listitem']").forEach(child => collectionList.appendChild(child));
-      typeItem.remove();
+    if (typeItemChildren && typeItemChildren.length) {
+      typeItemChildren.forEach(child => collectionList.appendChild(child));
     }
+    if (typeItem) typeItem.remove();
   }
 }
 
@@ -256,21 +227,37 @@ function moveShowAllIntoCollectionList() {
 Reload FinSweet CMS Filter
 ============================================== */
 function reloadFinsweetCMS() {
-  const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
-  if (oldScript) oldScript.remove();
-  
-  const newScript = document.createElement("script");
-  newScript.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js";
-  newScript.async = true;
-  document.body.appendChild(newScript);
-}
 
-// Enhanced function to handle radio button selection in .type-list
+    const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
+    if (oldScript) {
+    oldScript.remove();
+    }
+    const newScript = document.createElement("script");
+    newScript.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js";
+    newScript.async = true;
+    newScript.onload = () => {};
+    document.body.appendChild(newScript);
+    
+  }
+
+// Function to handle radio button selection in .type-list
 function initTypeListRadioHandler() {
+  // Listen for clicks on radio buttons in .type-list
   document.addEventListener('click', (e) => {
-    if (e.target.closest('.type-list .w-radio input[type="radio"]')) {
-      // Use the enhanced initialization function for proper handling
-      ensureProperInitializationAfterContentChange();
+    const radioButton = e.target.closest('.type-list .w-radio input[type="radio"]');
+    if (radioButton) {
+      setTimeout(() => {
+
+        
+        if (typeof initSplitTextAnimations === 'function') {
+          initSplitTextAnimations();
+        }
+        
+        // Refresh ScrollTrigger
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh(true);
+        }
+      }, 100);
     }
   });
 }
@@ -287,18 +274,6 @@ function initCustomSmoothScrolling() {
     let d = false;
     let i = null;
     let p = 0;
-    
-    // Clean up any existing smooth scrolling instance
-    if (window.customSmoothScroll && typeof window.customSmoothScroll.destroy === 'function') {
-        window.customSmoothScroll.destroy();
-    }
-    
-    // Ensure scroll position is reset before initializing
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-
 
     class S {
         constructor() {
@@ -344,11 +319,11 @@ function initCustomSmoothScrolling() {
             this.as();
             this.ud();
             this.be();
-            
-            // Enable smooth scrolling immediately after initialization
-            this.se = true;
-            this.fsu();
-            this.sl();
+            setTimeout(() => {
+                this.se = true;
+                this.fsu();
+                this.sl();
+            }, 10);
         }
 
         as() {
@@ -603,56 +578,9 @@ function initCustomSmoothScrolling() {
             window.removeEventListener("mouseup", this.emd);
             window.removeEventListener("resize", this.ud);
         }
-        
-        destroy() {
-            // Stop the animation loop
-            if (this.animationFrameId) {
-                cancelAnimationFrame(this.animationFrameId);
-                this.animationFrameId = null;
-            }
-            
-            // Reset all state
-            this.se = false;
-            this.dr = false;
-            this.isDragging = false;
-            this.sliderTouchActive = false;
-            
-            // Reset scroll position
-            this.ts = 0;
-            this.cs = 0;
-            this.smoothScrollX = 0;
-            
-            // Clean up DOM styles
-            document.body.style.overflow = "";
-            document.body.style.position = "";
-            document.body.style.width = "";
-            document.body.style.top = "";
-            document.body.style.height = "";
-            document.documentElement.style.scrollBehavior = "";
-            document.documentElement.style.touchAction = "pan-x pan-y";
-            
-            // Remove all event listeners
-            window.removeEventListener("wheel", this.handleWheel);
-            window.removeEventListener("touchstart", this.handleTouchStart);
-            window.removeEventListener("touchmove", this.handleTouchMove);
-            window.removeEventListener("touchend", this.handleTouchEnd);
-            window.removeEventListener("touchcancel", this.handleTouchEnd);
-            window.removeEventListener("mousedown", this.handleDragStart);
-            window.removeEventListener("mousemove", this.handleDragMove);
-            window.removeEventListener("mouseup", this.handleDragEnd);
-            window.removeEventListener("resize", this.calculateDimensions);
-            
-            // Reset scroll position to top
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-        }
     }
 
     i = new S();
-    
-    // Store the instance globally for cleanup
-    window.customSmoothScroll = i;
 
     window.toggleSmoothScroll = (e) => {
         if (i) {
@@ -667,200 +595,222 @@ function initCustomSmoothScrolling() {
 
 
 function initPageTransitions() {
-  // Create transition element if it doesn't exist
-  if (!document.querySelector('.transition')) {
-    const div = document.createElement('div');
-    div.className = 'transition';
-    div.innerHTML = `
-      <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
-        <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
-      </svg>
-    `;
-    document.body.appendChild(div);
-  }
+  
 
-  // Global page transition function
-  function globalPageTransition(url, isPopState = false) {
-    if (window.transitioning) {
-      window.pendingNavigation = { url, isPopState };
-      return;
+  
+    const loader = gsap.timeline();
+    let isAnimating = false;
+    let nextPageHTML = '';
+    let pendingNavigation = null;
+    let lastNavigationTime = 0;
+    const NAVIGATION_COOLDOWN = 1000;
+
+    if (!document.querySelector('.transition')) {
+        const div = document.createElement('div');
+        div.className = 'transition';
+        div.innerHTML = `
+            <svg id="loadersvg" viewBox="0 0 1 1" preserveAspectRatio="none">
+                <path class="swipeup" fill="#1E1F24" d="M 0 1 V 1 Q 0.5 1 1 1 V 1 z" />
+            </svg>
+        `;
+        document.body.appendChild(div);
     }
 
-    window.transitioning = true;
-    
-    // Temporarily disable smooth scrolling during transition to prevent conflicts
-    if (window.customSmoothScroll) {
-      window.customSmoothScroll.se = false;
-    }
-    
-    // Check if this is internal project navigation (staying within projects)
-    const isInternalProjectNav = url.includes('/projects/') && window.location.pathname.includes('/projects/');
-    
-    // 2. Start transition animation
-    const transition = document.querySelector('.transition');
     const swipeup = document.querySelector('.swipeup');
+    const transition = document.querySelector('.transition');
     const cursor = document.querySelector('.cursor');
-    
-    const transitionPromise = new Promise((resolve) => {
-      const tl = gsap.timeline({ onComplete: resolve });
-      tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
-      tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-      tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-      tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-      tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
-      tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
-      tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
-      tl.set(cursor, { visibility: "hidden" }, 0.2);
-    });
 
-    // 3. Fetch new page content
-    const fetchPromise = fetch(url)
-      .then(response => {
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.text();
-      })
-      .then(html => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const nextWrapper = doc.querySelector('.page-wrapper');
-        if (!nextWrapper) throw new Error('No .page-wrapper found');
-        return { html, doc, nextWrapper };
-      });
+    function canNavigate() {
+        const now = Date.now();
+        if (now - lastNavigationTime < NAVIGATION_COOLDOWN) return false;
+        lastNavigationTime = now;
+        return true;
+    }
 
-    // 4. Wait for both animation and fetch
-    Promise.all([transitionPromise, fetchPromise])
-      .then(async ([_, nextPage]) => {
-        // 5. Swap content
+    async function handleNavigation(url, isPopState = false) {
+        if (window.transitioning) {
+            pendingNavigation = { url, isPopState };
+            return;
+        }
+
+        if (!canNavigate()) return;
+
+        window.transitioning = true;
+        isAnimating = true;
+
+        // 1. Start the transition animation immediately
+        let transitionDone;
+        const transitionPromise = new Promise((resolve) => {
+            const tl = gsap.timeline({ onComplete: resolve });
+            tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
+            tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+            tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+            tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+            tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
+            tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
+            tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+            tl.set(cursor, { visibility: "hidden" }, 0.2);
+        });
+
+        // 2. Start fetching the next page in parallel
+        const fetchPromise = fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const nextWrapper = doc.querySelector('.page-wrapper');
+                if (!nextWrapper) throw new Error('No .page-wrapper found');
+                return { html, doc, nextWrapper };
+            });
+
+        // 3. Wait for both the animation and the fetch to finish
+        let nextPage;
+        try {
+            nextPage = await fetchPromise;
+            await transitionPromise;
+        } catch (err) {
+            // Navigation error handled silently
+            window.location.href = url;
+            return;
+        }
+
+        // 4. Now swap the content and finish the transition
+        nextPageHTML = nextPage.nextWrapper.innerHTML;
+        const doc = nextPage.doc;
+
+        // Keep transition visible while updating content
         const container = document.querySelector('.page-wrapper');
         if (!container) return;
 
-        document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
-        container.innerHTML = nextPage.nextWrapper.innerHTML;
+        // Clean up ALL page animations (only during page transitions)
+        cleanupAllPageAnimations();
 
-        // 6. Ensure proper scroll position and reset smooth scrolling state
+        document.title = doc.querySelector('title')?.textContent || document.title;
+        container.innerHTML = nextPageHTML;
+
+        // Ensure proper scroll position
         ensureProperScrollPosition();
-        
-        // Reset smooth scrolling state to prevent conflicts
-        if (window.customSmoothScroll) {
-          window.customSmoothScroll.se = false;
-          window.customSmoothScroll.dr = false;
-          window.customSmoothScroll.isDragging = false;
-          window.customSmoothScroll.sliderTouchActive = false;
-        }
 
-        // 7. Clean up ALL animations and instances (AFTER animation, BEFORE new functions)
-        if (!isInternalProjectNav) {
-          cleanupAllPageAnimations();
-        } else {
-          // For internal project navigation, only kill ScrollTriggers but preserve SplitText
-          if (typeof ScrollTrigger !== 'undefined') {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-          }
-          gsap.killTweensOf("*");
-        }
         
-        // Ensure proper scroll position and reset any scroll-related state
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-
-        // 8. Wait for scripts to be properly loaded
-        await ensureScriptsLoadedAfterTransition();
-
-        // 9. Initialize everything with proper sequencing and delays
-        const isMobile = window.innerWidth < 650;
-        const initializationDelay = isMobile ? 50 : 20; // Much shorter delay
+                // Initialize new page content
+        initInfinityGallery();
+        initDisplayToggle();
+        moveShowAllIntoCollectionList();
         
+        
+        
+        // Delay initialization to ensure proper scroll position
         setTimeout(() => {
-          initializePageAfterTransition();
-        }, initializationDelay);
+          // Ensure proper scroll position
+          ensureProperScrollPosition();
+          
+          initGsapAnimations();
+          initNavbarShowHide();
+          initCustomSmoothScrolling();
+          initTypeListRadioHandler();
+          reloadFinsweetCMS();
+          initTypeListRadioHandler();
+          
+          // Initialize SplitText animations with a longer delay to ensure DOM is ready
+          setTimeout(() => {
+            if (typeof initSplitTextAnimations === 'function') {
+              initSplitTextAnimations();
+            }
+          }, 200);
+         
 
-        // 10. Complete transition
+          // Initialize video after all other animations are set up
+          setTimeout(() => {
+            initHomeVideo();
+          }, 1000); // Increased delay to ensure page is fully loaded
+          
+          // Refresh ScrollTrigger after all other animations are set up
+          setTimeout(() => {
+            ScrollTrigger.refresh(true);
+          }, 50);
+        }, 150);
+
+        
+
+        // Complete the transition animation (outro)
         const tl = gsap.timeline();
         tl.to(swipeup, {
-          duration: 0.6,
-          ease: 'power4.in',
-          attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
+            duration: 0.6,
+            ease: 'power4.in',
+            attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
         });
 
         tl.to(swipeup, {
-          duration: 0.4,
-          ease: 'power2',
-          attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
-          onComplete: () => {
-            // Reset cursor
-            gsap.set(cursor, { scale: 0, visibility: "visible" });
-            gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
-            gsap.set(".menu-toggle", { opacity: 0 });
+            duration: 0.4,
+            ease: 'power2',
+            attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
+            onComplete: () => {
+                // Reset cursor to hidden state first
+                gsap.set(cursor, { scale: 0, visibility: "visible" });
+                gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
+                gsap.set(".menu-toggle", { opacity: 0 });
 
-            const inTl = gsap.timeline();
-            inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-            inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
-            inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
+                const inTl = gsap.timeline();
+                inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+                inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
+                inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
 
-            // Hide transition
-            transition.style.opacity = '0';
-            transition.style.visibility = 'hidden';
-            window.transitioning = false;
+                // Only hide transition after all animations are complete
+                transition.style.opacity = '0';
+                transition.style.visibility = 'hidden';
+                isAnimating = false;
+                window.transitioning = false;
 
-            // Initialize cursor
-            if (!window.cursorInitialized) {
-              initInteractiveCursor();
+                // Initialize cursor after transition is complete
+                if (!window.cursorInitialized) {
+                    initInteractiveCursor();
+                }
+
+                if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
+                    window.navbarShowHide = initNavbarShowHide();
+                }
+
+                if (pendingNavigation) {
+                    const { url, isPopState } = pendingNavigation;
+                    pendingNavigation = null;
+                    setTimeout(() => handleNavigation(url, isPopState), 100);
+                }
             }
-
-            if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
-              window.navbarShowHide = initNavbarShowHide();
-            }
-
-            // Re-enable smooth scrolling after transition is complete
-            if (window.customSmoothScroll) {
-              window.customSmoothScroll.se = true;
-            }
-            
-            // Handle pending navigation
-            if (window.pendingNavigation) {
-              const { url, isPopState } = window.pendingNavigation;
-              window.pendingNavigation = null;
-              setTimeout(() => globalPageTransition(url, isPopState), 100);
-            }
-          }
         });
-      })
-      .catch(err => {
-        window.location.href = url;
-      });
-  }
-
-  // Set up global event listeners
-  document.body.addEventListener('click', (e) => {
-    const link = e.target.closest('a[href]');
-    if (!link) return;
-
-    const href = link.getAttribute('href');
-    if (
-      link.target === '_blank' ||
-      href.startsWith('mailto:') ||
-      href.startsWith('tel:') ||
-      href.startsWith('#') ||
-      (href.startsWith('http') && !href.includes(location.hostname))
-    ) return;
-
-    e.preventDefault();
-    history.pushState({ title: document.title }, '', href);
-    globalPageTransition(href);
-  });
-
-  window.addEventListener('popstate', () => {
-    if (window.transitioning) {
-      window.pendingNavigation = { url: location.href, isPopState: true };
-      return;
     }
-    globalPageTransition(location.href, true);
-  });
 
-  window.addEventListener('DOMContentLoaded', () => {
-    history.replaceState({ title: document.title }, '', location.href);
-  });
+    document.body.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+
+        const href = link.getAttribute('href');
+        if (
+            link.target === '_blank' ||
+            href.startsWith('mailto:') ||
+            href.startsWith('tel:') ||
+            href.startsWith('#') ||
+            (href.startsWith('http') && !href.includes(location.hostname))
+        ) return;
+
+        e.preventDefault();
+        history.pushState({ title: document.title }, '', href);
+        handleNavigation(href);
+    });
+
+    window.addEventListener('popstate', () => {
+        if (window.transitioning) {
+            pendingNavigation = { url: location.href, isPopState: true };
+            return;
+        }
+        handleNavigation(location.href, true);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        history.replaceState({ title: document.title }, '', location.href);
+    });
 }
 
 
@@ -896,20 +846,15 @@ Split Text Animations
 ============================================== */
 
 function truncateByWords(el, wordLimit = 43) {
-  const words = el.textContent.trim().split(/\s+/);
+  const text = el.textContent.trim();
+  const words = text.split(/\s+/);
   if (words.length > wordLimit) {
     el.textContent = words.slice(0, wordLimit).join(' ') + '...';
   }
 }
 
 function cleanupAllPageAnimations() {
-  // Don't cleanup if we're in the middle of initialization or fast scrolling
-  if (window.isInitializing || window.isScrollingFast) {
-    console.log('Skipping cleanup during initialization or fast scrolling');
-    return;
-  }
-  
-  // Kill ALL ScrollTriggers first
+  // Kill ALL ScrollTriggers (only during page transitions)
   if (typeof ScrollTrigger !== 'undefined') {
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
   }
@@ -917,159 +862,77 @@ function cleanupAllPageAnimations() {
   // Kill all GSAP animations
   gsap.killTweensOf("*");
   
-  // Clean up SplitText instances more thoroughly
+  // Clean up SplitText instances
   if (typeof SplitText !== 'undefined') {
-    // First, revert all SplitText instances
-    document.querySelectorAll('*').forEach(element => {
-      if (element._splitTextInstance?.revert) {
-        try { 
-          element._splitTextInstance.revert(); 
-        } catch (e) {
-          // If revert fails, manually clean up
-          if (element._splitTextInstance.lines) {
-            element._splitTextInstance.lines.forEach(line => {
-              if (line && line.parentNode) {
-                line.parentNode.removeChild(line);
-              }
-            });
-          }
-        }
+    document.querySelectorAll('[data-split-text]').forEach(element => {
+      if (element._splitTextInstance && element._splitTextInstance.revert) {
+        element._splitTextInstance.revert();
         delete element._splitTextInstance;
       }
     });
     
-    // Remove all .line elements that might be orphaned
+    // Remove any existing .line elements
     document.querySelectorAll('.line').forEach(line => {
-      if (line && line.parentNode) {
-        line.parentNode.removeChild(line);
-      }
-    });
-    
-    // Also remove any .word elements that might be left over
-    document.querySelectorAll('.word').forEach(word => {
-      if (word && word.parentNode) {
-        word.parentNode.removeChild(word);
-      }
+      line.remove();
     });
   }
   
   // Clean up custom instances
-  if (window.customSmoothScroll?.destroy) {
-    window.customSmoothScroll.destroy();
-    window.customSmoothScroll = null;
-  }
-  if (window.cleanupCursor) window.cleanupCursor();
+  if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
+  if (window.cleanupCursor && typeof window.cleanupCursor === 'function') window.cleanupCursor();
   if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
-  if (window.infinitySliderInstance?.destroy) window.infinitySliderInstance.destroy();
   
   // Reset initialization flags
   window.cursorInitialized = false;
-  
-  // Force a reflow to ensure cleanup is complete
-  document.documentElement.offsetHeight;
 }
 
 function ensureProperScrollPosition() {
-  // Reset smooth scrolling state if it exists
-  if (window.customSmoothScroll) {
-    window.customSmoothScroll.ts = 0;
-    window.customSmoothScroll.cs = 0;
-    window.customSmoothScroll.smoothScrollX = 0;
-  }
-  
+  // Force scroll to top with multiple methods
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-  document.documentElement.offsetHeight; // force reflow
-}
-
-function initializePageAfterTransition() {
-  console.log('Initializing page after transition...');
   
-  const isMobile = window.innerWidth < 650;
-  console.log('Page transition - mobile:', isMobile);
+  // Force a reflow to ensure the scroll position is applied
+  document.documentElement.offsetHeight;
   
-  // Initialize everything in proper sequence
-  initInfinityGallery();
-  initDisplayToggle();
-  moveShowAllIntoCollectionList();
-  initNavbarShowHide();
-  initTypeListRadioHandler();
-  reloadFinsweetCMS();
-  
-  // Initialize smooth scrolling
-  initCustomSmoothScrolling();
-  
-  // Initialize animations immediately
-  console.log('Initializing GSAP animations after transition...');
-  initGsapAnimations();
-  
-  console.log('Initializing SplitText animations after transition...');
-  initSplitTextAnimations();
-  
-  // Refresh ScrollTrigger immediately
-  if (typeof ScrollTrigger !== 'undefined') {
-    console.log('Refreshing ScrollTrigger after transition...');
-    ScrollTrigger.refresh(true);
+  // Double-check scroll position
+  if (window.pageYOffset > 0) {
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
   }
-  
-  // Initialize video
-  initHomeVideo();
-  
-  console.log('Page transition initialization complete');
 }
 
 function initSplitTextAnimations(scope = document) {
-  console.log('Initializing SplitText animations...');
-  
+  // Check if SplitText is available
   if (typeof SplitText === 'undefined') {
-    console.error('SplitText not available for animations');
+    console.warn('SplitText not available, skipping text animations');
     return;
   }
-  
-  if (typeof ScrollTrigger === 'undefined') {
-    console.error('ScrollTrigger not available for SplitText animations');
-    return;
-  }
-  
-  const isMobile = window.innerWidth < 650;
-  console.log('SplitText animations - mobile:', isMobile);
 
-  const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
-  
+  const elements = scope.querySelectorAll(
+    "h1, h2, h3, h4, h5, h6, p, .logo img, .btn, .nav, #email-form label, .text-link, .link-box, #email-form form div"
+  );
+
   elements.forEach((element) => {
-    // Skip if element already has SplitText or no content
-    if (!element.textContent.trim()) return;
-    
-    // Clean up any existing SplitText instance first
-    if (element._splitTextInstance?.revert) {
-      try {
-        element._splitTextInstance.revert();
-      } catch (e) {
-        // If revert fails, manually clean up
-        if (element._splitTextInstance.lines) {
-          element._splitTextInstance.lines.forEach(line => {
-            if (line && line.parentNode) {
-              line.parentNode.removeChild(line);
-            }
-          });
-        }
-      }
-      delete element._splitTextInstance;
+    // Skip if element already has SplitText applied (double check)
+    if (element.querySelector('.line')) {
+      return;
     }
-    
-    // Remove any existing .line elements
-    element.querySelectorAll('.line').forEach(line => {
-      if (line && line.parentNode) {
-        line.parentNode.removeChild(line);
-      }
-    });
+
+    // Apply word truncation for specific elements but still allow animation
+    if (element.closest(".home-properties-grid") && element.matches("p.info")) {
+      truncateByWords(element, 43);
+      // Don't return here - continue with SplitText animation
+    }
 
     try {
       const split = new SplitText(element, { type: "lines", linesClass: "line" });
+      
+      // Store the SplitText instance for potential cleanup
       element._splitTextInstance = split;
-
-      if (!split.lines || split.lines.length === 0) return;
 
       split.lines.forEach((line) => {
         line.style.display = "inline-block";
@@ -1092,11 +955,18 @@ function initSplitTextAnimations(scope = document) {
           trigger: element,
           start: "top bottom",
           once: true,
-          id: `splittext-${Math.random()}`,
+          id: `splittext-${Math.random()}`, // Add unique ID
           onEnter: () => tl.play()
         },
         paused: true
       });
+
+      // Add a small delay to prevent immediate triggering
+      setTimeout(() => {
+        if (tl.scrollTrigger && !tl.scrollTrigger.isInViewport) {
+          tl.scrollTrigger.refresh();
+        }
+      }, 100);
 
       tl.to(split.lines, {
         yPercent: 0,
@@ -1108,7 +978,7 @@ function initSplitTextAnimations(scope = document) {
         ease: "power4.out"
       });
     } catch (error) {
-      if (element._splitTextInstance) delete element._splitTextInstance;
+      console.warn('Error applying SplitText to element:', element, error);
     }
   });
 }
@@ -1122,39 +992,8 @@ Page GSAP Animations
 
 
 function initGsapAnimations() {
-    console.log('Initializing GSAP animations...');
-    
-    // Verify GSAP and ScrollTrigger are available
-    if (typeof gsap === 'undefined') {
-      console.error('GSAP not available for animations');
-      return;
-    }
-    
-    if (typeof ScrollTrigger === 'undefined') {
-      console.error('ScrollTrigger not available for animations');
-      return;
-    }
-    
     // Ensure we're at the top of the page before creating animations
     ensureProperScrollPosition();
-    
-    const isMobile = window.innerWidth < 650;
-    console.log('GSAP animations - mobile:', isMobile);
-    
-    // Kill only GSAP animation ScrollTriggers, preserve SplitText triggers
-    ScrollTrigger.getAll().forEach(trigger => {
-      if (trigger.vars.id && trigger.vars.id.includes('gsap-animation') && !trigger.vars.id.includes('splittext')) {
-        trigger.kill();
-      }
-    });
-    
-    // For mobile, ensure native scrolling is enabled
-    if (isMobile) {
-      // Reset any custom scroll behavior that might interfere
-      document.body.style.overflow = '';
-      document.documentElement.style.scrollBehavior = '';
-      document.documentElement.style.touchAction = 'pan-x pan-y';
-    }
 
   // Common animations for all pages
   gsap.fromTo(".clipping-video, .about-hero-image", 
@@ -1198,8 +1037,7 @@ function initGsapAnimations() {
         start: "top top",
         end: `+=${scrollEnd}`,
         scrub: 0.5,
-        invalidateOnRefresh: true,
-        id: "gsap-animation-video-visual"
+        invalidateOnRefresh: true
       }
     });
 
@@ -1215,24 +1053,15 @@ function initGsapAnimations() {
       pinSpacing: true,
       scrub: 0.5,
       anticipatePin: 0,
-      id: "hero-pin",
-      onEnter: () => {
-        // Only disable other ScrollTriggers that are not essential
-        ScrollTrigger.getAll().forEach(st => {
-          if (st.vars.id && !st.vars.id.includes('hero') && !st.vars.id.includes('splittext')) {
-            st.disable();
-          }
-        });
-      },
-      onLeave: () => {
-        // Re-enable all ScrollTriggers
-        ScrollTrigger.getAll().forEach(st => st.enable());
-      }
+      onEnter: () => ScrollTrigger.getAll().forEach(st => {
+        if (st.trigger !== document.querySelector(".hero")) st.disable();
+      }),
+      onLeave: () => ScrollTrigger.getAll().forEach(st => st.enable())
     });
   }
 
   // Work thumbnail animations
-  document.querySelectorAll('.work-thumbnail .image-wrapper img').forEach((img, index) => {
+  document.querySelectorAll('.work-thumbnail .image-wrapper img').forEach(img => {
     gsap.fromTo(img, 
       { y: '-10%', scale: 1.1 }, 
       {
@@ -1243,8 +1072,7 @@ function initGsapAnimations() {
           trigger: img,
           start: 'top bottom',
           end: 'bottom top',
-          scrub: 1.2,
-          id: `gsap-animation-thumbnail-${index}`
+          scrub: 1.2
         }
       }
     );
@@ -1252,7 +1080,7 @@ function initGsapAnimations() {
 
   // Logo animations
   gsap.set(".home-about .logo", { opacity: 0, visibility: "hidden" });
-  gsap.utils.toArray(".home-about .logo").forEach((logo, index) => {
+  gsap.utils.toArray(".home-about .logo").forEach((logo) => {
     gsap.to(logo, {
       opacity: 1,
       visibility: "visible",
@@ -1261,8 +1089,7 @@ function initGsapAnimations() {
       scrollTrigger: {
         trigger: logo,
         start: "top 80%",
-        toggleActions: "play none none none",
-        id: `gsap-animation-logo-${index}`
+        toggleActions: "play none none none"
       }
     });
   });
@@ -1284,14 +1111,13 @@ function initGsapAnimations() {
           start: "top 1%",
           end: "bottom 0%",
           scrub: 0.5,
-          id: "gsap-animation-hero-headline"
         }
       }
     );
   }
 
   // Image parallax animations
-  document.querySelectorAll('.home-container .image img, .about-hero-image img, .about-values .image img, .property .image img, .place .image img, .footer-image img').forEach((img, index) => {
+  document.querySelectorAll('.home-container .image img, .about-hero-image img, .about-values .image img, .property .image img, .place .image img, .footer-image img').forEach((img) => {
     gsap.fromTo(img, {
       yPercent: -10,
       transformOrigin: "center center",
@@ -1304,57 +1130,48 @@ function initGsapAnimations() {
         start: "top bottom",
         end: "bottom top",
         scrub: 1,
-        id: `gsap-animation-parallax-${index}`
       }
     });
   });
 
-
-
-  
   // Left to right animations
-  gsap.utils.toArray(".left-to-right").forEach((img, index) => {
+  gsap.utils.toArray(".left-to-right").forEach((img) => {
     gsap.fromTo(img, 
       { clipPath: "inset(0 100% 0 0)" }, 
       {
         clipPath: "inset(0 0% 0 0)",
         duration: 2.5,
-        delay: -1,
+        delay: -0.7,
         ease: "expo.inOut",
         scrollTrigger: {
           trigger: img,
           start: "top 95%",
-          toggleActions: "play none none none",
-          id: `gsap-animation-left-right-${index}`
+          toggleActions: "play none none none"
         }
       }
     );
   });
 
   // Right to left animations
-  gsap.utils.toArray(".right-to-left").forEach((img, index) => {
+  gsap.utils.toArray(".right-to-left").forEach((img) => {
     gsap.fromTo(img, 
       { clipPath: "inset(0 0 0 100%)" }, 
       {
         clipPath: "inset(0 0 0 0%)",
         duration: 2.5,
-        delay: -1,
+        delay: -0.7,
         ease: "expo.inOut",
         scrollTrigger: {
           trigger: img,
           start: "top 95%",
-          toggleActions: "play none none none",
-          id: `gsap-animation-right-left-${index}`
+          toggleActions: "play none none none"
         }
       }
     );
   });
 
-
- 
-
   // Icon animations
-  gsap.utils.toArray(".content .icon").forEach((icon, index) => {
+  gsap.utils.toArray(".content .icon").forEach(icon => {
     gsap.fromTo(icon, 
       { clipPath: "circle(0% at 50% 50%)" }, 
       {
@@ -1364,8 +1181,7 @@ function initGsapAnimations() {
         scrollTrigger: {
           trigger: icon,
           start: "top 85%",
-          toggleActions: "play none none none",
-          id: `gsap-animation-icon-${index}`
+          toggleActions: "play none none none"
         }
       }
     );
@@ -1406,13 +1222,12 @@ function initGsapAnimations() {
   });
 
   // Bullet animations
-  document.querySelectorAll(".bullet").forEach((el, index) => {
+  document.querySelectorAll(".bullet").forEach((el) => {
     gsap.from(el, {
       scrollTrigger: {
         trigger: el,
         start: "top 80%",
-        toggleActions: "play none none none",
-        id: `gsap-animation-bullet-${index}`
+        toggleActions: "play none none none"
       },
       opacity: 0,
       y: 100,
@@ -1423,7 +1238,7 @@ function initGsapAnimations() {
   });
   
   
-  document.querySelectorAll(".w-input, .w-select").forEach((el, index) => {
+  document.querySelectorAll(".w-input, .w-select").forEach((el) => {
     gsap.fromTo(el, {
       clipPath: "inset(0 0 0 100%)"
     }, {
@@ -1433,8 +1248,7 @@ function initGsapAnimations() {
       scrollTrigger: {
         trigger: el,
         start: "top 90%",
-        toggleActions: "play none none none",
-        id: `gsap-animation-input-${index}`
+        toggleActions: "play none none none"
       }
     });
   });
@@ -1448,8 +1262,7 @@ function initGsapAnimations() {
     scrollTrigger: {
       trigger: ".collection-list-1",
       start: "top 90%",
-      toggleActions: "play none none none",
-      id: "gsap-animation-collection-list"
+      toggleActions: "play none none none"
     }
   });
 
@@ -1473,14 +1286,15 @@ function initGsapAnimations() {
           end: `+=${window.innerHeight * 2}`,
           pin: true,
           pinSpacing: false,
-          id: `gsap-animation-stack-${index}`,
           onUpdate: (self) => {
             // Calculate progress and apply stacking effect
             const progress = self.progress;
             
+
+            
             // Animate the ::after pseudo-element from opacity 0 to 0.5
             gsap.set(container, {
-              '--after-opacity': progress * 0.4
+              '--after-opacity': progress * 0.2
             });
           },
           onEnter: () => {
@@ -1507,8 +1321,7 @@ function initGsapAnimations() {
           start: "top top",
           end: "bottom top",
           pin: true,
-          pinSpacing: true,
-          id: `gsap-animation-stack-pin-${index}`
+          pinSpacing: true
         });
       }
     });
@@ -1521,7 +1334,6 @@ function initGsapAnimations() {
       start: "top top",
       end: "+=200px",
       scrub: true,
-      id: "gsap-animation-display-toggle",
       onUpdate: self => {
         const el = document.querySelector(".display-toggle");
         if (self.progress >= 1) {
@@ -1543,12 +1355,6 @@ function initGsapAnimations() {
     ease: "power4.out",
     delay: 0.5,
   });
-
-  // Final ScrollTrigger refresh to ensure all animations are properly set up
-  if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.refresh(true);
-    console.log('GSAP animations completed - ScrollTrigger refreshed');
-  }
 
 }
 
@@ -1598,6 +1404,7 @@ function resetInteractiveCursor() {
 }
 
 function initInteractiveCursor() {
+  if (window.innerWidth <= 650) return;
 
   const cursor = document.querySelector("#cursor");
   if (!cursor) return;
@@ -1878,15 +1685,20 @@ function refreshbreakingpoints() {
 
 function initInfinityGallery() {
   try {
+    
+
     // Destroy the previous instance if it exists
     if (window.infinitySliderInstance) {
       window.infinitySliderInstance.destroy();
       window.infinitySliderInstance = null;
+      
     }
 
     const sliderWrapper = document.querySelector(".slider-wrapper");
     
+    
     if (!sliderWrapper) {
+      
       return;
     }
   
@@ -1943,8 +1755,11 @@ function initInfinityGallery() {
     }
 
     setupFullscreenModal() {
+      
+      
       // Create modal container if it doesn't exist
       if (!document.querySelector('.fullscreen-modal')) {
+        
         const modal = document.createElement('div');
         modal.className = 'fullscreen-modal';
         document.body.appendChild(modal);
@@ -1978,24 +1793,33 @@ function initInfinityGallery() {
       }
 
       // Add expand icons to all slider items
+      
       this.items.forEach((item, index) => {
+        
         if (!item.querySelector('.expand-icon')) {
+          
           const expandIcon = document.createElement('div');
           expandIcon.className = 'expand-icon';
           item.appendChild(expandIcon);
           
           // Use both click and touchend for better Safari support
           const handleExpand = (e) => {
+            
             e.preventDefault();
             e.stopPropagation();
             const img = item.querySelector('img');
+            
             this.openFullscreen(img);
           };
           
           expandIcon.addEventListener('click', handleExpand);
           expandIcon.addEventListener('touchend', handleExpand);
+        } else {
+          
         }
       });
+      
+      
     }
 
     openFullscreen(img) {
@@ -2004,6 +1828,8 @@ function initInfinityGallery() {
       if (this.currentAnimation) {
         this.currentAnimation.kill();
       }
+
+      
       
       // Set fullscreen state and disable scrolling
       this.isFullscreenOpen = true;
@@ -2092,6 +1918,8 @@ function initInfinityGallery() {
       const img = this.modal.querySelector('img');
       if (!img) return;
 
+      
+
       // Get the original image position and size
       const rect = this.originalImage.getBoundingClientRect();
 
@@ -2154,11 +1982,13 @@ function initInfinityGallery() {
     disableScroll() {
       // Disable the infinity gallery scrolling
       this.scrollEnabled = false;
+      
     }
 
     enableScroll() {
       // Re-enable the infinity gallery scrolling
       this.scrollEnabled = true;
+      
     }
 
     cloneItems() {
@@ -2439,12 +2269,14 @@ function initInfinityGallery() {
       this.items = null;
       this.modal = null;
       this.originalImage = null; // Prevent stale references
+
+      
     }
   }
 
       window.infinitySliderInstance = new InfiniteHorizontalScroll(sliderWrapper);
   } catch (error) {
-    // Infinity gallery initialization skipped
+    
   }
 }
 
@@ -2495,7 +2327,7 @@ function lazyLoadScript(src, options = {}) {
                     observer.disconnect();
                     loadScriptWithRetry(src, options)
                         .then(resolve)
-                        .catch(() => {});
+                        
                 }
             });
         });
@@ -2786,6 +2618,16 @@ function initHomeVideo() {
     try {
         const videoContainer = document.getElementById("video-container");
         if (!videoContainer) {
+            
+            return;
+        }
+
+        // Check if page is fully loaded
+        if (document.readyState !== 'complete') {
+            
+            window.addEventListener('load', () => {
+                setTimeout(initHomeVideo, 500); // Additional delay after load
+            });
             return;
         }
 
@@ -2800,7 +2642,7 @@ function initHomeVideo() {
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
-        video.preload = "auto"; // Load video immediately
+        video.preload = "metadata"; // Only load metadata initially
 
         const source = document.createElement("source");
         source.src = videoSrc;
@@ -2808,11 +2650,24 @@ function initHomeVideo() {
 
         video.appendChild(source);
         
-        // Add video to container immediately
+        // Add video to container
         videoContainer.appendChild(video);
         
+        // Load video data when it's in viewport
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    video.preload = "auto";
+                    observer.unobserve(video);
+                }
+            });
+        });
+        
+        observer.observe(video);
+        
+        
     } catch (error) {
-        // Home video initialization skipped
+        
     }
 }
 
@@ -2831,6 +2686,7 @@ function initDisplayToggle() {
   window.isGalleryOpen = false;
   
   if (!displayToggle || !gridBtn || !galleryBtn || !fullscreenGallery) {
+    
     return;
   }
 
@@ -2845,7 +2701,6 @@ function initDisplayToggle() {
     
     if (!gallerySlider || properties.length === 0) return;
 
-    // Clear existing slides and event listeners
     gallerySlider.innerHTML = '';
     
     properties.forEach((property, index) => {
@@ -2868,6 +2723,9 @@ function initDisplayToggle() {
         totalSlidesSpan.textContent = totalSlides;
       }
     }
+    
+    // Gallery slide links will be handled by the global event listener
+    // This ensures the same SVG wave animation as other site links
   }
 
   function createGallerySlide(slider, indicators, img, name, price, info, link, index) {
@@ -2914,13 +2772,8 @@ function initDisplayToggle() {
         });
       }
       
-      // Ensure proper navigation for gallery slide links
-      // The global event listener should handle this, but let's make sure
-      if (link && link !== '#') {
-        e.preventDefault();
-        history.pushState({ title: document.title }, '', link);
-        globalPageTransition(link);
-      }
+      // For gallery slide links, let the global event listener handle the navigation
+      // This ensures the same SVG wave animation as other site links
     });
     
     slider.appendChild(slide);
@@ -2931,12 +2784,6 @@ function initDisplayToggle() {
   function switchToGrid() {
     // Kill any ongoing gallery animations
     gsap.killTweensOf(fullscreenGallery);
-    
-    // Destroy existing gallery instance if it exists
-    if (galleryInstance && typeof galleryInstance.destroy === 'function') {
-      galleryInstance.destroy();
-      galleryInstance = null;
-    }
     
     isToggleAnimating = true;
     currentView = 'grid';
@@ -2980,6 +2827,11 @@ function initDisplayToggle() {
       }
     });
     
+    if (galleryInstance) {
+      galleryInstance.destroy();
+      galleryInstance = null;
+    }
+    
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }
@@ -2988,12 +2840,6 @@ function initDisplayToggle() {
     // Kill any ongoing gallery animations
     gsap.killTweensOf(fullscreenGallery);
     
-    // Destroy existing gallery instance if it exists
-    if (galleryInstance && typeof galleryInstance.destroy === 'function') {
-      galleryInstance.destroy();
-      galleryInstance = null;
-    }
-    
     isToggleAnimating = true;
     currentView = 'gallery';
     window.isGalleryOpen = true; // Set global flag for smooth scrolling
@@ -3001,18 +2847,6 @@ function initDisplayToggle() {
     gridBtn.classList.remove('active');
     
     populateGallery();
-    
-    // Create gallery instance immediately and set first slide properly
-    galleryInstance = new FullscreenGallery();
-    
-    // Ensure first slide is set correctly before animation
-    if (galleryInstance.slides && galleryInstance.slides.length > 0) {
-      gsap.set(galleryInstance.slides[0], { 
-        opacity: 1,
-        clipPath: 'inset(0% 0% 0% 0%)',
-        zIndex: 1
-      });
-    }
     
     // Animate mega-menu-overlay opacity to 0.4
     const overlay = document.querySelector('.mega-menu-overlay');
@@ -3055,6 +2889,7 @@ function initDisplayToggle() {
       }
     });
     
+    galleryInstance = new FullscreenGallery();
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
   }
@@ -3310,547 +3145,3 @@ function initializeApplication() {
   initDisplayToggle();
 }
 
-function forceRefreshSplitTextAnimations() {
-  // Kill any existing SplitText animations
-  if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.getAll().forEach(trigger => {
-      if (trigger.vars && trigger.vars.id && trigger.vars.id.includes('splittext')) {
-        trigger.kill();
-      }
-    });
-  }
-  
-  // Clean up any existing SplitText instances
-  const allElements = document.querySelectorAll('*');
-  allElements.forEach(element => {
-    if (element._splitTextInstance && element._splitTextInstance.revert) {
-      try {
-        element._splitTextInstance.revert();
-      } catch (error) {
-        // Error reverting SplitText instance during force refresh
-      }
-      delete element._splitTextInstance;
-    }
-  });
-  
-  // Remove any orphaned .line elements
-  document.querySelectorAll('.line').forEach(line => {
-    if (line && line.parentNode) {
-      line.parentNode.removeChild(line);
-    }
-  });
-  
-  // Also remove any .word elements that might be left over
-  document.querySelectorAll('.word').forEach(word => {
-    if (word && word.parentNode) {
-      word.parentNode.removeChild(word);
-    }
-  });
-  
-  // Re-initialize SplitText animations
-  setTimeout(() => {
-    if (typeof initSplitTextAnimations === 'function') {
-      initSplitTextAnimations();
-      
-      // Refresh ScrollTrigger after re-initialization
-      if (typeof ScrollTrigger !== 'undefined') {
-        ScrollTrigger.refresh(true);
-      }
-    }
-  }, 100);
-}
-
-// Make force refresh function globally available for debugging
-window.forceRefreshSplitTextAnimations = forceRefreshSplitTextAnimations;
-
-// Add debugging function to check SplitText status
-function debugSplitTextStatus() {
-  const elementsWithSplitText = document.querySelectorAll('*').length;
-  const lineElements = document.querySelectorAll('.line').length;
-  const scrollTriggers = typeof ScrollTrigger !== 'undefined' ? ScrollTrigger.getAll().filter(t => t.vars && t.vars.id && t.vars.id.includes('splittext')).length : 0;
-  
-  return {
-    totalElements: elementsWithSplitText,
-    lineElements: lineElements,
-    splitTextScrollTriggers: scrollTriggers,
-    splitTextAvailable: typeof SplitText !== 'undefined'
-  };
-}
-
-// Function to properly clean up and reinitialize everything
-function cleanupAndReinitializeAll() {
-  // First, clean up everything
-  cleanupAllPageAnimations();
-  
-  // Then reinitialize everything in the proper sequence
-  setTimeout(() => {
-    initializePageAfterTransition();
-  }, 50);
-}
-
-// Make cleanup and reinitialize function globally available
-window.cleanupAndReinitializeAll = cleanupAndReinitializeAll;
-
-window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
-
-window.debugSplitTextStatus = debugSplitTextStatus;
-
-// Enhanced global handler for all radio button changes (including CMS filters)
-document.addEventListener('click', (e) => {
-  const radioButton = e.target.closest('.w-radio input[type="radio"]');
-  if (radioButton) {
-    // Use the enhanced initialization function for proper handling
-    ensureProperInitializationAfterContentChange();
-  }
-});
-
-// Global resize handler for all GSAP functions
-let resizeTimeout;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
-    }
-    if (typeof gsap !== 'undefined') {
-      gsap.set("*", { clearProps: "transform" });
-    }
-  }, 100);
-});
-
-// Enhanced mobile scroll handler to refresh ScrollTrigger after scrolling
-let scrollTimeout;
-let isScrollingFast = false;
-let scrollCount = 0;
-let lastScrollTime = 0;
-
-window.addEventListener('scroll', () => {
-  const isMobile = window.innerWidth < 650;
-  const currentTime = Date.now();
-  
-  // Detect fast scrolling
-  if (currentTime - lastScrollTime < 50) {
-    scrollCount++;
-    if (scrollCount > 3) {
-      isScrollingFast = true;
-      window.isScrollingFast = true; // Set global flag
-    }
-  } else {
-    scrollCount = 0;
-    isScrollingFast = false;
-    window.isScrollingFast = false; // Clear global flag
-  }
-  
-  lastScrollTime = currentTime;
-  
-  if (isMobile && typeof ScrollTrigger !== 'undefined' && !isScrollingFast) {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      // Only refresh if not scrolling fast
-      if (!isScrollingFast) {
-        forceRefreshScrollTriggerMobile();
-      }
-    }, 200); // Increased delay to prevent rapid refreshes
-  }
-});
-
-// Reset fast scrolling flag when scrolling stops
-let scrollEndTimeout;
-window.addEventListener('scroll', () => {
-  clearTimeout(scrollEndTimeout);
-  scrollEndTimeout = setTimeout(() => {
-    isScrollingFast = false;
-    window.isScrollingFast = false;
-  }, 300);
-});
-
-// Function to ensure proper ScrollTrigger refresh after page transitions
-function ensureScrollTriggerRefresh() {
-  if (typeof ScrollTrigger !== 'undefined') {
-    // Force a refresh of all ScrollTriggers
-    ScrollTrigger.refresh(true);
-    
-    // Also refresh any SplitText animations that might need it
-    setTimeout(() => {
-      if (typeof initSplitTextAnimations === 'function') {
-        initSplitTextAnimations();
-      }
-      
-      // Additional refresh after a delay to ensure everything is properly set up
-      setTimeout(() => {
-        ScrollTrigger.refresh(true);
-      }, 100);
-    }, 50);
-  }
-}
-
-// Make the function globally available
-window.ensureScrollTriggerRefresh = ensureScrollTriggerRefresh;
-
-// Function to verify all scripts are properly loaded
-function verifyScriptsLoaded() {
-  const scripts = {
-    gsap: typeof gsap !== 'undefined',
-    scrollTrigger: typeof ScrollTrigger !== 'undefined',
-    splitText: typeof SplitText !== 'undefined',
-    scrollToPlugin: typeof ScrollToPlugin !== 'undefined'
-  };
-  
-  console.log('Script loading status:', scripts);
-  
-  return Object.values(scripts).every(loaded => loaded);
-}
-
-// Make verification function globally available
-window.verifyScriptsLoaded = verifyScriptsLoaded;
-
-// Function to force reinitialize everything
-function forceReinitializeAll() {
-  console.log('Force reinitializing all functions...');
-  
-  // Verify scripts are loaded
-  if (!verifyScriptsLoaded()) {
-    console.error('Scripts not loaded, cannot reinitialize');
-    return;
-  }
-  
-  // Clean up everything first
-  cleanupAllPageAnimations();
-  
-  // Reinitialize everything
-  setTimeout(() => {
-    initMegaMenu();
-    initPageTransitions();
-    moveShowAllIntoCollectionList();
-    initNavbarShowHide();
-    initDisplayToggle();
-    initTypeListRadioHandler();
-    reloadFinsweetCMS();
-    
-    setTimeout(() => {
-      initGsapAnimations();
-      
-      setTimeout(() => {
-        initSplitTextAnimations();
-        
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.refresh(true);
-        }
-        
-        initHomeVideo();
-        
-        console.log('Force reinitialization complete');
-      }, 200);
-    }, 100);
-  }, 50);
-}
-
-// Make force reinitialize function globally available
-window.forceReinitializeAll = forceReinitializeAll;
-
-// Function to force refresh ScrollTrigger for mobile after scrolling
-function forceRefreshScrollTriggerMobile() {
-  const isMobile = window.innerWidth < 650;
-  if (isMobile && typeof ScrollTrigger !== 'undefined') {
-    console.log('Force refreshing ScrollTrigger for mobile...');
-    ScrollTrigger.refresh(true);
-    
-    // Additional refresh after a delay
-    setTimeout(() => {
-      ScrollTrigger.refresh(true);
-    }, 100);
-  }
-}
-
-// Make mobile refresh function globally available
-window.forceRefreshScrollTriggerMobile = forceRefreshScrollTriggerMobile;
-
-// Enhanced function to ensure proper script loading and initialization after page transitions
-function ensureScriptsLoadedAfterTransition() {
-  return new Promise((resolve) => {
-    const isMobile = window.innerWidth < 650;
-    const baseDelay = isMobile ? 50 : 20; // Much shorter delay
-    
-    console.log(`Ensuring scripts loaded after transition (mobile: ${isMobile})...`);
-    
-    // Check if all required scripts are loaded
-    const checkScripts = () => {
-      const scriptsLoaded = {
-        gsap: typeof gsap !== 'undefined',
-        scrollTrigger: typeof ScrollTrigger !== 'undefined',
-        splitText: typeof SplitText !== 'undefined'
-      };
-      
-      console.log('Script loading status:', scriptsLoaded);
-      
-      return Object.values(scriptsLoaded).every(loaded => loaded);
-    };
-    
-    // Wait for scripts to be loaded
-    const waitForScripts = () => {
-      if (checkScripts()) {
-        console.log('All scripts loaded, proceeding with initialization...');
-        
-        // Register plugins
-        if (typeof gsap !== 'undefined') {
-          if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
-          if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
-        }
-        
-        resolve();
-      } else {
-        console.log('Scripts not yet loaded, retrying...');
-        setTimeout(waitForScripts, 50); // Faster retry
-      }
-    };
-    
-    // Start checking after base delay
-    setTimeout(waitForScripts, baseDelay);
-  });
-}
-
-// Enhanced page transition function with proper script loading
-function globalPageTransition(url, isPopState = false) {
-  if (window.transitioning) {
-    window.pendingNavigation = { url, isPopState };
-    return;
-  }
-
-  window.transitioning = true;
-  
-  // Temporarily disable smooth scrolling during transition to prevent conflicts
-  if (window.customSmoothScroll) {
-    window.customSmoothScroll.se = false;
-  }
-  
-  // Check if this is internal project navigation (staying within projects)
-  const isInternalProjectNav = url.includes('/projects/') && window.location.pathname.includes('/projects/');
-  
-  // 2. Start transition animation
-  const transition = document.querySelector('.transition');
-  const swipeup = document.querySelector('.swipeup');
-  const cursor = document.querySelector('.cursor');
-  
-  const transitionPromise = new Promise((resolve) => {
-    const tl = gsap.timeline({ onComplete: resolve });
-    tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
-    tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-    tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-    tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-    tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
-    tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
-    tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
-    tl.set(cursor, { visibility: "hidden" }, 0.2);
-  });
-
-  // 3. Fetch new page content
-  const fetchPromise = fetch(url)
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return response.text();
-    })
-    .then(html => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const nextWrapper = doc.querySelector('.page-wrapper');
-      if (!nextWrapper) throw new Error('No .page-wrapper found');
-      return { html, doc, nextWrapper };
-    });
-
-  // 4. Wait for both animation and fetch
-  Promise.all([transitionPromise, fetchPromise])
-    .then(async ([_, nextPage]) => {
-      // 5. Swap content
-      const container = document.querySelector('.page-wrapper');
-      if (!container) return;
-
-      document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
-      container.innerHTML = nextPage.nextWrapper.innerHTML;
-
-      // 6. Ensure proper scroll position and reset smooth scrolling state
-      ensureProperScrollPosition();
-      
-      // Reset smooth scrolling state to prevent conflicts
-      if (window.customSmoothScroll) {
-        window.customSmoothScroll.se = false;
-        window.customSmoothScroll.dr = false;
-        window.customSmoothScroll.isDragging = false;
-        window.customSmoothScroll.sliderTouchActive = false;
-      }
-
-      // 7. Clean up ALL animations and instances (AFTER animation, BEFORE new functions)
-      if (!isInternalProjectNav) {
-        cleanupAllPageAnimations();
-      } else {
-        // For internal project navigation, only kill ScrollTriggers but preserve SplitText
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-        }
-        gsap.killTweensOf("*");
-      }
-      
-      // Ensure proper scroll position and reset any scroll-related state
-      window.scrollTo(0, 0);
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-
-      // 8. Wait for scripts to be properly loaded
-      await ensureScriptsLoadedAfterTransition();
-
-      // 9. Initialize everything with proper sequencing and delays
-      const isMobile = window.innerWidth < 650;
-      const initializationDelay = isMobile ? 300 : 100;
-      
-      setTimeout(() => {
-        initializePageAfterTransition();
-      }, initializationDelay);
-
-      // 10. Complete transition
-      const tl = gsap.timeline();
-      tl.to(swipeup, {
-        duration: 0.6,
-        ease: 'power4.in',
-        attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
-      });
-
-      tl.to(swipeup, {
-        duration: 0.4,
-        ease: 'power2',
-        attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
-        onComplete: () => {
-          // Reset cursor
-          gsap.set(cursor, { scale: 0, visibility: "visible" });
-          gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
-          gsap.set(".menu-toggle", { opacity: 0 });
-
-          const inTl = gsap.timeline();
-          inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
-          inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
-          inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
-
-          // Hide transition
-          transition.style.opacity = '0';
-          transition.style.visibility = 'hidden';
-          window.transitioning = false;
-
-          // Initialize cursor
-          if (!window.cursorInitialized) {
-            initInteractiveCursor();
-          }
-
-          if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
-            window.navbarShowHide = initNavbarShowHide();
-          }
-
-          // Re-enable smooth scrolling after transition is complete
-          if (window.customSmoothScroll) {
-            window.customSmoothScroll.se = true;
-          }
-          
-          // Handle pending navigation
-          if (window.pendingNavigation) {
-            const { url, isPopState } = window.pendingNavigation;
-            window.pendingNavigation = null;
-            setTimeout(() => globalPageTransition(url, isPopState), 100);
-          }
-        }
-      });
-    })
-    .catch(err => {
-      window.location.href = url;
-    });
-}
-
-// Enhanced function to force refresh ScrollTrigger and SplitText for mobile
-function forceRefreshScrollTriggerMobile() {
-  const isMobile = window.innerWidth < 650;
-  if (isMobile && typeof ScrollTrigger !== 'undefined') {
-    console.log('Force refreshing ScrollTrigger for mobile...');
-    
-    // Only refresh if there are active ScrollTriggers
-    const activeTriggers = ScrollTrigger.getAll().filter(trigger => trigger.isActive);
-    if (activeTriggers.length > 0) {
-      // Gentle refresh without killing existing instances
-      ScrollTrigger.refresh();
-      
-      setTimeout(() => {
-        // Only refresh again if still active
-        const stillActiveTriggers = ScrollTrigger.getAll().filter(trigger => trigger.isActive);
-        if (stillActiveTriggers.length > 0) {
-          ScrollTrigger.refresh();
-        }
-      }, 100);
-    }
-  }
-}
-
-// Enhanced function to ensure proper initialization after any dynamic content changes
-function ensureProperInitializationAfterContentChange() {
-  const isMobile = window.innerWidth < 650;
-  const delay = isMobile ? 100 : 50;
-  
-  console.log('Ensuring proper initialization after content change...');
-  
-  setTimeout(() => {
-    // Re-initialize SplitText animations
-    if (typeof initSplitTextAnimations === 'function') {
-      initSplitTextAnimations();
-    }
-    
-    // Refresh ScrollTrigger
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
-    }
-    
-    // Additional refresh for mobile
-    if (isMobile) {
-      setTimeout(() => {
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.refresh(true);
-        }
-      }, 100);
-    }
-  }, delay);
-}
-
-// Make enhanced functions globally available
-window.forceRefreshScrollTriggerMobile = forceRefreshScrollTriggerMobile;
-window.ensureProperInitializationAfterContentChange = ensureProperInitializationAfterContentChange;
-window.ensureScriptsLoadedAfterTransition = ensureScriptsLoadedAfterTransition;
-
-// Enhanced window load handler to ensure everything is properly initialized
-window.addEventListener('load', () => {
-  const isMobile = window.innerWidth < 650;
-  const loadDelay = isMobile ? 100 : 50;
-  
-  console.log('Window loaded, ensuring proper initialization...');
-  
-  // Set a flag to prevent script killing during initialization
-  window.isInitializing = true;
-  
-  setTimeout(() => {
-    // Re-initialize SplitText animations
-    if (typeof initSplitTextAnimations === 'function') {
-      initSplitTextAnimations();
-    }
-    
-    // Refresh ScrollTrigger
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh(true);
-    }
-    
-    // Additional refresh for mobile
-    if (isMobile) {
-      setTimeout(() => {
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.refresh(true);
-        }
-      }, 100);
-    }
-    
-    // Clear the initialization flag
-    setTimeout(() => {
-      window.isInitializing = false;
-    }, 500);
-  }, loadDelay);
-});
