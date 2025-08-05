@@ -997,41 +997,24 @@ function initializePageAfterTransition() {
   initTypeListRadioHandler();
   reloadFinsweetCMS();
   
-  // Initialize smooth scrolling (disabled on mobile to prevent conflicts)
+  // Initialize smooth scrolling
   initCustomSmoothScrolling();
   
-      // Initialize animations with minimal delays
-    setTimeout(() => {
-      console.log('Initializing GSAP animations after transition...');
-      initGsapAnimations();
-      
-      // Minimal delay for mobile to ensure everything is loaded
-      const mobileDelay = isMobile ? 30 : 20;
-      
-      setTimeout(() => {
-        console.log('Initializing SplitText animations after transition...');
-        initSplitTextAnimations();
-        
-        // Refresh ScrollTrigger after all animations are set up
-        if (typeof ScrollTrigger !== 'undefined') {
-          console.log('Refreshing ScrollTrigger after transition...');
-          ScrollTrigger.refresh(true);
-        }
-        
-        // Single additional refresh for mobile
-        if (isMobile) {
-          setTimeout(() => {
-            if (typeof ScrollTrigger !== 'undefined') {
-              console.log('Additional ScrollTrigger refresh for mobile...');
-              ScrollTrigger.refresh(true);
-            }
-          }, 100);
-        }
-        
-        // Initialize video after all animations
-        setTimeout(() => initHomeVideo(), 20);
-      }, mobileDelay);
-    }, 20);
+  // Initialize animations immediately
+  console.log('Initializing GSAP animations after transition...');
+  initGsapAnimations();
+  
+  console.log('Initializing SplitText animations after transition...');
+  initSplitTextAnimations();
+  
+  // Refresh ScrollTrigger immediately
+  if (typeof ScrollTrigger !== 'undefined') {
+    console.log('Refreshing ScrollTrigger after transition...');
+    ScrollTrigger.refresh(true);
+  }
+  
+  // Initialize video
+  initHomeVideo();
   
   console.log('Page transition initialization complete');
 }
@@ -1158,9 +1141,9 @@ function initGsapAnimations() {
     const isMobile = window.innerWidth < 650;
     console.log('GSAP animations - mobile:', isMobile);
     
-    // Kill any existing ScrollTriggers to prevent conflicts
+    // Kill only GSAP animation ScrollTriggers, preserve SplitText triggers
     ScrollTrigger.getAll().forEach(trigger => {
-      if (trigger.vars.id && trigger.vars.id.includes('gsap-animation')) {
+      if (trigger.vars.id && trigger.vars.id.includes('gsap-animation') && !trigger.vars.id.includes('splittext')) {
         trigger.kill();
       }
     });
@@ -1560,6 +1543,12 @@ function initGsapAnimations() {
     ease: "power4.out",
     delay: 0.5,
   });
+
+  // Final ScrollTrigger refresh to ensure all animations are properly set up
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.refresh(true);
+    console.log('GSAP animations completed - ScrollTrigger refreshed');
+  }
 
 }
 
