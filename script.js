@@ -44,34 +44,24 @@ function loadScript(src) {
   
       // Start the loader animation
       animateLoaderCounter(() => {
-        // Initialize functions after loader completes
+        // Initialize core functions after loader completes
         refreshbreakingpoints();
         initInteractiveCursor();
         initMegaMenu();
         initPageTransitions();
-        initInfinityGallery();
         moveShowAllIntoCollectionList();
-        initDisplayToggle();
         
-        // Initialize everything immediately without requestAnimationFrame
+        // Initialize all other functions
+        initInfinityGallery();
+        initDisplayToggle();
         initNavbarShowHide();
         initGsapAnimations();
         initSplitTextAnimations();
+        initTypeListRadioHandler();
+        initCustomSmoothScrolling();
         
-        // Initialize type-list radio button handler
-        if (typeof initTypeListRadioHandler === 'function') {
-          initTypeListRadioHandler();
-        }
-        
-        // Only initialize cursor if not already initialized
-        if (!window.cursorInitialized) {
-            initInteractiveCursor();
-        }
-        
+        // Refresh ScrollTrigger and initialize video
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
-        
-        // Initialize video immediately without delay
         initHomeVideo();
       }, 400); // Reduced loader duration from 800ms to 400ms
   
@@ -80,7 +70,6 @@ function loadScript(src) {
       // Fallback initialization without loader
       refreshbreakingpoints();
       initPageTransitions();
-      initHomeVideo();
       initInfinityGallery();
     }
   }
@@ -220,11 +209,8 @@ function reloadFinsweetCMS() {
 // Function to handle radio button selection in .type-list
 function initTypeListRadioHandler() {
   document.addEventListener('click', (e) => {
-    if (e.target.closest('.type-list .w-radio input[type="radio"]')) {
-      setTimeout(() => {
-        if (typeof initSplitTextAnimations === 'function') initSplitTextAnimations();
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-      }, 100);
+    if (e.target.closest('.type-list .w-radio input[type="radio"]') && typeof ScrollTrigger !== 'undefined') {
+      setTimeout(() => ScrollTrigger.refresh(true), 100);
     }
   });
 }
@@ -562,9 +548,6 @@ function initCustomSmoothScrolling() {
 
 
 function initPageTransitions() {
-  
-
-  
     const loader = gsap.timeline();
     let isAnimating = false;
     let nextPageHTML = '';
@@ -595,6 +578,17 @@ function initPageTransitions() {
     }
 
     async function handleNavigation(url, isPopState = false) {
+        // Store current scroll position but don't lock it immediately
+        const currentScrollY = window.scrollY;
+        
+        // Only lock scroll if we're not already transitioning
+        if (!window.transitioning) {
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${currentScrollY}px`;
+            document.body.style.width = '100%';
+            document.body.style.overflow = 'hidden';
+        }
+        
         globalPageTransition(url, isPopState);
     }
 
@@ -612,7 +606,12 @@ function initPageTransitions() {
         ) return;
 
         e.preventDefault();
-        history.pushState({ title: document.title }, '', href);
+        e.stopPropagation();
+        
+        // Store current scroll position before navigation
+        const currentScrollY = window.scrollY;
+        
+        history.pushState({ title: document.title, scrollY: currentScrollY }, '', href);
         handleNavigation(href);
     });
 
@@ -669,13 +668,8 @@ function truncateByWords(el, wordLimit = 43) {
 }
 
 function cleanupAllPageAnimations() {
-  // Kill ALL ScrollTriggers
-  if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  }
-  
-  // Kill all GSAP animations
-  gsap.killTweensOf("*");
+  // Simple cleanup - only kill specific animations
+  gsap.killTweensOf(".header .logo img, .header .menu a, .menu-toggle, .cursor");
   
   // Clean up SplitText instances
   if (typeof SplitText !== 'undefined') {
@@ -685,25 +679,39 @@ function cleanupAllPageAnimations() {
         delete element._splitTextInstance;
       }
     });
-    
-    // Remove .line elements
     document.querySelectorAll('.line').forEach(line => line.remove());
   }
   
-  // Clean up custom instances
-  if (window.customSmoothScroll?.destroy) window.customSmoothScroll.destroy();
+  // Clean up instances
   if (window.cleanupCursor) window.cleanupCursor();
   if (window.navbarShowHide?.destroy) window.navbarShowHide.destroy();
   
-  // Reset initialization flags
   window.cursorInitialized = false;
 }
 
 function ensureProperScrollPosition() {
+  // Force scroll to top with multiple methods for maximum compatibility
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-  document.documentElement.offsetHeight; // force reflow
+  
+  // Reset any body styles that might interfere
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  document.body.style.overflow = '';
+  
+  // Force reflow to ensure scroll position is set
+  document.documentElement.offsetHeight;
+  
+  // Double-check scroll position
+  setTimeout(() => {
+    if (window.scrollY !== 0) {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, 10);
 }
 
 function initSplitTextAnimations(scope = document) {
@@ -2954,10 +2962,10 @@ function forceRefreshSplitTextAnimations() {
     line.remove();
   });
   
-  // Re-initialize SplitText animations
+  // Refresh ScrollTrigger instead of reinitializing
   setTimeout(() => {
-    if (typeof initSplitTextAnimations === 'function') {
-      initSplitTextAnimations();
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
     }
   }, 100);
 }
@@ -2990,16 +2998,11 @@ window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
 
 window.debugSplitTextStatus = debugSplitTextStatus;
 
-// Simple global handler for all radio button changes (including CMS filters)
+// Simple global handler for radio button changes
 document.addEventListener('click', (e) => {
   const radioButton = e.target.closest('.w-radio input[type="radio"]');
-  if (radioButton) {
-    // Wait for any dynamic content to update and then reinitialize SplitText
-    setTimeout(() => {
-      if (typeof initSplitTextAnimations === 'function') {
-        initSplitTextAnimations();
-      }
-    }, 500);
+  if (radioButton && typeof ScrollTrigger !== 'undefined') {
+    setTimeout(() => ScrollTrigger.refresh(true), 100);
   }
 });
 
@@ -3025,9 +3028,6 @@ function globalPageTransition(url, isPopState = false) {
   }
 
   window.transitioning = true;
-  
-  // 1. Clean up ALL animations and instances
-  cleanupAllPageAnimations();
   
   // 2. Start transition animation
   const transition = document.querySelector('.transition');
@@ -3070,33 +3070,54 @@ function globalPageTransition(url, isPopState = false) {
       document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
       container.innerHTML = nextPage.nextWrapper.innerHTML;
 
-      // 6. Ensure proper scroll position
-      ensureProperScrollPosition();
+      // 6. Force scroll to top and reset body styles
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      // Reset body styles that were set during navigation
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      
+      // Force reflow to ensure scroll position is set
+      document.documentElement.offsetHeight;
 
-      // 7. Re-register GSAP plugins
+      // 7. Re-register GSAP plugins and ensure they're available
       if (typeof gsap !== 'undefined') {
         if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
         if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
+        if (typeof ScrollToPlugin !== 'undefined') gsap.registerPlugin(ScrollToPlugin);
+      }
+      
+      // Ensure GSAP is ready before proceeding
+      if (typeof gsap === 'undefined') {
+        console.error('GSAP not available for page transition');
+        return;
       }
 
-      // 8. Initialize everything immediately
-      initInfinityGallery();
-      initDisplayToggle();
+      // 8. Initialize everything once in proper order
       moveShowAllIntoCollectionList();
-      initGsapAnimations();
-      initNavbarShowHide();
-      initCustomSmoothScrolling();
-      initTypeListRadioHandler();
       reloadFinsweetCMS();
-      initSplitTextAnimations();
+      
+      // Simple single initialization
+      setTimeout(() => {
+        // Initialize all functions in order
+        if (typeof initGsapAnimations === 'function') initGsapAnimations();
+        if (typeof initSplitTextAnimations === 'function') initSplitTextAnimations();
+        if (typeof initInfinityGallery === 'function') initInfinityGallery();
+        if (typeof initDisplayToggle === 'function') initDisplayToggle();
+        if (typeof initTypeListRadioHandler === 'function') initTypeListRadioHandler();
+        if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
+        if (typeof initNavbarShowHide === 'function') initNavbarShowHide();
+        
+        // Refresh ScrollTrigger
+        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
+      }, 100);
 
       // 9. Initialize video after animations
       setTimeout(() => initHomeVideo(), 500);
-
-      // 10. Refresh ScrollTrigger
-      setTimeout(() => {
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-      }, 100);
 
       // 11. Complete transition
       const tl = gsap.timeline();
@@ -3111,6 +3132,9 @@ function globalPageTransition(url, isPopState = false) {
         ease: 'power2',
         attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
         onComplete: () => {
+          // Clean up ALL animations and instances AFTER page transition animation completes
+         /* cleanupAllPageAnimations();*/
+          
           // Reset cursor
           gsap.set(cursor, { scale: 0, visibility: "visible" });
           gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
@@ -3126,7 +3150,7 @@ function globalPageTransition(url, isPopState = false) {
           transition.style.visibility = 'hidden';
           window.transitioning = false;
 
-          // Initialize cursor
+          // Initialize cursor only if not already initialized
           if (!window.cursorInitialized) {
             initInteractiveCursor();
           }
@@ -3134,6 +3158,8 @@ function globalPageTransition(url, isPopState = false) {
           if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
             window.navbarShowHide = initNavbarShowHide();
           }
+          
+
 
           // Handle pending navigation
           if (window.pendingNavigation) {
@@ -3146,6 +3172,11 @@ function globalPageTransition(url, isPopState = false) {
     })
     .catch(err => {
       console.error('Navigation error:', err);
+      // Reset body styles on error
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
       window.location.href = url;
     });
 }
