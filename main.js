@@ -106,6 +106,7 @@ async function startApp() {
       initNavbarShowHide();
       initGsapAnimations();
       initSplitTextAnimations();
+      initDisplayToggle();
       
       if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
       if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
@@ -575,7 +576,7 @@ function initPageTransitions() {
             ScrollTrigger.refresh(true);
             initCustomSmoothScrolling();
             initSplitTextAnimations();
-            initVWFontZoomSafeForGSAP();
+            initDisplayToggle();
         }, 100);
 
         // Complete the transition animation (outro)
@@ -2050,3 +2051,463 @@ window.addEventListener('resize', () => {
 });
 
 
+/* ==============================================
+Display Toggle and Fullscreen Gallery Functionality
+============================================== */
+
+function initDisplayToggle() {
+    const displayToggle = document.querySelector('.display-toggle');
+    const gridBtn = document.querySelector('.grid-btn');
+    const galleryBtn = document.querySelector('.gallery-btn');
+    const fullscreenGallery = document.querySelector('.fullscreen-gallery');
+    const homeProperties = document.querySelector('.home-properties');
+    
+    // Global variable to track gallery state for smooth scrolling
+    window.isGalleryOpen = false;
+    
+    if (!displayToggle || !gridBtn || !galleryBtn || !fullscreenGallery) {
+      
+      return;
+    }
+  
+    let currentView = 'grid';
+    let galleryInstance = null;
+    let isToggleAnimating = false; // Prevent rapid toggle clicks
+  
+    function populateGallery() {
+      const gallerySlider = document.querySelector('.gallery-slider');
+      const galleryCounter = document.querySelector('.gallery-counter');
+      const properties = document.querySelectorAll('.home-properties-grid .property');
+      
+      if (!gallerySlider || properties.length === 0) return;
+  
+      gallerySlider.innerHTML = '';
+      
+      properties.forEach((property, index) => {
+        const img = property.querySelector('img');
+        const name = property.querySelector('.name');
+        const price = property.querySelector('.price');
+        const info = property.querySelector('.info');
+        const link = property.getAttribute('href');
+        
+        if (img && name) {
+          createGallerySlide(gallerySlider, null, img, name, price, info, link, index);
+        }
+      });
+      
+      // Update the counter with total slides
+      if (galleryCounter) {
+        const totalSlides = gallerySlider.children.length;
+        const totalSlidesSpan = galleryCounter.querySelector('.total-slides');
+        if (totalSlidesSpan) {
+          totalSlidesSpan.textContent = totalSlides;
+        }
+      }
+      
+      // Gallery slide links will be handled by the global event listener
+      // This ensures the same SVG wave animation as other site links
+    }
+  
+    function createGallerySlide(slider, indicators, img, name, price, info, link, index) {
+      // Create slide
+      const slide = document.createElement('div');
+      slide.className = 'gallery-slide';
+      slide.dataset.index = index;
+      
+      // Create the link wrapper
+      const linkWrapper = document.createElement('a');
+      linkWrapper.href = link || '#';
+      linkWrapper.className = 'gallery-slide-link';
+      
+      // Set the slide content inside the link
+      linkWrapper.innerHTML = `
+        <img src="${img.src}" alt="${img.alt}" loading="lazy">
+        <div class="gallery-slide-content">
+          <h3>${name.textContent}</h3>
+          ${price ? `<h4>${price.textContent}</h4>` : ''}
+          ${info ? `<p>${info.textContent}</p>` : ''}
+        </div>
+      `;
+      
+      // Add the link wrapper to the slide
+      slide.appendChild(linkWrapper);
+      
+      // Let the global event listener handle the navigation
+      // This ensures the same SVG wave animation as other site links
+      linkWrapper.addEventListener('click', (e) => {
+        // Don't handle clicks on gallery navigation elements
+        if (e.target.closest('.gallery-nav')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        
+        // Animate mega-menu-overlay to opacity 0 when gallery slide is clicked
+        const overlay = document.querySelector('.mega-menu-overlay');
+        if (overlay) {
+          gsap.to(overlay, {
+            opacity: 0,
+            duration: 1.2,
+            ease: 'power4.inOut'
+          });
+        }
+        
+        // For gallery slide links, let the global event listener handle the navigation
+        // This ensures the same SVG wave animation as other site links
+      });
+      
+      slider.appendChild(slide);
+    }
+  
+  
+  
+    function switchToGrid() {
+      // Kill any ongoing gallery animations
+      gsap.killTweensOf(fullscreenGallery);
+      
+      isToggleAnimating = true;
+      currentView = 'grid';
+      window.isGalleryOpen = false; // Reset global flag for smooth scrolling
+      gridBtn.classList.add('active');
+      galleryBtn.classList.remove('active');
+      
+      // Animate mega-menu-overlay opacity back to 0
+      const overlay = document.querySelector('.mega-menu-overlay');
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 0,
+          duration: 1.2,
+          ease: 'power4.inOut'
+        });
+      }
+      
+      // Animate header opacity back to 1
+      const header = document.querySelector('.header');
+      if (header) {
+        gsap.to(header, {
+          opacity: 1,
+          pointerEvents: 'auto',
+          duration: 0.8,
+          ease: 'power4.inOut'
+        });
+      }
+      
+      // Show grid immediately
+      if (homeProperties) homeProperties.style.display = 'block';
+      
+      // Clean clipPath exit animation from left to right
+      gsap.to(fullscreenGallery, {
+        clipPath: 'inset(0% 100% 0% 0%)',
+        duration: 1.2,
+        ease: 'power4.inOut',
+        onComplete: () => {
+          fullscreenGallery.classList.remove('active');
+          gsap.set(fullscreenGallery, { visibility: 'hidden' });
+          isToggleAnimating = false; // Re-enable toggle after animation
+        }
+      });
+      
+      if (galleryInstance) {
+        galleryInstance.destroy();
+        galleryInstance = null;
+      }
+      
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+  
+    function switchToGallery() {
+      // Kill any ongoing gallery animations
+      gsap.killTweensOf(fullscreenGallery);
+      
+      isToggleAnimating = true;
+      currentView = 'gallery';
+      window.isGalleryOpen = true; // Set global flag for smooth scrolling
+      galleryBtn.classList.add('active');
+      gridBtn.classList.remove('active');
+      
+      populateGallery();
+      
+      // Animate mega-menu-overlay opacity to 0.4
+      const overlay = document.querySelector('.mega-menu-overlay');
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 0.4,
+          duration: 1.2,
+          ease: 'power4.inOut'
+        });
+      }
+      
+      // Animate header opacity to 0
+      const header = document.querySelector('.header');
+      if (header) {
+        gsap.to(header, {
+          opacity: 0,
+          duration: 0.8,
+          pointerEvents: 'none',
+          ease: 'power4.inOut'
+        });
+      }
+      
+      // Keep grid visible, set gallery initial clipPath state
+      gsap.set(fullscreenGallery, { 
+        visibility: 'visible',
+        opacity: 1,
+        clipPath: 'inset(0% 0% 0% 100%)'
+      });
+      
+      // Animate gallery entrance from right to left
+      gsap.to(fullscreenGallery, {
+        clipPath: 'inset(0% 0% 0% 0%)',
+        duration: 1.2,
+        ease: 'power4.inOut',
+        onComplete: () => {
+          fullscreenGallery.classList.add('active');
+          // Hide grid after gallery entrance completes
+          if (homeProperties) homeProperties.style.display = 'none';
+          isToggleAnimating = false; // Re-enable toggle after animation
+        }
+      });
+      
+      galleryInstance = new FullscreenGallery();
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    }
+  
+    function setupEventListeners() {
+      gridBtn.addEventListener('click', switchToGrid);
+      galleryBtn.addEventListener('click', switchToGallery);
+  
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && currentView === 'gallery') {
+          switchToGrid();
+        }
+      });
+    }
+  
+    setupEventListeners();
+    switchToGrid();
+  }
+  
+  // Fullscreen Gallery Class
+  class FullscreenGallery {
+    constructor() {
+      this.slides = document.querySelectorAll('.gallery-slide');
+      this.prevBtn = document.querySelector('.gallery-prev');
+      this.nextBtn = document.querySelector('.gallery-next');
+      this.currentSlide = 0;
+      this.totalSlides = this.slides.length;
+      this.isAnimating = false;
+      this.pendingSlide = null; // Track pending slide requests
+      
+      if (this.totalSlides === 0) return;
+      
+      this.init();
+    }
+  
+    init() {
+      // Set initial state for all slides without animation
+      this.slides.forEach((slide, index) => {
+        if (index === 0) {
+          gsap.set(slide, { 
+            opacity: 1,
+            clipPath: 'inset(0% 0% 0% 0%)',
+            zIndex: 1
+          });
+        } else {
+          gsap.set(slide, { 
+            opacity: 0,
+            clipPath: 'inset(0% 0% 0% 0%)',
+            zIndex: 0
+          });
+        }
+      });
+      
+      // Update counter
+      this.updateCounter();
+      
+      this.bindEvents();
+    }
+  
+    bindEvents() {
+      if (this.prevBtn) {
+        this.prevBtn.addEventListener('click', () => this.prevSlide());
+      }
+      
+      if (this.nextBtn) {
+        this.nextBtn.addEventListener('click', () => this.nextSlide());
+      }
+  
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          this.prevSlide();
+        } else if (e.key === 'ArrowRight') {
+          this.nextSlide();
+        }
+      });
+  
+      // Touch/swipe support
+      let startX = 0;
+      let startY = 0;
+      let endX = 0;
+      let endY = 0;
+  
+      document.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }, { passive: true });
+  
+      document.addEventListener('touchend', (e) => {
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        
+        const diffX = startX - endX;
+        const diffY = startY - endY;
+        
+        // Check if horizontal swipe is more significant than vertical
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+          if (diffX > 0) {
+            this.nextSlide();
+          } else {
+            this.prevSlide();
+          }
+        }
+      }, { passive: true });
+    }
+  
+    showSlide(index) {
+      // If already animating, queue this request
+      if (this.isAnimating) {
+        this.pendingSlide = index;
+        return;
+      }
+      
+      // Kill any ongoing animations first
+      gsap.killTweensOf(this.slides);
+      
+      // Update current slide immediately
+      const previousSlide = this.currentSlide;
+      this.currentSlide = index;
+      this.isAnimating = true;
+      
+      const currentSlide = this.slides[previousSlide];
+      const nextSlide = this.slides[index];
+      const direction = index > previousSlide ? 1 : -1; // 1 for next, -1 for previous
+      
+      // Update counter
+      this.updateCounter();
+      
+      // Clean slide transition animation using only clipPath
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          this.isAnimating = false;
+          // Only clean up after the full animation is complete
+          this.cleanupSlides();
+          
+          // Check if there's a pending slide request
+          if (this.pendingSlide !== null) {
+            const pendingIndex = this.pendingSlide;
+            this.pendingSlide = null;
+            this.showSlide(pendingIndex);
+          }
+        },
+        onInterrupt: () => {
+          this.isAnimating = false;
+          // Ensure cleanup happens even if interrupted
+          this.cleanupSlides();
+          
+          // Check if there's a pending slide request
+          if (this.pendingSlide !== null) {
+            const pendingIndex = this.pendingSlide;
+            this.pendingSlide = null;
+            this.showSlide(pendingIndex);
+          }
+        }
+      });
+  
+      // Set initial states
+      const nextClipPath = direction === 1 ? 'inset(0% 0% 0% 100%)' : 'inset(0% 100% 0% 0%)';
+      const currentClipPath = direction === 1 ? 'inset(0% 100% 0% 0%)' : 'inset(0% 0% 0% 100%)';
+  
+      timeline
+        .set(nextSlide, { 
+          opacity: 1, 
+          clipPath: nextClipPath,
+          zIndex: 2
+        })
+        .set(currentSlide, { zIndex: 1 })
+        .to(currentSlide, { 
+          clipPath: currentClipPath,
+          duration: 1.2, 
+          ease: 'power4.inOut' 
+        }, 0)
+        .to(nextSlide, { 
+          clipPath: 'inset(0% 0% 0% 0%)',
+          duration: 1.2, 
+          ease: 'power4.inOut' 
+        }, 0)
+        // Only hide the previous slide after the full clipPath animation is complete
+        .to(currentSlide, { opacity: 0, duration: 0.1 }, 1.2);
+    }
+  
+    nextSlide() {
+      const nextIndex = (this.currentSlide + 1) % this.totalSlides;
+      this.showSlide(nextIndex);
+    }
+  
+    prevSlide() {
+      const prevIndex = this.currentSlide === 0 ? this.totalSlides - 1 : this.currentSlide - 1;
+      this.showSlide(prevIndex);
+    }
+  
+    goToSlide(index) {
+      if (index >= 0 && index < this.totalSlides) {
+        this.showSlide(index);
+      }
+    }
+  
+    updateCounter() {
+      const counter = document.querySelector('.gallery-counter .current-slide');
+      if (counter) {
+        counter.textContent = this.currentSlide + 1;
+      }
+    }
+  
+    cleanupSlides() {
+      // Kill any ongoing animations first
+      gsap.killTweensOf(this.slides);
+      
+      // Clean up all slides to ensure no partial clipPath states
+      this.slides.forEach((slide, index) => {
+        if (index === this.currentSlide) {
+          // Current slide should be fully visible
+          gsap.set(slide, {
+            opacity: 1,
+            clipPath: 'inset(0% 0% 0% 0%)',
+            zIndex: 1
+          });
+        } else {
+          // All other slides should be completely hidden
+          gsap.set(slide, {
+            opacity: 0,
+            clipPath: 'inset(0% 0% 0% 0%)',
+            zIndex: 0
+          });
+        }
+      });
+    }
+  
+    destroy() {
+      // Kill any ongoing animations
+      gsap.killTweensOf(this.slides);
+      
+      // Remove event listeners if needed
+      if (this.prevBtn) {
+        this.prevBtn.removeEventListener('click', () => this.prevSlide());
+      }
+      if (this.nextBtn) {
+        this.nextBtn.removeEventListener('click', () => this.nextSlide());
+      }
+    }
+  }
