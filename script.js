@@ -274,14 +274,12 @@ function reloadFinsweetCMS() {
   document.body.appendChild(newScript);
 }
 
-// Function to handle radio button selection in .type-list
+// Enhanced function to handle radio button selection in .type-list
 function initTypeListRadioHandler() {
   document.addEventListener('click', (e) => {
     if (e.target.closest('.type-list .w-radio input[type="radio"]')) {
-      setTimeout(() => {
-        if (typeof initSplitTextAnimations === 'function') initSplitTextAnimations();
-        if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-      }, 100);
+      // Use the enhanced initialization function for proper handling
+      ensureProperInitializationAfterContentChange();
     }
   });
 }
@@ -740,7 +738,7 @@ function initPageTransitions() {
 
     // 4. Wait for both animation and fetch
     Promise.all([transitionPromise, fetchPromise])
-      .then(([_, nextPage]) => {
+      .then(async ([_, nextPage]) => {
         // 5. Swap content
         const container = document.querySelector('.page-wrapper');
         if (!container) return;
@@ -775,16 +773,16 @@ function initPageTransitions() {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
 
-        // 8. Re-register GSAP plugins
-        if (typeof gsap !== 'undefined') {
-          if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
-          if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
-        }
+        // 8. Wait for scripts to be properly loaded
+        await ensureScriptsLoadedAfterTransition();
 
-        // 9. Initialize everything with proper sequencing
+        // 9. Initialize everything with proper sequencing and delays
+        const isMobile = window.innerWidth < 650;
+        const initializationDelay = isMobile ? 50 : 20; // Much shorter delay
+        
         setTimeout(() => {
           initializePageAfterTransition();
-        }, 50); // Small delay to ensure DOM is ready
+        }, initializationDelay);
 
         // 10. Complete transition
         const tl = gsap.timeline();
@@ -1005,35 +1003,38 @@ function initializePageAfterTransition() {
   // Initialize smooth scrolling (disabled on mobile to prevent conflicts)
   initCustomSmoothScrolling();
   
-  // Initialize animations with proper delays for mobile
-  setTimeout(() => {
-    console.log('Initializing GSAP animations after transition...');
-    initGsapAnimations();
-    
+      // Initialize animations with minimal delays
     setTimeout(() => {
-      console.log('Initializing SplitText animations after transition...');
-      initSplitTextAnimations();
+      console.log('Initializing GSAP animations after transition...');
+      initGsapAnimations();
       
-      // Refresh ScrollTrigger after all animations are set up
-      if (typeof ScrollTrigger !== 'undefined') {
-        console.log('Refreshing ScrollTrigger after transition...');
-        ScrollTrigger.refresh(true);
-      }
+      // Minimal delay for mobile to ensure everything is loaded
+      const mobileDelay = isMobile ? 30 : 20;
       
-      // Additional refresh for mobile to ensure everything works
-      if (isMobile) {
-        setTimeout(() => {
-          if (typeof ScrollTrigger !== 'undefined') {
-            console.log('Additional ScrollTrigger refresh for mobile...');
-            ScrollTrigger.refresh(true);
-          }
-        }, 200);
-      }
-      
-      // Initialize video after all animations
-      setTimeout(() => initHomeVideo(), 50);
-    }, 100);
-  }, 50);
+      setTimeout(() => {
+        console.log('Initializing SplitText animations after transition...');
+        initSplitTextAnimations();
+        
+        // Refresh ScrollTrigger after all animations are set up
+        if (typeof ScrollTrigger !== 'undefined') {
+          console.log('Refreshing ScrollTrigger after transition...');
+          ScrollTrigger.refresh(true);
+        }
+        
+        // Single additional refresh for mobile
+        if (isMobile) {
+          setTimeout(() => {
+            if (typeof ScrollTrigger !== 'undefined') {
+              console.log('Additional ScrollTrigger refresh for mobile...');
+              ScrollTrigger.refresh(true);
+            }
+          }, 100);
+        }
+        
+        // Initialize video after all animations
+        setTimeout(() => initHomeVideo(), 20);
+      }, mobileDelay);
+    }, 20);
   
   console.log('Page transition initialization complete');
 }
@@ -3402,16 +3403,12 @@ window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
 
 window.debugSplitTextStatus = debugSplitTextStatus;
 
-// Simple global handler for all radio button changes (including CMS filters)
+// Enhanced global handler for all radio button changes (including CMS filters)
 document.addEventListener('click', (e) => {
   const radioButton = e.target.closest('.w-radio input[type="radio"]');
   if (radioButton) {
-    // Wait for any dynamic content to update and then reinitialize SplitText
-    setTimeout(() => {
-      if (typeof initSplitTextAnimations === 'function') {
-        initSplitTextAnimations();
-      }
-    }, 500);
+    // Use the enhanced initialization function for proper handling
+    ensureProperInitializationAfterContentChange();
   }
 });
 
@@ -3429,14 +3426,14 @@ window.addEventListener('resize', () => {
   }, 100);
 });
 
-// Mobile scroll handler to refresh ScrollTrigger after scrolling
+// Enhanced mobile scroll handler to refresh ScrollTrigger after scrolling
 let scrollTimeout;
 window.addEventListener('scroll', () => {
   const isMobile = window.innerWidth < 650;
   if (isMobile && typeof ScrollTrigger !== 'undefined') {
     clearTimeout(scrollTimeout);
     scrollTimeout = setTimeout(() => {
-      ScrollTrigger.refresh(true);
+      forceRefreshScrollTriggerMobile();
     }, 150);
   }
 });
@@ -3542,5 +3539,276 @@ function forceRefreshScrollTriggerMobile() {
 // Make mobile refresh function globally available
 window.forceRefreshScrollTriggerMobile = forceRefreshScrollTriggerMobile;
 
+// Enhanced function to ensure proper script loading and initialization after page transitions
+function ensureScriptsLoadedAfterTransition() {
+  return new Promise((resolve) => {
+    const isMobile = window.innerWidth < 650;
+    const baseDelay = isMobile ? 50 : 20; // Much shorter delay
+    
+    console.log(`Ensuring scripts loaded after transition (mobile: ${isMobile})...`);
+    
+    // Check if all required scripts are loaded
+    const checkScripts = () => {
+      const scriptsLoaded = {
+        gsap: typeof gsap !== 'undefined',
+        scrollTrigger: typeof ScrollTrigger !== 'undefined',
+        splitText: typeof SplitText !== 'undefined'
+      };
+      
+      console.log('Script loading status:', scriptsLoaded);
+      
+      return Object.values(scriptsLoaded).every(loaded => loaded);
+    };
+    
+    // Wait for scripts to be loaded
+    const waitForScripts = () => {
+      if (checkScripts()) {
+        console.log('All scripts loaded, proceeding with initialization...');
+        
+        // Register plugins
+        if (typeof gsap !== 'undefined') {
+          if (typeof ScrollTrigger !== 'undefined') gsap.registerPlugin(ScrollTrigger);
+          if (typeof SplitText !== 'undefined') gsap.registerPlugin(SplitText);
+        }
+        
+        resolve();
+      } else {
+        console.log('Scripts not yet loaded, retrying...');
+        setTimeout(waitForScripts, 50); // Faster retry
+      }
+    };
+    
+    // Start checking after base delay
+    setTimeout(waitForScripts, baseDelay);
+  });
+}
 
+// Enhanced page transition function with proper script loading
+function globalPageTransition(url, isPopState = false) {
+  if (window.transitioning) {
+    window.pendingNavigation = { url, isPopState };
+    return;
+  }
 
+  window.transitioning = true;
+  
+  // Temporarily disable smooth scrolling during transition to prevent conflicts
+  if (window.customSmoothScroll) {
+    window.customSmoothScroll.se = false;
+  }
+  
+  // Check if this is internal project navigation (staying within projects)
+  const isInternalProjectNav = url.includes('/projects/') && window.location.pathname.includes('/projects/');
+  
+  // 2. Start transition animation
+  const transition = document.querySelector('.transition');
+  const swipeup = document.querySelector('.swipeup');
+  const cursor = document.querySelector('.cursor');
+  
+  const transitionPromise = new Promise((resolve) => {
+    const tl = gsap.timeline({ onComplete: resolve });
+    tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
+    tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+    tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+    tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+    tl.to(".header .logo img, .header .menu a", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
+    tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
+    tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
+    tl.set(cursor, { visibility: "hidden" }, 0.2);
+  });
+
+  // 3. Fetch new page content
+  const fetchPromise = fetch(url)
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.text();
+    })
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const nextWrapper = doc.querySelector('.page-wrapper');
+      if (!nextWrapper) throw new Error('No .page-wrapper found');
+      return { html, doc, nextWrapper };
+    });
+
+  // 4. Wait for both animation and fetch
+  Promise.all([transitionPromise, fetchPromise])
+    .then(async ([_, nextPage]) => {
+      // 5. Swap content
+      const container = document.querySelector('.page-wrapper');
+      if (!container) return;
+
+      document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
+      container.innerHTML = nextPage.nextWrapper.innerHTML;
+
+      // 6. Ensure proper scroll position and reset smooth scrolling state
+      ensureProperScrollPosition();
+      
+      // Reset smooth scrolling state to prevent conflicts
+      if (window.customSmoothScroll) {
+        window.customSmoothScroll.se = false;
+        window.customSmoothScroll.dr = false;
+        window.customSmoothScroll.isDragging = false;
+        window.customSmoothScroll.sliderTouchActive = false;
+      }
+
+      // 7. Clean up ALL animations and instances (AFTER animation, BEFORE new functions)
+      if (!isInternalProjectNav) {
+        cleanupAllPageAnimations();
+      } else {
+        // For internal project navigation, only kill ScrollTriggers but preserve SplitText
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+        }
+        gsap.killTweensOf("*");
+      }
+      
+      // Ensure proper scroll position and reset any scroll-related state
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // 8. Wait for scripts to be properly loaded
+      await ensureScriptsLoadedAfterTransition();
+
+      // 9. Initialize everything with proper sequencing and delays
+      const isMobile = window.innerWidth < 650;
+      const initializationDelay = isMobile ? 300 : 100;
+      
+      setTimeout(() => {
+        initializePageAfterTransition();
+      }, initializationDelay);
+
+      // 10. Complete transition
+      const tl = gsap.timeline();
+      tl.to(swipeup, {
+        duration: 0.6,
+        ease: 'power4.in',
+        attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' }
+      });
+
+      tl.to(swipeup, {
+        duration: 0.4,
+        ease: 'power2',
+        attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
+        onComplete: () => {
+          // Reset cursor
+          gsap.set(cursor, { scale: 0, visibility: "visible" });
+          gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
+          gsap.set(".menu-toggle", { opacity: 0 });
+
+          const inTl = gsap.timeline();
+          inTl.to([".header .logo img", ".header .menu a"], { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+          inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
+          inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
+
+          // Hide transition
+          transition.style.opacity = '0';
+          transition.style.visibility = 'hidden';
+          window.transitioning = false;
+
+          // Initialize cursor
+          if (!window.cursorInitialized) {
+            initInteractiveCursor();
+          }
+
+          if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
+            window.navbarShowHide = initNavbarShowHide();
+          }
+
+          // Re-enable smooth scrolling after transition is complete
+          if (window.customSmoothScroll) {
+            window.customSmoothScroll.se = true;
+          }
+          
+          // Handle pending navigation
+          if (window.pendingNavigation) {
+            const { url, isPopState } = window.pendingNavigation;
+            window.pendingNavigation = null;
+            setTimeout(() => globalPageTransition(url, isPopState), 100);
+          }
+        }
+      });
+    })
+    .catch(err => {
+      window.location.href = url;
+    });
+}
+
+// Enhanced function to force refresh ScrollTrigger and SplitText for mobile
+function forceRefreshScrollTriggerMobile() {
+  const isMobile = window.innerWidth < 650;
+  if (isMobile && typeof ScrollTrigger !== 'undefined') {
+    console.log('Force refreshing ScrollTrigger for mobile...');
+    
+    // Single refresh with minimal delay
+    ScrollTrigger.refresh(true);
+    
+    setTimeout(() => {
+      ScrollTrigger.refresh(true);
+    }, 100);
+  }
+}
+
+// Enhanced function to ensure proper initialization after any dynamic content changes
+function ensureProperInitializationAfterContentChange() {
+  const isMobile = window.innerWidth < 650;
+  const delay = isMobile ? 100 : 50;
+  
+  console.log('Ensuring proper initialization after content change...');
+  
+  setTimeout(() => {
+    // Re-initialize SplitText animations
+    if (typeof initSplitTextAnimations === 'function') {
+      initSplitTextAnimations();
+    }
+    
+    // Refresh ScrollTrigger
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+    
+    // Additional refresh for mobile
+    if (isMobile) {
+      setTimeout(() => {
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh(true);
+        }
+      }, 100);
+    }
+  }, delay);
+}
+
+// Make enhanced functions globally available
+window.forceRefreshScrollTriggerMobile = forceRefreshScrollTriggerMobile;
+window.ensureProperInitializationAfterContentChange = ensureProperInitializationAfterContentChange;
+window.ensureScriptsLoadedAfterTransition = ensureScriptsLoadedAfterTransition;
+
+// Enhanced window load handler to ensure everything is properly initialized
+window.addEventListener('load', () => {
+  const isMobile = window.innerWidth < 650;
+  const loadDelay = isMobile ? 100 : 50;
+  
+  console.log('Window loaded, ensuring proper initialization...');
+  
+  setTimeout(() => {
+    // Re-initialize SplitText animations
+    if (typeof initSplitTextAnimations === 'function') {
+      initSplitTextAnimations();
+    }
+    
+    // Refresh ScrollTrigger
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+    }
+    
+    // Additional refresh for mobile
+    if (isMobile) {
+      setTimeout(() => {
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh(true);
+        }
+      }, 100);
+    }
+  }, loadDelay);
+});
