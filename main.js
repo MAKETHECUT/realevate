@@ -107,6 +107,9 @@ async function startApp() {
       initGsapAnimations();
       initSplitTextAnimations();
       initDisplayToggle();
+      reloadFinsweetCMS();
+      initTypeListRadioHandler();
+      moveShowAllIntoCollectionList();
       
       if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
       if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
@@ -142,7 +145,6 @@ function initAllFunctions() {
          
             ScrollTrigger.refresh(true);
           initCustomSmoothScrolling();
-           initVWFontZoomSafeForGSAP();
    
         });
     }
@@ -577,6 +579,8 @@ function initPageTransitions() {
             initCustomSmoothScrolling();
             initSplitTextAnimations();
             initDisplayToggle();
+            reloadFinsweetCMS();
+            initTypeListRadioHandler();
         }, 100);
 
         // Complete the transition animation (outro)
@@ -2511,3 +2515,65 @@ function initDisplayToggle() {
       }
     }
   }
+
+
+
+
+function moveShowAllIntoCollectionList() {
+    const showAll = document.querySelector(".show-all");
+    const typeItem = document.querySelector(".collection-list-1");
+    const typeItemChildren = typeItem?.querySelectorAll("[role='listitem']");
+    const collectionList = document.querySelector(".type-item .w-dyn-items");
+  
+    if (collectionList) {
+      if (showAll) collectionList.prepend(showAll);
+      if (typeItemChildren && typeItemChildren.length) {
+        typeItemChildren.forEach(child => collectionList.appendChild(child));
+      }
+      if (typeItem) typeItem.remove();
+    }
+  }
+  
+  
+  
+  
+  
+  /* ==============================================
+  Reload FinSweet CMS Filter
+  ============================================== */
+  function reloadFinsweetCMS() {
+  
+      const oldScript = document.querySelector('script[src*="cmsfilter.js"]');
+      if (oldScript) {
+      oldScript.remove();
+      }
+      const newScript = document.createElement("script");
+      newScript.src = "https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js";
+      newScript.async = true;
+      newScript.onload = () => {};
+      document.body.appendChild(newScript);
+      
+    }
+  
+  // Function to handle radio button selection in .type-list
+  function initTypeListRadioHandler() {
+    // Listen for clicks on radio buttons in .type-list
+    document.addEventListener('click', (e) => {
+      const radioButton = e.target.closest('.type-list .w-radio input[type="radio"]');
+      if (radioButton) {
+        setTimeout(() => {
+  
+          
+          if (typeof initSplitTextAnimations === 'function') {
+            initSplitTextAnimations();
+          }
+          
+          // Refresh ScrollTrigger
+          if (typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.refresh(true);
+          }
+        }, 100);
+      }
+    });
+  }
+
