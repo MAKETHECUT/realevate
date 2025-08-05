@@ -1329,6 +1329,9 @@ function initGsapAnimations() {
     });
   });
 
+
+
+  
   // Left to right animations
   gsap.utils.toArray(".left-to-right").forEach((img, index) => {
     gsap.fromTo(img, 
@@ -1336,7 +1339,7 @@ function initGsapAnimations() {
       {
         clipPath: "inset(0 0% 0 0)",
         duration: 2.5,
-        delay: -0.7,
+        delay: -1,
         ease: "expo.inOut",
         scrollTrigger: {
           trigger: img,
@@ -1355,7 +1358,7 @@ function initGsapAnimations() {
       {
         clipPath: "inset(0 0 0 0%)",
         duration: 2.5,
-        delay: -0.7,
+        delay: -1,
         ease: "expo.inOut",
         scrollTrigger: {
           trigger: img,
@@ -1366,6 +1369,9 @@ function initGsapAnimations() {
       }
     );
   });
+
+
+ 
 
   // Icon animations
   gsap.utils.toArray(".content .icon").forEach((icon, index) => {
@@ -1494,7 +1500,7 @@ function initGsapAnimations() {
             
             // Animate the ::after pseudo-element from opacity 0 to 0.5
             gsap.set(container, {
-              '--after-opacity': progress * 0.2
+              '--after-opacity': progress * 0.4
             });
           },
           onEnter: () => {
