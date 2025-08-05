@@ -60,9 +60,14 @@ function loadScript(src) {
         initTypeListRadioHandler();
         initCustomSmoothScrolling();
         
-        // Refresh ScrollTrigger and initialize video
+        // Initialize video on homepage during loader
+        const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+        if (isHomepage) {
+          setTimeout(() => initHomeVideo(), 500); // Start loading during counter animation
+        }
+        
+        // Refresh ScrollTrigger
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
-        initHomeVideo();
       }, 400); // Reduced loader duration from 800ms to 400ms
   
     } catch (error) {
@@ -693,7 +698,9 @@ function cleanupAllPageAnimations() {
     window.navbarShowHide = null;
   }
   
+  // Reset initialization flags
   window.cursorInitialized = false;
+  window.videoInitialized = false;
 }
 
 function ensureProperScrollPosition() {
@@ -2411,12 +2418,26 @@ window.addEventListener('resize', () => {
 });
 
 
-function initHomeVideo() {
+function initHomeVideo(forceReinit = false) {
+    // Prevent double initialization unless forced
+    if (window.videoInitialized && !forceReinit) {
+        console.log('Video already initialized, skipping');
+        return;
+    }
+    
     try {
         const videoContainer = document.getElementById("video-container");
         if (!videoContainer) {
             console.log('Video container not found, skipping video initialization');
             return;
+        }
+
+        // Clear existing video if reinitializing
+        if (forceReinit) {
+            const existingVideo = videoContainer.querySelector('video');
+            if (existingVideo) {
+                existingVideo.remove();
+            }
         }
 
         const isMobile = window.innerWidth < 650;
@@ -2430,7 +2451,8 @@ function initHomeVideo() {
         video.muted = true;
         video.loop = true;
         video.playsInline = true;
-        video.preload = "auto"; // Load video immediately
+        video.preload = "none"; // Don't preload to avoid slowing down page load
+        video.style.opacity = "0"; // Start with 0 opacity for fade-in
 
         const source = document.createElement("source");
         source.src = videoSrc;
@@ -2440,6 +2462,30 @@ function initHomeVideo() {
         
         // Add video to container immediately
         videoContainer.appendChild(video);
+        
+        // Load video immediately
+        video.load();
+        
+        // Start playing and fade in when video is ready
+        video.addEventListener('canplay', () => {
+            video.play().catch(e => console.log('Video autoplay failed:', e));
+            
+            // Fade in the video over 0.2 seconds
+            if (typeof gsap !== 'undefined') {
+                gsap.to(video, {
+                    opacity: 1,
+                    duration: 0.2,
+                    ease: "power2.out"
+                });
+            } else {
+                // Fallback for when GSAP is not available
+                video.style.transition = "opacity 0.2s ease-out";
+                video.style.opacity = "1";
+            }
+        });
+        
+        // Mark as initialized
+        window.videoInitialized = true;
         
         console.log('Home video initialized successfully');
     } catch (error) {
@@ -3115,12 +3161,17 @@ function globalPageTransition(url, isPopState = false) {
         if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
         if (typeof initNavbarShowHide === 'function') initNavbarShowHide();
         
+        // Initialize video on homepage after page transition
+        const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+        if (isHomepage) {
+          setTimeout(() => initHomeVideo(true), 100); // Force reinit for page transitions
+        }
+        
         // Refresh ScrollTrigger
         if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh(true);
       }, 100);
 
-      // 9. Initialize video after animations
-      setTimeout(() => initHomeVideo(), 500);
+
 
       // 11. Complete transition
       const tl = gsap.timeline();
