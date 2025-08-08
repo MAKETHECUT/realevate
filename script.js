@@ -1469,8 +1469,6 @@ function refreshbreakingpoints() {
 
 
 
-
-
 function initInfinityGallery() {
   try {
     console.log('initInfinityGallery called');
@@ -1510,8 +1508,9 @@ function initInfinityGallery() {
       this.isFullscreenOpen = false; // Add this to track fullscreen state
       this.animationFrameId = null; // To hold the animation frame ID
       this.originalItemCount = this.items.length;
-      this.snapOnSettle = false;
-      this.snapAnimation = null;
+      // Remove all snapping logic for true infinite scroll
+      // this.snapOnSettle = false;
+      // this.snapAnimation = null;
 
       const isMobile = window.innerWidth < 650;
       const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
@@ -1799,10 +1798,13 @@ function initInfinityGallery() {
         const itemMarginRight = parseFloat(getComputedStyle(item).marginRight);
         this.totalWidth += itemWidth + itemMarginRight;
       });
-      const originalWidth = this.totalWidth / 3;
-      this.scrollX = originalWidth;
-      this.smoothScrollX = originalWidth;
-      this.container.style.transform = `translateX(${-this.scrollX}px)`;
+      
+      // Start at the beginning of the first item (cloned items)
+      this.scrollX = 0;
+      this.smoothScrollX = 0;
+      
+      // Use smoothScrollX for the initial transform to ensure smooth animation
+      this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
     }
 
     init() {
@@ -1873,11 +1875,12 @@ function initInfinityGallery() {
       if (event.touches.length > 1) return; // Ignore multi-touch
       if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       
-      this.snapOnSettle = false;
-      if (this.snapAnimation) {
-        this.snapAnimation.kill();
-        this.snapAnimation = null;
-      }
+      // Remove snapping logic for true infinite scroll
+      // this.snapOnSettle = false;
+      // if (this.snapAnimation) {
+      //   this.snapAnimation.kill();
+      //   this.snapAnimation = null;
+      // }
 
       this.touchStartX = event.touches[0].clientX;
       this.touchStartY = event.touches[0].clientY;
@@ -1905,17 +1908,19 @@ function initInfinityGallery() {
 
     handleTouchEnd() {
       this.dragDelta = 0;
-      this.snapOnSettle = true;
+      // Remove snapping logic for true infinite scroll
+      // this.snapOnSettle = true;
     }
 
     handleDragStart(e) {
       if (!this.scrollEnabled || this.isFullscreenOpen) return; // Prevent scrolling when fullscreen is open
       
-      this.snapOnSettle = false;
-      if (this.snapAnimation) {
-        this.snapAnimation.kill();
-        this.snapAnimation = null;
-      }
+      // Remove snapping logic for true infinite scroll
+      // this.snapOnSettle = false;
+      // if (this.snapAnimation) {
+      //   this.snapAnimation.kill();
+      //   this.snapAnimation = null;
+      // }
 
       this.isDragging = true;
       this.dragStartX = e.clientX;
@@ -1931,65 +1936,18 @@ function initInfinityGallery() {
 
     handleDragEnd() {
       this.isDragging = false;
-      this.snapOnSettle = true;
+      // Remove snapping logic for true infinite scroll
+      // this.snapOnSettle = true;
     }
 
     handleInfiniteScroll() {
-      const originalWidth = this.totalWidth / 3;
-      if (this.scrollX < 0) {
-        this.scrollX += originalWidth;
-        this.smoothScrollX += originalWidth;
-      } else if (this.scrollX > this.totalWidth - originalWidth) {
-        this.scrollX -= originalWidth;
-        this.smoothScrollX -= originalWidth;
-      }
+      // NEVER reset the scroll position - let it go infinitely
+      // The visual wrapping is handled by the cloned items
+      // No boundaries, no resets, just continuous scrolling
     }
 
-    snapToCenter() {
-      if (window.innerWidth >= 650 || this.isDragging || (this.isTouchDevice && this.dragDelta !== 0)) return;
-
-      const viewportCenter = window.innerWidth / 2;
-      let currentScrollCenter = this.smoothScrollX + viewportCenter;
-      
-      let closestItem = null;
-      let minDistance = Infinity;
-
-      // Adjust for infinite scroll wrapping
-      const originalWidth = this.totalWidth / 3;
-      currentScrollCenter = (currentScrollCenter % originalWidth) + originalWidth;
-      
-      const originalItems = this.items.slice(this.originalItemCount, this.originalItemCount * 2);
-
-      originalItems.forEach(item => {
-        const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-        const distance = Math.abs(currentScrollCenter - itemCenter);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestItem = item;
-        }
-      });
-
-      if (closestItem) {
-        const targetX = closestItem.offsetLeft + closestItem.offsetWidth / 2 - viewportCenter;
-        
-        let finalTargetX = targetX;
-        if(Math.abs(this.smoothScrollX - targetX) > originalWidth / 2) {
-            if(targetX < this.smoothScrollX) {
-                finalTargetX += originalWidth;
-            } else {
-                finalTargetX -= originalWidth;
-            }
-        }
-
-        if (this.snapAnimation) this.snapAnimation.kill();
-        this.snapAnimation = gsap.to(this, { 
-          scrollX: finalTargetX, 
-          duration: 0.2, 
-          ease: 'none',
-          onComplete: () => { this.snapAnimation = null; }
-        });
-      }
-    }
+    // snapToCenter() function removed for true infinite scroll
+    // This function was causing unwanted snapping behavior
 
     animate() {
       if (this.scrollEnabled && !this.isFullscreenOpen) {
@@ -1997,10 +1955,11 @@ function initInfinityGallery() {
         this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
         this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
 
-        if (this.snapOnSettle && !this.isDragging && Math.abs(this.scrollX - this.smoothScrollX) < 0.5) {
-            this.snapToCenter();
-            this.snapOnSettle = false;
-        }
+        // Remove snapping behavior for true infinite scroll
+        // if (this.snapOnSettle && !this.isDragging && Math.abs(this.scrollX - this.smoothScrollX) < 0.5) {
+        //     this.snapToCenter();
+        //     this.snapOnSettle = false;
+        // }
       }
       this.animationFrameId = requestAnimationFrame(() => this.animate());
       }
@@ -2077,9 +2036,9 @@ Script Loading Utility
 
 // Version control for scripts
 const SCRIPT_VERSIONS = {
-    'gsap': '3.12.5',
-    'scrolltrigger': '3.12.5',
-    'splittext': '3.12.5'
+  'gsap': '3.12.5',
+  'scrolltrigger': '3.12.5',
+  'splittext': '3.12.5'
 };
 
 // Cache control
@@ -2087,44 +2046,44 @@ const CACHE_BUSTER = `?v=${Date.now()}`;
 
 // Retry logic
 async function loadScriptWithRetry(src, options = {}, maxRetries = 3) {
-    let retries = 0;
-    
-    while (retries < maxRetries) {
-        try {
-            return await loadScript(src, options);
-        } catch (error) {
-            retries++;
-            if (retries === maxRetries) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * retries));
-        }
-    }
+  let retries = 0;
+  
+  while (retries < maxRetries) {
+      try {
+          return await loadScript(src, options);
+      } catch (error) {
+          retries++;
+          if (retries === maxRetries) throw error;
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+      }
+  }
 }
 
 function loadScriptsSequentially(scripts) {
-    return scripts.reduce((promiseChain, script) => {
-        return promiseChain.then(() => loadScriptWithRetry(script.src, script.options));
-    }, Promise.resolve());
+  return scripts.reduce((promiseChain, script) => {
+      return promiseChain.then(() => loadScriptWithRetry(script.src, script.options));
+  }, Promise.resolve());
 }
 
 // Lazy loading utility
 function lazyLoadScript(src, options = {}) {
-    return new Promise((resolve) => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    observer.disconnect();
-                    loadScriptWithRetry(src, options)
-                        .then(resolve)
-                        .catch(console.error);
-                }
-            });
-        });
+  return new Promise((resolve) => {
+      const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                  observer.disconnect();
+                  loadScriptWithRetry(src, options)
+                      .then(resolve)
+                      .catch(console.error);
+              }
+          });
+      });
 
-        const placeholder = document.createElement('div');
-        placeholder.dataset.lazyScript = src;
-        document.body.appendChild(placeholder);
-        observer.observe(placeholder);
-    });
+      const placeholder = document.createElement('div');
+      placeholder.dataset.lazyScript = src;
+      document.body.appendChild(placeholder);
+      observer.observe(placeholder);
+  });
 }
 
 
@@ -3027,15 +2986,56 @@ function debugSplitTextStatus() {
   };
 }
 
+// Function to handle filter changes on projects page
+function handleProjectsPageFilterChanges() {
+  // Wait for FinSweet filter to complete its filtering
+  setTimeout(() => {
+    // Refresh ScrollTrigger to recalculate positions based on new page height
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh(true);
+      console.log('ScrollTrigger refreshed after filter change');
+    }
+    
+    // Reinitialize SplitText animations for any new visible content
+    if (typeof SplitText !== 'undefined') {
+      initSplitTextAnimations();
+      console.log('SplitText animations reinitialized after filter change');
+    }
+    
+    // Force a reflow to ensure all calculations are accurate
+    document.documentElement.offsetHeight;
+    
+    // Additional refresh after a short delay to ensure everything is properly updated
+    setTimeout(() => {
+      if (typeof ScrollTrigger !== 'undefined') {
+        ScrollTrigger.refresh(true);
+      }
+    }, 200);
+  }, 150); // Wait 150ms for FinSweet filter to complete
+}
+
 window.handleProjectsPageFilterChanges = handleProjectsPageFilterChanges;
 
 window.debugSplitTextStatus = debugSplitTextStatus;
 
-// Simple global handler for radio button changes
+// Enhanced global handler for radio button changes
 document.addEventListener('click', (e) => {
   const radioButton = e.target.closest('.w-radio input[type="radio"]');
-  if (radioButton && typeof ScrollTrigger !== 'undefined') {
-    setTimeout(() => ScrollTrigger.refresh(true), 100);
+  if (radioButton) {
+    // Check if we're on the projects page
+    const isProjectsPage = window.location.pathname.includes('projects') || 
+                          window.location.pathname.includes('all-projects') ||
+                          document.querySelector('[fs-cmsfilter-element="filters"]');
+    
+    if (isProjectsPage) {
+      // Call the specific handler for projects page filter changes
+      handleProjectsPageFilterChanges();
+    } else {
+      // General ScrollTrigger refresh for other pages
+      if (typeof ScrollTrigger !== 'undefined') {
+        setTimeout(() => ScrollTrigger.refresh(true), 100);
+      }
+    }
   }
 });
 
@@ -3139,7 +3139,6 @@ function globalPageTransition(url, isPopState = false) {
         // Initialize all functions in order
         if (typeof initGsapAnimations === 'function') initGsapAnimations();
         if (typeof initSplitTextAnimations === 'function') initSplitTextAnimations();
-        if (typeof initInfinityGallery === 'function') initInfinityGallery();
         if (typeof initDisplayToggle === 'function') initDisplayToggle();
         if (typeof initTypeListRadioHandler === 'function') initTypeListRadioHandler();
         if (typeof initCustomSmoothScrolling === 'function') initCustomSmoothScrolling();
@@ -3196,6 +3195,21 @@ function globalPageTransition(url, isPopState = false) {
           if (typeof initNavbarShowHide === 'function' && !window.navbarShowHide) {
             window.navbarShowHide = initNavbarShowHide();
           }
+          
+          // Initialize infinity gallery after page transition completes
+          // This ensures DOM is ready and transition is finished
+          setTimeout(() => {
+            if (typeof initInfinityGallery === 'function') {
+              // Only initialize on pages that have the slider wrapper
+              const sliderWrapper = document.querySelector(".slider-wrapper");
+              if (sliderWrapper && sliderWrapper.children.length > 0) {
+                console.log('Initializing infinity gallery after page transition');
+                initInfinityGallery();
+              } else {
+                console.log('No slider wrapper found - skipping infinity gallery initialization');
+              }
+            }
+          }, 200);
           
 
 
