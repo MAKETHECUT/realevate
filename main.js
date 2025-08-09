@@ -731,7 +731,12 @@ setTimeout(() => {
 function initSplitTextAnimations(scope = document) {
 if (typeof SplitText === 'undefined') return;
 
-const elements = scope.querySelectorAll("h1, h2, h3, h4, h5, h6, p");
+// Check if screen width is under 650px
+const isMobile = window.innerWidth < 650;
+
+// If mobile, only select h1 elements, otherwise select all text elements
+const selector = isMobile ? "h1" : "h1, h2, h3, h4, h5, h6, p";
+const elements = scope.querySelectorAll(selector);
 
 elements.forEach((element) => {
   if (element.querySelector('.line') || !element.textContent.trim() || element._splitTextInstance) return;
@@ -2539,10 +2544,27 @@ document.addEventListener('DOMContentLoaded', () => {
   initMegaMenu();
 });
 
+// Track width for split text mobile threshold detection
+let lastWidth = window.innerWidth;
+
 window.addEventListener('resize', () => {
   if (megaMenuState && typeof megaMenuState.refresh === 'function') {
       megaMenuState.refresh('Home');
   }
+  
+  // Handle split text mobile threshold changes
+  const currentWidth = window.innerWidth;
+  const wasMobile = lastWidth < 650;
+  const isMobile = currentWidth < 650;
+  
+  if (wasMobile !== isMobile) {
+    // Reinitialize split text animations when crossing mobile threshold
+    if (typeof forceRefreshSplitTextAnimations === 'function') {
+      forceRefreshSplitTextAnimations();
+    }
+  }
+  
+  lastWidth = currentWidth;
 });
 
 
@@ -3227,6 +3249,7 @@ if (radioButton) {
 /*
 // Global resize handler for all GSAP functions
 let resizeTimeout;
+
 window.addEventListener('resize', () => {
 clearTimeout(resizeTimeout);
 resizeTimeout = setTimeout(() => {
