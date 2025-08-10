@@ -2070,7 +2070,7 @@ video {
   align-items: start;
   grid-gap:1vw;
   font-size: 1.2vw;
-  flex-direction: column-reverse;
+  flex-direction: column;
   color:var(--medgrey);
 }
 
@@ -3053,4 +3053,24 @@ Display Toggle and Gallery View Styles
     padding: 1vw 2vw;
     font-size: 3vw;
   }
+}
+
+@media (max-width:650px) {
+  .mobile-thin-h1 {
+    width: 90%;
+    margin:auto;
+    margin-top: 15vw;
+    margin-bottom:7vw;
+  }
+  .projects .text-margin-bottom {
+  	margin-top: 25vw;
+  }
+}
+
+.header .menu, .menu { 
+	direction: rtl;
+	justify-content: start;
+}
+.wg-switcher-watermark {
+	display:none!important;
 }
