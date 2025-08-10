@@ -585,7 +585,9 @@ function initPageTransitions() {
   async function handleNavigation(url, isPopState = false) {
       // Store current scroll position but don't lock it immediately
       const currentScrollY = window.scrollY;
+
       
+      /*
       // Only lock scroll if we're not already transitioning
       if (!window.transitioning) {
           document.body.style.position = 'fixed';
@@ -593,6 +595,11 @@ function initPageTransitions() {
           document.body.style.width = '100%';
           document.body.style.overflow = 'hidden';
       }
+      
+
+      */
+
+
       
       globalPageTransition(url, isPopState);
   }
@@ -3314,6 +3321,8 @@ Promise.all([transitionPromise, fetchPromise])
 
     document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
     container.innerHTML = nextPage.nextWrapper.innerHTML;
+
+    
 
     // 6. Force scroll to top and reset body styles
     window.scrollTo(0, 0);
