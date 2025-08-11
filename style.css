@@ -28,10 +28,50 @@
 }
 
 
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: var(--darkgrey);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #fff;
+  font-size: 5vw;
+  font-family: var(--secondary);
+  transition: opacity 0.7s cubic-bezier(.77,0,.18,1);
+}
+
+.loading-line {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #fff;
+  z-index: 10000;
+}
+
+
 html,
 body {
   background: var(--darkgrey);
   visibility: hidden;
+}
+
+
+body {
+	opacity: 0;
+	visibility: hidden;
+	animation: fadeIn 0.3s ease forwards 0.3s;
+}
+
+@keyframes fadeIn {
+	to {
+		opacity: 1;
+		visibility: visible;
+	}
 }
 
 
