@@ -3016,48 +3016,6 @@ Display Toggle and Gallery View Styles
 }
 
 
-/* Fallback Language Switcher Styles */
-.weglot-language-switcher.fallback {
-  background: transparent;
-  width: unset;
-  display: inline-flex;
-  gap: 1vw;
-  margin-left: 2vw;
-}
-
-.weglot-language-switcher.fallback .wg-drop-list-item {
-  cursor: pointer;
-  padding: 0.5vw 1vw;
-  border-radius: 2px;
-  transition: all 0.3s ease;
-  color: var(--darkgrey);
-  font-size: 1.2vw;
-  font-weight: 400;
-}
-
-.weglot-language-switcher.fallback .wg-drop-list-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: var(--darkgrey);
-}
-
-.weglot-language-switcher.fallback .wg-drop-list-item.active {
-  background-color: var(--darkgrey);
-  color: white;
-}
-
-/* Mobile responsive for fallback switcher */
-@media (max-width: 650px) {
-  .weglot-language-switcher.fallback {
-    margin-left: 4vw;
-    gap: 2vw;
-  }
-  
-  .weglot-language-switcher.fallback .wg-drop-list-item {
-    padding: 1vw 2vw;
-    font-size: 3vw;
-  }
-}
-
 @media (max-width:650px) {
   .mobile-thin-h1 {
     width: 90%;
