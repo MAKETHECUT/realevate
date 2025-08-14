@@ -89,34 +89,7 @@ function loadScript(src) {
   document.addEventListener("DOMContentLoaded", startApp);
   // --- END DYNAMIC LOADER ---
   
-  // ✅ Wrapper around page transitions to exclude /contact-us
-  document.addEventListener("DOMContentLoaded", () => {
-    const currentPath = window.location.pathname;
-    if (currentPath !== "/contact-us") {
-      initPageTransitions();
-    }
-  });
-
-  // ✅ Override navigation for contact page link
-  document.body.addEventListener('click', (e) => {
-    const link = e.target.closest('a[href]');
-    if (!link) return;
-
-    const href = link.getAttribute('href');
-    if (
-      href.includes("/contact-us") &&
-      !href.startsWith('mailto:') &&
-      !href.startsWith('tel:') &&
-      !href.startsWith('#') &&
-      (href.startsWith("/") || href.includes(location.hostname))
-    ) {
-      e.preventDefault();
-      window.location.href = href; // 🔁 Force full reload
-      return;
-    }
-  });
-
-  // ✅ Reinitialize Webflow on page load
+  // ✅ Reinitialize Webflow on page load to fix form issues
   window.addEventListener("load", () => {
     if (typeof Webflow !== 'undefined') {
       Webflow.destroy();
@@ -128,6 +101,29 @@ function loadScript(src) {
           console.warn("Webflow ix2 not available.");
         }
       }
+    }
+    
+    // Special handling for contact page forms
+    const isContactPage = window.location.pathname.includes('/contact') || 
+                         window.location.pathname.includes('/contact-us') ||
+                         document.querySelector('#full-contact-form');
+    
+    if (isContactPage) {
+      console.log('Contact page detected - ensuring forms are properly initialized');
+      // Force reinitialize forms on contact page
+      setTimeout(() => {
+        if (typeof Webflow !== 'undefined') {
+          Webflow.destroy();
+          Webflow.ready();
+          if (Webflow.require) {
+            try {
+              Webflow.require('ix2').init();
+            } catch (err) {
+              console.warn("Webflow ix2 not available on contact page.");
+            }
+          }
+        }
+      }, 500);
     }
   });
   
@@ -633,12 +629,6 @@ function loadScript(src) {
     }
   
     async function handleNavigation(url, isPopState = false) {
-        // Skip navigation handling for contact page
-        if (url.includes("/contact-us")) {
-            window.location.href = url;
-            return;
-        }
-        
         // Store current scroll position but don't lock it immediately
         const currentScrollY = window.scrollY;
   
@@ -670,8 +660,7 @@ function loadScript(src) {
             href.startsWith('mailto:') ||
             href.startsWith('tel:') ||
             href.startsWith('#') ||
-            (href.startsWith('http') && !href.includes(location.hostname)) ||
-            href.includes("/contact-us") // Exclude contact page links
+            (href.startsWith('http') && !href.includes(location.hostname))
         ) return;
 
         e.preventDefault();
@@ -3432,12 +3421,6 @@ function openMenu() {
   
   // Global unified page transition system
   function globalPageTransition(url, isPopState = false) {
-  // Skip page transitions for contact page
-  if (url.includes("/contact-us")) {
-    window.location.href = url;
-    return;
-  }
-  
   if (window.transitioning) {
     window.pendingNavigation = { url, isPopState };
     return;
@@ -3519,6 +3502,28 @@ function openMenu() {
       moveShowAllIntoCollectionList();
       reloadFinsweetCMS();
       
+      // Special handling for forms after page transition
+      const isContactPageAfterTransition = nextPage.doc.querySelector('#full-contact-form') || 
+                                         nextPage.doc.querySelector('.contact-form');
+      
+      if (isContactPageAfterTransition) {
+        console.log('Contact page detected after transition - ensuring forms are properly initialized');
+        // Force reinitialize forms after page transition
+        setTimeout(() => {
+          if (typeof Webflow !== 'undefined') {
+            Webflow.destroy();
+            Webflow.ready();
+            if (Webflow.require) {
+              try {
+                Webflow.require('ix2').init();
+              } catch (err) {
+                console.warn("Webflow ix2 not available after page transition.");
+              }
+            }
+          }
+        }, 300);
+      }
+      
       // Simple single initialization
       setTimeout(() => {
         // Initialize all functions in order
@@ -3592,6 +3597,20 @@ function openMenu() {
                 initInfinityGallery();
               } else {
                 console.log('No slider wrapper found - skipping infinity gallery initialization');
+              }
+            }
+            
+            // Reinitialize Webflow forms after page transition to fix 405 errors
+            if (typeof Webflow !== 'undefined') {
+              console.log('Reinitializing Webflow forms after page transition');
+              Webflow.destroy();
+              Webflow.ready();
+              if (Webflow.require) {
+                try {
+                  Webflow.require('ix2').init();
+                } catch (err) {
+                  console.warn("Webflow ix2 not available.");
+                }
               }
             }
           }, 200);
