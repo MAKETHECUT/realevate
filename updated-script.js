@@ -89,42 +89,40 @@ function loadScript(src) {
   document.addEventListener("DOMContentLoaded", startApp);
   // --- END DYNAMIC LOADER ---
   
-  // ✅ Reinitialize Webflow on page load to fix form issues
+  // ✅ Gentle Webflow reinitialization to fix form issues
   window.addEventListener("load", () => {
-    if (typeof Webflow !== 'undefined') {
-      Webflow.destroy();
-      Webflow.ready();
-      if (Webflow.require) {
-        try {
-          Webflow.require('ix2').init();
-        } catch (err) {
-          console.warn("Webflow ix2 not available.");
-        }
-      }
-    }
-    
-    // Special handling for contact page forms
-    const isContactPage = window.location.pathname.includes('/contact') || 
-                         window.location.pathname.includes('/contact-us') ||
-                         document.querySelector('#full-contact-form');
-    
-    if (isContactPage) {
-      console.log('Contact page detected - ensuring forms are properly initialized');
-      // Force reinitialize forms on contact page
-      setTimeout(() => {
-        if (typeof Webflow !== 'undefined') {
-          Webflow.destroy();
-          Webflow.ready();
-          if (Webflow.require) {
+          // Special handling for contact page forms
+      const isContactPage = window.location.pathname.includes('/contact') || 
+                           window.location.pathname.includes('/contact-us') ||
+                           document.querySelector('#full-contact-form');
+      
+      if (isContactPage) {
+        console.log('Contact page detected - ensuring forms are properly initialized');
+        // Gentle reinitialize forms on contact page
+        setTimeout(() => {
+          if (typeof Webflow !== 'undefined' && Webflow.require) {
             try {
+              // Only reinitialize ix2, don't destroy everything
               Webflow.require('ix2').init();
+              console.log('Webflow ix2 reinitialized on contact page');
             } catch (err) {
               console.warn("Webflow ix2 not available on contact page.");
             }
           }
-        }
-      }, 500);
-    }
+          
+          // Ensure form submit buttons work
+          const forms = document.querySelectorAll('form');
+          forms.forEach(form => {
+            const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+            if (submitBtn) {
+              // Remove any existing event listeners
+              const newSubmitBtn = submitBtn.cloneNode(true);
+              submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+              console.log('Form submit button refreshed');
+            }
+          });
+        }, 1000);
+      }
   });
   
   window.history.scrollRestoration = "manual";
@@ -3508,20 +3506,32 @@ function openMenu() {
       
       if (isContactPageAfterTransition) {
         console.log('Contact page detected after transition - ensuring forms are properly initialized');
-        // Force reinitialize forms after page transition
+        // Gentle reinitialize forms after page transition
         setTimeout(() => {
-          if (typeof Webflow !== 'undefined') {
-            Webflow.destroy();
-            Webflow.ready();
-            if (Webflow.require) {
-              try {
-                Webflow.require('ix2').init();
-              } catch (err) {
-                console.warn("Webflow ix2 not available after page transition.");
-              }
+          if (typeof Webflow !== 'undefined' && Webflow.require) {
+            try {
+              // Only reinitialize ix2, don't destroy everything
+              Webflow.require('ix2').init();
+              console.log('Webflow ix2 reinitialized after page transition');
+            } catch (err) {
+              console.warn("Webflow ix2 not available after page transition.");
             }
           }
-        }, 300);
+          
+          // Ensure form submit buttons work after page transition
+          setTimeout(() => {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+              const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+              if (submitBtn) {
+                // Remove any existing event listeners
+                const newSubmitBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+                console.log('Form submit button refreshed after page transition');
+              }
+            });
+          }, 200);
+        }, 500);
       }
       
       // Simple single initialization
@@ -3600,19 +3610,31 @@ function openMenu() {
               }
             }
             
-            // Reinitialize Webflow forms after page transition to fix 405 errors
-            if (typeof Webflow !== 'undefined') {
+            // Gentle reinitialize Webflow forms after page transition to fix 405 errors
+            if (typeof Webflow !== 'undefined' && Webflow.require) {
               console.log('Reinitializing Webflow forms after page transition');
-              Webflow.destroy();
-              Webflow.ready();
-              if (Webflow.require) {
-                try {
-                  Webflow.require('ix2').init();
-                } catch (err) {
-                  console.warn("Webflow ix2 not available.");
-                }
+              try {
+                // Only reinitialize ix2, don't destroy everything
+                Webflow.require('ix2').init();
+                console.log('Webflow ix2 reinitialized after page transition completion');
+              } catch (err) {
+                console.warn("Webflow ix2 not available after page transition completion.");
               }
             }
+            
+            // Ensure form submit buttons work after page transition completion
+            setTimeout(() => {
+              const forms = document.querySelectorAll('form');
+              forms.forEach(form => {
+                const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+                if (submitBtn) {
+                  // Remove any existing event listeners
+                  const newSubmitBtn = submitBtn.cloneNode(true);
+                  submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+                  console.log('Form submit button refreshed after page transition completion');
+                }
+              });
+            }, 300);
           }, 200);
           
   
