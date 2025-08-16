@@ -3425,13 +3425,17 @@ function reinitializeWebflowForms() {
 // Reset & reinitialize all core Webflow components (use after AJAX/page-fetch swap)
 function resetWebflowAll() {
   try { window.Webflow && Webflow.destroy && Webflow.destroy(); } catch(_) {}
-  try { window.Webflow && Webflow.ready && Webflow.ready(); } catch(_) {}
   
-  // Re-initialize forms module specifically
-  try {
-    if (window.Webflow && Webflow.require) {
-      const formsModule = Webflow.require('forms');
-      if (formsModule && formsModule.init) formsModule.init();
-    }
-  } catch (_) {}
+  // Wait a bit then reinitialize Webflow
+  setTimeout(() => {
+    try { window.Webflow && Webflow.ready && Webflow.ready(); } catch(_) {}
+    
+    // Re-initialize forms module specifically
+    try {
+      if (window.Webflow && Webflow.require) {
+        const formsModule = Webflow.require('forms');
+        if (formsModule && formsModule.init) formsModule.init();
+      }
+    } catch (_) {}
+  }, 100);
 }
