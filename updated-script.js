@@ -71,7 +71,8 @@ document.addEventListener("DOMContentLoaded", startApp);
     'initHomeVideo',
     'moveShowAllIntoCollectionList',
     'reloadFinsweetCMS',
-    'handleProjectsPageFilterChanges'
+    'handleProjectsPageFilterChanges',
+    'reinitializeWebflowForms'
   ];
 
 // פונקציה לאתחול כל הפונקציות
@@ -3217,7 +3218,7 @@ const transitionPromise = new Promise((resolve) => {
 
 
 // 3. Fetch new page content
-const fetchPromise = fetch(url)
+const fetchPromise = fetch(url, { credentials: 'include' })
   .then(response => {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.text();
@@ -3237,18 +3238,61 @@ Promise.all([transitionPromise, fetchPromise])
     const container = document.querySelector('.page-wrapper');
     if (!container) return;
 
-    document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
+    // Update <title>
+    const newTitle = nextPage.doc.querySelector('title');
+    if (newTitle) document.title = newTitle.textContent;
+
+    // Update html[data-wf-page] (prevents Webflow form 405 on AJAX loads)
+    const wfPage = nextPage.doc.documentElement.getAttribute('data-wf-page');
+    if (wfPage) document.documentElement.setAttribute('data-wf-page', wfPage);
+
+    // Swap main container content
     container.innerHTML = nextPage.nextWrapper.innerHTML;
 
-    // Fix form submission - set correct action and method
-    document.querySelectorAll('form[data-wf-element-id]').forEach(form => {
-      form.action = 'https://webflow.com/api/v1/form/683625562ee8a0f6224dc849';
-      form.method = 'POST';
-      form.enctype = 'multipart/form-data';
-      form.setAttribute('data-wf-page-id', '683625562ee8a0f6224dc849');
+    // Execute any inline scripts that came with the new content
+    const scripts = container.querySelectorAll('script');
+    scripts.forEach(old => {
+      const s = document.createElement('script');
+      for (const a of old.attributes) s.setAttribute(a.name, a.value);
+      s.textContent = old.textContent;
+      old.replaceWith(s);
     });
 
-    initializeAllFunctions();
+    // Re-initialize Webflow
+    if (window.Webflow) {
+      try { window.Webflow.destroy(); } catch(_) {}
+      requestAnimationFrame(() => {
+        try { window.Webflow.ready(); } catch(_) {}
+        try { window.Webflow.require && window.Webflow.require('ix2').init(); } catch(_) {}
+        
+        // Re-initialize forms specifically
+        setTimeout(() => {
+          // Re-initialize all Webflow forms
+          const forms = document.querySelectorAll('form[data-wf-page-id]');
+          forms.forEach(form => {
+            // Remove any existing event listeners
+            const submitBtn = form.querySelector('input[type="submit"], button[type="submit"]');
+            if (submitBtn) {
+              // Clone and replace the submit button to remove old listeners
+              const newSubmitBtn = submitBtn.cloneNode(true);
+              submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+            }
+          });
+          
+          // Force Webflow to re-initialize forms
+          if (window.Webflow && window.Webflow.ready) {
+            window.Webflow.ready();
+          }
+        }, 200);
+      });
+    }
+
+    // Re-initialize all functions
+    setTimeout(() => {
+      if (typeof initializeAllFunctions === 'function') {
+        initializeAllFunctions();
+      }
+    }, 300);
 
     // 6. Force scroll to top and reset body styles
     window.scrollTo(0, 0);
@@ -3360,4 +3404,58 @@ console.warn = function(...args) {
 };
 }
 // --- END GLOBAL CONSOLE WARNING SUPPRESSION ---
+
+
+
+// ===== WEBFLOW FORMS REINITIALIZATION =====
+function reinitializeWebflowForms() {
+  // Wait a bit for DOM to be ready
+  setTimeout(() => {
+    // Find all Webflow forms
+    const forms = document.querySelectorAll('form[data-wf-page-id]');
+    
+    forms.forEach(form => {
+      // Reset form state
+      form.reset();
+      
+      // Re-enable submit buttons
+      const submitButtons = form.querySelectorAll('input[type="submit"], button[type="submit"]');
+      submitButtons.forEach(btn => {
+        btn.disabled = false;
+        btn.removeAttribute('data-wait');
+        btn.value = btn.getAttribute('data-original-value') || btn.value;
+      });
+      
+      // Clear any error messages
+      const errorMessages = form.querySelectorAll('.w-form-fail, .error-message');
+      errorMessages.forEach(msg => {
+        msg.style.display = 'none';
+      });
+      
+      // Clear success messages
+      const successMessages = form.querySelectorAll('.w-form-done, .success-message');
+      successMessages.forEach(msg => {
+        msg.style.display = 'none';
+      });
+      
+      // Re-enable all input fields
+      const inputs = form.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        input.disabled = false;
+        input.removeAttribute('readonly');
+      });
+    });
+    
+    // Force Webflow to re-initialize
+    if (window.Webflow && window.Webflow.ready) {
+      window.Webflow.ready();
+    }
+    
+    console.log('Webflow forms reinitialized');
+  }, 100);
+}
+
+// --- END WEBFLOW FORMS REINITIALIZATION ---
+
+// --- END VANILLA PAGE FETCHING ---
 
