@@ -3246,6 +3246,12 @@ Promise.all([transitionPromise, fetchPromise])
     const wfPage = nextPage.doc.documentElement.getAttribute('data-wf-page');
     if (wfPage) document.documentElement.setAttribute('data-wf-page', wfPage);
 
+    // Clear any existing error/success messages before swapping content
+    const existingErrors = document.querySelectorAll('.w-form-fail, .error-message, .w-form-done, .success-message');
+    existingErrors.forEach(msg => {
+      msg.style.display = 'none';
+    });
+
     // Swap main container content
     container.innerHTML = nextPage.nextWrapper.innerHTML;
 
@@ -3292,6 +3298,29 @@ Promise.all([transitionPromise, fetchPromise])
       if (typeof initializeAllFunctions === 'function') {
         initializeAllFunctions();
       }
+      
+      // Additional form cleanup after functions are initialized
+      setTimeout(() => {
+        // Reset all forms to clean state
+        const allForms = document.querySelectorAll('form');
+        allForms.forEach(form => {
+          // Reset form data
+          form.reset();
+          
+          // Clear any remaining error/success messages
+          const formErrors = form.querySelectorAll('.w-form-fail, .error-message, .w-form-done, .success-message');
+          formErrors.forEach(msg => {
+            msg.style.display = 'none';
+          });
+          
+          // Re-enable submit buttons
+          const submitButtons = form.querySelectorAll('input[type="submit"], button[type="submit"]');
+          submitButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.removeAttribute('data-wait');
+          });
+        });
+      }, 100);
     }, 300);
 
     // 6. Force scroll to top and reset body styles
@@ -3415,8 +3444,18 @@ function reinitializeWebflowForms() {
     const forms = document.querySelectorAll('form[data-wf-page-id]');
     
     forms.forEach(form => {
-      // Reset form state
+      // Reset form state completely
       form.reset();
+      
+      // Clear all form data and validation states
+      const inputs = form.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        input.disabled = false;
+        input.removeAttribute('readonly');
+        input.classList.remove('w-form-done', 'w-form-fail');
+        input.style.borderColor = '';
+        input.style.backgroundColor = '';
+      });
       
       // Re-enable submit buttons
       const submitButtons = form.querySelectorAll('input[type="submit"], button[type="submit"]');
@@ -3424,26 +3463,29 @@ function reinitializeWebflowForms() {
         btn.disabled = false;
         btn.removeAttribute('data-wait');
         btn.value = btn.getAttribute('data-original-value') || btn.value;
+        btn.classList.remove('w-form-done', 'w-form-fail');
       });
       
-      // Clear any error messages
-      const errorMessages = form.querySelectorAll('.w-form-fail, .error-message');
+      // Clear any error messages and hide them completely
+      const errorMessages = form.querySelectorAll('.w-form-fail, .error-message, .error-msg');
       errorMessages.forEach(msg => {
         msg.style.display = 'none';
+        msg.style.visibility = 'hidden';
+        msg.style.opacity = '0';
+        msg.innerHTML = '';
       });
       
-      // Clear success messages
+      // Clear success messages and hide them completely
       const successMessages = form.querySelectorAll('.w-form-done, .success-message');
       successMessages.forEach(msg => {
         msg.style.display = 'none';
+        msg.style.visibility = 'hidden';
+        msg.style.opacity = '0';
+        msg.innerHTML = '';
       });
       
-      // Re-enable all input fields
-      const inputs = form.querySelectorAll('input, textarea, select');
-      inputs.forEach(input => {
-        input.disabled = false;
-        input.removeAttribute('readonly');
-      });
+      // Remove any validation classes from the form itself
+      form.classList.remove('w-form-done', 'w-form-fail');
     });
     
     // Force Webflow to re-initialize
@@ -3451,7 +3493,7 @@ function reinitializeWebflowForms() {
       window.Webflow.ready();
     }
     
-    console.log('Webflow forms reinitialized');
+    console.log('Webflow forms reinitialized and cleaned');
   }, 100);
 }
 
