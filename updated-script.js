@@ -3523,16 +3523,61 @@ function setupFormSubmissionHandler() {
         msg.innerHTML = '';
       });
       
-      // Show success message only for this specific form
-      setTimeout(() => {
-        const successMessages = formContainer.querySelectorAll('.w-form-done, .success-message');
-        successMessages.forEach(msg => {
-          msg.style.display = 'block';
-          msg.style.visibility = 'visible';
-          msg.style.opacity = '1';
-          msg.innerHTML = '<div>הטופס נשלח בהצלחה! תודה על פנייתכם.</div>';
+      // Show loading state
+      const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+      if (submitButton) {
+        const originalValue = submitButton.value;
+        submitButton.value = 'שולח...';
+        submitButton.disabled = true;
+      }
+      
+      // Let the form submit normally and monitor for success
+      // We'll use MutationObserver to watch for Webflow's success state
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const target = mutation.target;
+            
+            // Check if form submission was successful
+            if (target.classList.contains('w-form-done')) {
+              // Form submitted successfully - redirect to thank-you page
+              setTimeout(() => {
+                window.location.href = '/thank-you';
+              }, 1000);
+              
+              // Stop observing
+              observer.disconnect();
+            }
+            
+            // Check if form submission failed
+            if (target.classList.contains('w-form-fail')) {
+              // Form submission failed - reset button
+              if (submitButton) {
+                submitButton.value = originalValue;
+                submitButton.disabled = false;
+              }
+              
+              // Stop observing
+              observer.disconnect();
+            }
+          }
         });
-      }, 1000);
+      });
+      
+      // Start observing the form for class changes
+      observer.observe(form, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+      
+      // Fallback: if no response after 10 seconds, reset button
+      setTimeout(() => {
+        if (submitButton) {
+          submitButton.value = originalValue;
+          submitButton.disabled = false;
+        }
+        observer.disconnect();
+      }, 10000);
     }
   });
 }
