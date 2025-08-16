@@ -72,8 +72,7 @@ document.addEventListener("DOMContentLoaded", startApp);
     'moveShowAllIntoCollectionList',
     'reloadFinsweetCMS',
     'handleProjectsPageFilterChanges',
-    'reinitializeWebflowForms',
-    'setupFormSubmissionHandler'
+    'reinitializeWebflowForms'
   ];
 
 // פונקציה לאתחול כל הפונקציות
@@ -3502,87 +3501,4 @@ function reinitializeWebflowForms() {
     console.log('Webflow forms reinitialized and cleaned');
   }, 100);
 }
-
-// ===== FORM SUBMISSION HANDLER =====
-function setupFormSubmissionHandler() {
-  // Listen for form submissions
-  document.addEventListener('submit', function(e) {
-    if (e.target.matches('form[data-wf-page-id]')) {
-      const form = e.target;
-      
-      // Find the specific form container
-      const formContainer = form.closest('.w-form');
-      if (!formContainer) return;
-      
-      // Hide error messages only for this specific form
-      const errorMessages = formContainer.querySelectorAll('.w-form-fail, .error-message, .error-msg, .text-block');
-      errorMessages.forEach(msg => {
-        msg.style.display = 'none';
-        msg.style.visibility = 'hidden';
-        msg.style.opacity = '0';
-        msg.innerHTML = '';
-      });
-      
-      // Show loading state
-      const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
-      if (submitButton) {
-        const originalValue = submitButton.value;
-        submitButton.value = 'שולח...';
-        submitButton.disabled = true;
-      }
-      
-      // Let the form submit normally and monitor for success
-      // We'll use MutationObserver to watch for Webflow's success state
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-            const target = mutation.target;
-            
-            // Check if form submission was successful
-            if (target.classList.contains('w-form-done')) {
-              // Form submitted successfully - redirect to thank-you page
-              setTimeout(() => {
-                window.location.href = '/thank-you';
-              }, 1000);
-              
-              // Stop observing
-              observer.disconnect();
-            }
-            
-            // Check if form submission failed
-            if (target.classList.contains('w-form-fail')) {
-              // Form submission failed - reset button
-              if (submitButton) {
-                submitButton.value = originalValue;
-                submitButton.disabled = false;
-              }
-              
-              // Stop observing
-              observer.disconnect();
-            }
-          }
-        });
-      });
-      
-      // Start observing the form for class changes
-      observer.observe(form, {
-        attributes: true,
-        attributeFilter: ['class']
-      });
-      
-      // Fallback: if no response after 10 seconds, reset button
-      setTimeout(() => {
-        if (submitButton) {
-          submitButton.value = originalValue;
-          submitButton.disabled = false;
-        }
-        observer.disconnect();
-      }, 10000);
-    }
-  });
-}
-
-// --- END WEBFLOW FORMS REINITIALIZATION ---
-
-// --- END VANILLA PAGE FETCHING ---
 
