@@ -72,7 +72,8 @@ document.addEventListener("DOMContentLoaded", startApp);
     'moveShowAllIntoCollectionList',
     'reloadFinsweetCMS',
     'handleProjectsPageFilterChanges',
-    'reinitializeWebflowForms'
+    'reinitializeWebflowForms',
+    'setupFormSubmissionHandler'
   ];
 
 // פונקציה לאתחול כל הפונקציות
@@ -3247,9 +3248,11 @@ Promise.all([transitionPromise, fetchPromise])
     if (wfPage) document.documentElement.setAttribute('data-wf-page', wfPage);
 
     // Clear any existing error/success messages before swapping content
-    const existingErrors = document.querySelectorAll('.w-form-fail, .error-message, .w-form-done, .success-message');
+    const existingErrors = document.querySelectorAll('.w-form-fail, .error-message, .w-form-done, .success-message, .error-msg, .text-block');
     existingErrors.forEach(msg => {
       msg.style.display = 'none';
+      msg.style.visibility = 'hidden';
+      msg.style.opacity = '0';
     });
 
     // Swap main container content
@@ -3307,11 +3310,14 @@ Promise.all([transitionPromise, fetchPromise])
           // Reset form data
           form.reset();
           
-          // Clear any remaining error/success messages
-          const formErrors = form.querySelectorAll('.w-form-fail, .error-message, .w-form-done, .success-message');
-          formErrors.forEach(msg => {
-            msg.style.display = 'none';
-          });
+                // Clear any remaining error/success messages
+      const formErrors = form.querySelectorAll('.w-form-fail, .error-message, .w-form-done, .success-message, .error-msg, .text-block');
+      formErrors.forEach(msg => {
+        msg.style.display = 'none';
+        msg.style.visibility = 'hidden';
+        msg.style.opacity = '0';
+        msg.innerHTML = '';
+      });
           
           // Re-enable submit buttons
           const submitButtons = form.querySelectorAll('input[type="submit"], button[type="submit"]');
@@ -3467,7 +3473,7 @@ function reinitializeWebflowForms() {
       });
       
       // Clear any error messages and hide them completely
-      const errorMessages = form.querySelectorAll('.w-form-fail, .error-message, .error-msg');
+      const errorMessages = form.querySelectorAll('.w-form-fail, .error-message, .error-msg, .text-block');
       errorMessages.forEach(msg => {
         msg.style.display = 'none';
         msg.style.visibility = 'hidden';
@@ -3495,6 +3501,40 @@ function reinitializeWebflowForms() {
     
     console.log('Webflow forms reinitialized and cleaned');
   }, 100);
+}
+
+// ===== FORM SUBMISSION HANDLER =====
+function setupFormSubmissionHandler() {
+  // Listen for form submissions
+  document.addEventListener('submit', function(e) {
+    if (e.target.matches('form[data-wf-page-id]')) {
+      const form = e.target;
+      
+      // Find the specific form container
+      const formContainer = form.closest('.w-form');
+      if (!formContainer) return;
+      
+      // Hide error messages only for this specific form
+      const errorMessages = formContainer.querySelectorAll('.w-form-fail, .error-message, .error-msg, .text-block');
+      errorMessages.forEach(msg => {
+        msg.style.display = 'none';
+        msg.style.visibility = 'hidden';
+        msg.style.opacity = '0';
+        msg.innerHTML = '';
+      });
+      
+      // Show success message only for this specific form
+      setTimeout(() => {
+        const successMessages = formContainer.querySelectorAll('.w-form-done, .success-message');
+        successMessages.forEach(msg => {
+          msg.style.display = 'block';
+          msg.style.visibility = 'visible';
+          msg.style.opacity = '1';
+          msg.innerHTML = '<div>הטופס נשלח בהצלחה! תודה על פנייתכם.</div>';
+        });
+      }, 1000);
+    }
+  });
 }
 
 // --- END WEBFLOW FORMS REINITIALIZATION ---
