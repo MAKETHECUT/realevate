@@ -3240,10 +3240,12 @@ Promise.all([transitionPromise, fetchPromise])
     document.title = nextPage.doc.querySelector('title')?.textContent || document.title;
     container.innerHTML = nextPage.nextWrapper.innerHTML;
 
-    // Fix 405 error - set correct form action
+    // Fix form submission - set correct action and method
     document.querySelectorAll('form[data-wf-element-id]').forEach(form => {
       form.action = 'https://webflow.com/api/v1/form/683625562ee8a0f6224dc849';
       form.method = 'POST';
+      form.enctype = 'multipart/form-data';
+      form.setAttribute('data-wf-page-id', '683625562ee8a0f6224dc849');
     });
 
     initializeAllFunctions();
