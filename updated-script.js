@@ -71,8 +71,7 @@ document.addEventListener("DOMContentLoaded", startApp);
     'initHomeVideo',
     'moveShowAllIntoCollectionList',
     'reloadFinsweetCMS',
-    'handleProjectsPageFilterChanges',
-    'reinitializeWebflowForms',
+    'handleProjectsPageFilterChanges'
   ];
 
 // פונקציה לאתחול כל הפונקציות
@@ -108,6 +107,8 @@ function initializeAllFunctions() {
   if (typeof ScrollTrigger !== 'undefined') {
     ScrollTrigger.refresh(true);
   }
+  
+
 
 }
 
@@ -3187,22 +3188,20 @@ if (radioButton) {
 
 
 
-// Global unified page transition system
+
+
 function globalPageTransition(url, isPopState = false) {
-if (window.transitioning) {
-  window.pendingNavigation = { url, isPopState };
-  return;
-}
+  if (window.transitioning) {
+    window.pendingNavigation = { url, isPopState };
+    return;
+  }
 
-window.transitioning = true;
-window.isPageTransition = true;
+  window.transitioning = true;
+  window.isPageTransition = true;
 
-
-
-// 2. Start transition animation
-const transition = document.querySelector('.transition');
-const swipeup = document.querySelector('.swipeup');
-const cursor = document.querySelector('.cursor');
+  const transition = document.querySelector('.transition');
+  const swipeup = document.querySelector('.swipeup');
+  const cursor = document.querySelector('.cursor');
 
 const transitionPromise = new Promise((resolve) => {
   const tl = gsap.timeline({ onComplete: resolve });
@@ -3217,91 +3216,118 @@ const transitionPromise = new Promise((resolve) => {
 });
 
 
-// 3. Fetch new page content
-const fetchPromise = fetch(url, { credentials: 'include' })
-  .then(response => {
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return response.text();
-  })
-  .then(html => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const nextWrapper = doc.querySelector('.page-wrapper');
-    if (!nextWrapper) throw new Error('No .page-wrapper found');
-    return { html, doc, nextWrapper };
-  });
-
-
-    // 4. Wait for both animation and fetch
-  Promise.all([transitionPromise, fetchPromise])
-  .then(([_, nextPage]) => {
-    // 5. Swap content
-    const container = document.querySelector('.page-wrapper');
-    if (!container) return;
-
-    // Update <title>
-    const newTitle = nextPage.doc.querySelector('title');
-    if (newTitle) document.title = newTitle.textContent;
-
-    // Update html[data-wf-page] (prevents Webflow form 405 on AJAX loads)
-    const wfPage = nextPage.doc.documentElement.getAttribute('data-wf-page');
-    if (wfPage) {
-      document.documentElement.setAttribute('data-wf-page', wfPage);
-      
-      // Update all forms data-wf-page-id to match current page
-      const forms = document.querySelectorAll('form[data-wf-page-id]');
-      forms.forEach(form => {
-        form.setAttribute('data-wf-page-id', wfPage);
-      });
-    }
-
-    // Let Webflow handle form messages naturally
-
-    // Swap main container content
-    container.innerHTML = nextPage.nextWrapper.innerHTML;
-
-    // Execute any inline scripts that came with the new content
-    const scripts = container.querySelectorAll('script');
-    scripts.forEach(old => {
-      const s = document.createElement('script');
-      for (const a of old.attributes) s.setAttribute(a.name, a.value);
-      s.textContent = old.textContent;
-      old.replaceWith(s);
+  const fetchPromise = fetch(url, { credentials: 'include' })
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.text();
+    })
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const nextWrapper = doc.querySelector('.page-wrapper');
+      if (!nextWrapper) throw new Error('No .page-wrapper found');
+      return { html, doc, nextWrapper };
     });
 
-    // Reset and reinitialize all Webflow components after content swap
-    if (typeof resetWebflowAll === 'function') {
-      resetWebflowAll();
-    }
+  Promise.all([transitionPromise, fetchPromise])
+    .then(([_, nextPage]) => {
+      const container = document.querySelector('.page-wrapper');
+      if (!container) return;
 
-    // Re-initialize all functions
-    setTimeout(() => {
-      if (typeof initializeAllFunctions === 'function') {
-        initializeAllFunctions();
+      const newTitle = nextPage.doc.querySelector('title');
+      if (newTitle) document.title = newTitle.textContent;
+
+      const wfPage = nextPage.doc.documentElement.getAttribute('data-wf-page');
+      if (wfPage) {
+        document.documentElement.setAttribute('data-wf-page', wfPage);
       }
-    }, 300);
 
-    // 6. Force scroll to top and reset body styles
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-    
-    // Reset body styles that were set during navigation
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    
-    // Force reflow to ensure scroll position is set
-    document.documentElement.offsetHeight;
+      // Update all data attributes from the new page
+      const newHtmlElement = nextPage.doc.documentElement;
+      const currentHtmlElement = document.documentElement;
+      Array.from(newHtmlElement.attributes).forEach(attr => {
+        if (attr.name.startsWith('data-')) {
+          currentHtmlElement.setAttribute(attr.name, attr.value);
+        }
+      });
+
+      // Update body attributes as well
+      const newBody = nextPage.doc.body;
+      const currentBody = document.body;
+      Array.from(newBody.attributes).forEach(attr => {
+        if (attr.name.startsWith('data-') || attr.name === 'class') {
+          currentBody.setAttribute(attr.name, attr.value);
+        }
+      });
+
+      // Update URL to match the new page (important for Webflow forms)
+      if (!isPopState) {
+        window.history.pushState({ title: document.title }, '', url);
+      }
+
+      container.innerHTML = nextPage.nextWrapper.innerHTML;
+
+      const scripts = container.querySelectorAll('script');
+      scripts.forEach(old => {
+        const s = document.createElement('script');
+        for (const a of old.attributes) s.setAttribute(a.name, a.value);
+        s.textContent = old.textContent;
+        old.replaceWith(s);
+      });
+
+      setTimeout(() => {
+        if (typeof initializeAllFunctions === 'function') {
+          initializeAllFunctions();
+        }
+        
+        // Force Webflow to recognize the new page
+        if (window.Webflow) {
+          try {
+            window.Webflow.ready();
+          } catch (e) {
+            console.log('Webflow re-initialized');
+          }
+        }
+        
+        // Replace Webflow forms with custom ones - with delay
+        setTimeout(() => {
+          console.log('Replacing Webflow forms...');
+          replaceWebflowForms();
+          
+          // Test if forms are working
+          const forms = document.querySelectorAll('form[data-wf-form]');
+          console.log('Found', forms.length, 'Webflow forms');
+          
+          const customForms = document.querySelectorAll('form[id*="wf-form"], form[id*="footer-form"]');
+          console.log('Found', customForms.length, 'custom forms');
+          
+          customForms.forEach(form => {
+            const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+            if (submitButton) {
+              console.log('Submit button found:', submitButton);
+              // Force button to be clickable
+              submitButton.style.pointerEvents = 'auto';
+              submitButton.style.cursor = 'pointer';
+              submitButton.disabled = false;
+              submitButton.removeAttribute('disabled');
+            }
+          });
+        }, 500);
+      }, 300);
+
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      
+      document.documentElement.offsetHeight;
 
 
-    // 8. Re-initialize all functions after page transition
-
-  
-
-    // 11. Complete transition
-    const tl = gsap.timeline();
+      const tl = gsap.timeline();
     tl.to(swipeup, {
       duration: 0.6,
       ease: 'power4.in',
@@ -3323,30 +3349,61 @@ const fetchPromise = fetch(url, { credentials: 'include' })
         inTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
         inTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
 
-        // Re-initialize cursor after page transition
         if (window.innerWidth > 650) {
-          // Reset cursor initialization flag to allow re-initialization
           window.cursorInitialized = false;
-          // Re-initialize cursor
           initInteractiveCursor();
         }
 
-        // Re-initialize home video if on homepage
         const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html';
         if (isHomepage) {
-          // Reset video initialization flag to allow re-initialization
           window.videoInitialized = false;
-          // Re-initialize video with force flag
           setTimeout(() => initHomeVideo(true), 100);
         }
 
-        // Hide transition
+        // Final Webflow re-initialization to ensure forms work
+        setTimeout(() => {
+          if (window.Webflow) {
+            try {
+              window.Webflow.ready();
+            } catch (e) {
+              console.log('Final Webflow re-initialization');
+            }
+          }
+          
+          // Replace any remaining Webflow forms
+          console.log('Final form replacement...');
+          replaceWebflowForms();
+          
+          // Final test of forms
+          setTimeout(() => {
+            const allForms = document.querySelectorAll('form');
+            console.log('All forms found:', allForms.length);
+            
+            allForms.forEach((form, index) => {
+              console.log('Form', index, ':', form.id, form.className);
+              const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+              if (submitButton) {
+                console.log('Form', index, 'submit button:', submitButton);
+                // Force button to be clickable
+                submitButton.style.pointerEvents = 'auto';
+                submitButton.style.cursor = 'pointer';
+                submitButton.disabled = false;
+                submitButton.removeAttribute('disabled');
+                
+                // Add click test
+                submitButton.addEventListener('click', function(e) {
+                  console.log('Button clicked! Form:', form.id);
+                });
+              }
+            });
+          }, 200);
+        }, 200);
+
         transition.style.opacity = '0';
         transition.style.visibility = 'hidden';
         window.transitioning = false;
         window.isPageTransition = false;
 
-        // Handle pending navigation
         if (window.pendingNavigation) {
           const { url, isPopState } = window.pendingNavigation;
           window.pendingNavigation = null;
@@ -3357,7 +3414,6 @@ const fetchPromise = fetch(url, { credentials: 'include' })
   })
   .catch(err => {
     console.error('Navigation error:', err);
-    // Reset body styles on error
     document.body.style.position = '';
     document.body.style.top = '';
     document.body.style.width = '';
@@ -3393,49 +3449,180 @@ console.warn = function(...args) {
 }
 // --- END GLOBAL CONSOLE WARNING SUPPRESSION ---
 
-
-
-// ===== WEBFLOW FORMS REINITIALIZATION =====
-function reinitializeWebflowForms() {
-  // Wait for Webflow to be ready, then ensure forms work properly
+// Initialize forms when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, checking for forms...');
   setTimeout(() => {
-    if (window.Webflow && window.Webflow.ready) {
-      window.Webflow.ready();
-      
-      // Additional form initialization after Webflow is ready
-      setTimeout(() => {
-        const forms = document.querySelectorAll('form[data-wf-page-id]');
-        forms.forEach(form => {
-          // Ensure submit buttons are enabled
-          const submitButtons = form.querySelectorAll('input[type="submit"], button[type="submit"]');
-          submitButtons.forEach(btn => {
-            btn.disabled = false;
-            btn.removeAttribute('data-wait');
-            btn.style.pointerEvents = 'auto';
-            btn.style.cursor = 'pointer';
-          });
-        });
-      }, 100);
-    }
-  }, 200);
-}
+    replaceWebflowForms();
+  }, 1000);
+});
 
-
-
-// Reset & reinitialize all core Webflow components (use after AJAX/page-fetch swap)
-function resetWebflowAll() {
-  try { window.Webflow && Webflow.destroy && Webflow.destroy(); } catch(_) {}
+// Custom Webflow form handler
+function createCustomWebflowForm(formData) {
+  // Create form element
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = 'https://webflow.com/api/v1/form/submit';
+  form.style.display = 'none';
   
-  // Wait a bit then reinitialize Webflow
-  setTimeout(() => {
-    try { window.Webflow && Webflow.ready && Webflow.ready(); } catch(_) {}
-    
-    // Re-initialize forms module specifically
-    try {
-      if (window.Webflow && Webflow.require) {
-        const formsModule = Webflow.require('forms');
-        if (formsModule && formsModule.init) formsModule.init();
-      }
-    } catch (_) {}
-  }, 100);
+  // Add form fields
+  Object.keys(formData).forEach(key => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = formData[key];
+    form.appendChild(input);
+  });
+  
+  // Add to page and submit
+  document.body.appendChild(form);
+  form.submit();
 }
+
+// Custom form submission function
+function submitToWebflow(formElement, successCallback, errorCallback) {
+  const formData = new FormData(formElement);
+  
+  // Get form ID based on form element
+  let formId = '';
+  let redirectUrl = '/thank-you';
+  
+  if (formElement.id === 'wf-form-Contact-Page-Form') {
+    formId = '3c466ca9-7f4b-a479-b755-35f10e6d39af'; // Contact Page Form ID
+  } else if (formElement.id === 'footer-form') {
+    formId = '89682d13-77a4-c01b-8366-53f6f043533f'; // Footer Form ID
+  }
+  
+  // Add form metadata
+  formData.append('formId', formId);
+  formData.append('pageId', '683625562ee8a0f6224dc842');
+  formData.append('redirect', redirectUrl);
+  
+  // Create a temporary form and submit it
+  const tempForm = document.createElement('form');
+  tempForm.method = 'POST';
+  tempForm.action = 'https://webflow.com/api/v1/form/submit';
+  tempForm.style.display = 'none';
+  
+  // Add all form data
+  for (let [key, value] of formData.entries()) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = value;
+    tempForm.appendChild(input);
+  }
+  
+  // Add to page and submit
+  document.body.appendChild(tempForm);
+  tempForm.submit();
+  
+  // Call success callback immediately (since we're redirecting)
+  successCallback({ success: true });
+}
+
+// Function to replace Webflow forms with custom ones
+function replaceWebflowForms() {
+  console.log('replaceWebflowForms called');
+  
+  const webflowForms = document.querySelectorAll('form[data-wf-form]');
+  console.log('Found', webflowForms.length, 'Webflow forms to replace');
+  
+  if (webflowForms.length === 0) {
+    console.log('No Webflow forms found, checking for any forms...');
+    const anyForms = document.querySelectorAll('form');
+    console.log('Found', anyForms.length, 'total forms');
+  }
+  
+  webflowForms.forEach(webflowForm => {
+    // Create custom form wrapper
+    const customForm = document.createElement('form');
+    customForm.id = webflowForm.id; // Keep the same ID
+    customForm.className = webflowForm.className; // Keep the same classes
+    customForm.style.cssText = webflowForm.style.cssText;
+    
+    // Copy all form fields and labels
+    const formElements = webflowForm.querySelectorAll('label, input, textarea, select');
+    formElements.forEach(element => {
+      const newElement = element.cloneNode(true);
+      customForm.appendChild(newElement);
+    });
+    
+    // Find the original submit button and copy its styling
+    const originalSubmitButton = webflowForm.querySelector('input[type="submit"], button[type="submit"]');
+    const submitButton = document.createElement('input');
+    submitButton.type = 'submit';
+    submitButton.value = originalSubmitButton ? originalSubmitButton.value : 'שלח';
+    submitButton.className = originalSubmitButton ? originalSubmitButton.className : 'w-button';
+    
+    // Add submit handler
+    customForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Show loading state
+      const originalValue = submitButton.value;
+      submitButton.value = 'שולח...';
+      submitButton.disabled = true;
+      
+      // Submit to Webflow
+      submitToWebflow(customForm, 
+        (result) => {
+          // Success
+          submitButton.value = 'נשלח בהצלחה!';
+          submitButton.style.backgroundColor = '#4CAF50';
+          submitButton.style.color = 'white';
+          
+          // Show success message
+          const successMessage = document.createElement('div');
+          successMessage.className = 'success-message w-form-done';
+          successMessage.innerHTML = '<div>תודה! ההודעה שלך התקבלה בהצלחה!</div>';
+          customForm.appendChild(successMessage);
+          
+          setTimeout(() => {
+            submitButton.value = originalValue;
+            submitButton.disabled = false;
+            submitButton.style.backgroundColor = '';
+            submitButton.style.color = '';
+            if (successMessage.parentNode) {
+              successMessage.parentNode.removeChild(successMessage);
+            }
+          }, 3000);
+        },
+        (error) => {
+          // Error
+          submitButton.value = 'שגיאה - נסה שוב';
+          submitButton.style.backgroundColor = '#f44336';
+          submitButton.style.color = 'white';
+          
+          // Show error message
+          const errorMessage = document.createElement('div');
+          errorMessage.className = 'error-message w-form-fail';
+          errorMessage.innerHTML = '<div class="error-msg">שגיאה - בדקו את השדות ונסו שנית</div>';
+          customForm.appendChild(errorMessage);
+          
+          setTimeout(() => {
+            submitButton.value = originalValue;
+            submitButton.disabled = false;
+            submitButton.style.backgroundColor = '';
+            submitButton.style.color = '';
+            if (errorMessage.parentNode) {
+              errorMessage.parentNode.removeChild(errorMessage);
+            }
+          }, 3000);
+        }
+      );
+    });
+    
+    customForm.appendChild(submitButton);
+    
+    // Replace the Webflow form
+    webflowForm.parentNode.replaceChild(customForm, webflowForm);
+  });
+}
+
+
+
+
+
+
+
