@@ -3342,28 +3342,30 @@ const transitionPromise = new Promise((resolve) => {
         }
       }
       
-      // Replace Webflow forms immediately
-      console.log('Replacing Webflow forms...');
-      replaceWebflowForms();
-      
-      // Test if forms are working
-      const forms = document.querySelectorAll('form[data-wf-form]');
-      console.log('Found', forms.length, 'Webflow forms');
-      
-      const customForms = document.querySelectorAll('form[id*="wf-form"], form[id*="footer-form"]');
-      console.log('Found', customForms.length, 'custom forms');
-      
-      customForms.forEach(form => {
-        const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
-        if (submitButton) {
-          console.log('Submit button found:', submitButton);
-          // Force button to be clickable
-          submitButton.style.pointerEvents = 'auto';
-          submitButton.style.cursor = 'pointer';
-          submitButton.disabled = false;
-          submitButton.removeAttribute('disabled');
-        }
-      });
+      // Replace Webflow forms with custom ones - with delay
+      setTimeout(() => {
+        console.log('Replacing Webflow forms...');
+        replaceWebflowForms();
+        
+        // Test if forms are working
+        const forms = document.querySelectorAll('form[data-wf-form]');
+        console.log('Found', forms.length, 'Webflow forms');
+        
+        const customForms = document.querySelectorAll('form[id*="wf-form"], form[id*="footer-form"]');
+        console.log('Found', customForms.length, 'custom forms');
+        
+        customForms.forEach(form => {
+          const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+          if (submitButton) {
+            console.log('Submit button found:', submitButton);
+            // Force button to be clickable
+            submitButton.style.pointerEvents = 'auto';
+            submitButton.style.cursor = 'pointer';
+            submitButton.disabled = false;
+            submitButton.removeAttribute('disabled');
+          }
+        });
+      }, 500);
 
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
@@ -3407,7 +3409,7 @@ const transitionPromise = new Promise((resolve) => {
         const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html';
         if (isHomepage) {
           window.videoInitialized = false;
-          initHomeVideo(true);
+          setTimeout(() => initHomeVideo(true), 100);
         }
 
         // Final Webflow re-initialization to ensure forms work
@@ -3419,31 +3421,35 @@ const transitionPromise = new Promise((resolve) => {
           }
         }
         
-        // Replace any remaining Webflow forms
-        console.log('Final form replacement...');
-        replaceWebflowForms();
-        
-        // Final test of forms
-        const allForms = document.querySelectorAll('form');
-        console.log('All forms found:', allForms.length);
-        
-        allForms.forEach((form, index) => {
-          console.log('Form', index, ':', form.id, form.className);
-          const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
-          if (submitButton) {
-            console.log('Form', index, 'submit button:', submitButton);
-            // Force button to be clickable
-            submitButton.style.pointerEvents = 'auto';
-            submitButton.style.cursor = 'pointer';
-            submitButton.disabled = false;
-            submitButton.removeAttribute('disabled');
+        // Replace any remaining Webflow forms with delay
+        setTimeout(() => {
+          console.log('Final form replacement...');
+          replaceWebflowForms();
+          
+          // Final test of forms
+          setTimeout(() => {
+            const allForms = document.querySelectorAll('form');
+            console.log('All forms found:', allForms.length);
             
-            // Add click test
-            submitButton.addEventListener('click', function(e) {
-              console.log('Button clicked! Form:', form.id);
+            allForms.forEach((form, index) => {
+              console.log('Form', index, ':', form.id, form.className);
+              const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+              if (submitButton) {
+                console.log('Form', index, 'submit button:', submitButton);
+                // Force button to be clickable
+                submitButton.style.pointerEvents = 'auto';
+                submitButton.style.cursor = 'pointer';
+                submitButton.disabled = false;
+                submitButton.removeAttribute('disabled');
+                
+                // Add click test
+                submitButton.addEventListener('click', function(e) {
+                  console.log('Button clicked! Form:', form.id);
+                });
+              }
             });
-          }
-        });
+          }, 200);
+        }, 200);
 
         transition.style.opacity = '0';
         transition.style.visibility = 'hidden';
