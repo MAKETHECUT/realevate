@@ -1665,23 +1665,46 @@ class InfiniteHorizontalScroll {
       this.modal = document.querySelector('.fullscreen-modal');
     }
 
-    // Add expand icons to all slider items
+    // Add expand icons to all slider items (only on desktop above 650px)
+    this.handleExpandIcons();
+  }
+
+  handleExpandIcons() {
+    const isDesktop = window.innerWidth > 650;
+    
     this.items.forEach((item, index) => {
-      if (!item.querySelector('.expand-icon')) {
-        const expandIcon = document.createElement('div');
-        expandIcon.className = 'expand-icon';
-        item.appendChild(expandIcon);
+      let expandIcon = item.querySelector('.expand-icon');
+      
+      if (isDesktop) {
+        // Show expand icons on desktop
+        if (!expandIcon) {
+          expandIcon = document.createElement('div');
+          expandIcon.className = 'expand-icon';
+          item.appendChild(expandIcon);
+          
+          // Use both click and touchend for better Safari support
+          const handleExpand = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const img = item.querySelector('img');
+            this.openFullscreen(img);
+          };
+          
+          expandIcon.addEventListener('click', handleExpand);
+          expandIcon.addEventListener('touchend', handleExpand);
+        }
         
-        // Use both click and touchend for better Safari support
-        const handleExpand = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const img = item.querySelector('img');
-          this.openFullscreen(img);
-        };
-        
-        expandIcon.addEventListener('click', handleExpand);
-        expandIcon.addEventListener('touchend', handleExpand);
+        // Ensure icon is visible
+        expandIcon.style.display = 'block';
+        expandIcon.style.visibility = 'visible';
+        expandIcon.style.opacity = '1';
+      } else {
+        // Hide expand icons on mobile
+        if (expandIcon) {
+          expandIcon.style.display = 'none';
+          expandIcon.style.visibility = 'hidden';
+          expandIcon.style.opacity = '0';
+        }
       }
     });
   }
@@ -2934,6 +2957,10 @@ class InfiniteHorizontalScroll {
     
     // Keyboard events for closing fullscreen
     document.addEventListener("keydown", this.handleKeydown);
+    
+    // Resize event for handling expand icons visibility
+    this.handleResize = this.handleResize.bind(this);
+    window.addEventListener("resize", this.handleResize);
   }
 
   handleKeydown(e) {
@@ -2951,6 +2978,11 @@ class InfiniteHorizontalScroll {
       
       this.closeFullscreen();
     }
+  }
+
+  handleResize() {
+    // Handle expand icons visibility on resize
+    this.handleExpandIcons();
   }
 
   handleWheel(event) {
@@ -3223,6 +3255,7 @@ destroy() {
     window.removeEventListener("mousemove", this.handleDragMove);
     window.removeEventListener("mouseup", this.handleDragEnd);
     // window.removeEventListener("resize", this.handleResize); // Disabled
+    window.removeEventListener("resize", this.handleResize);
     document.removeEventListener("keydown", this.handleKeydown);
 
     // Remove the modal from the DOM to ensure it's fresh on next init
@@ -4680,7 +4713,6 @@ function replaceWebflowForms() {
     webflowForm.parentNode.replaceChild(customForm, webflowForm);
   });
 }
-
 
 
 
