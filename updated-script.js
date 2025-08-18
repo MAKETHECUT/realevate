@@ -1356,7 +1356,14 @@ document.querySelectorAll(".slider-wrapper").forEach(el => {
   el.addEventListener("mouseleave", () => cursor.classList.remove("slide"));
 });
 
-// Hide cursor when hovering over expand icons
+
+document.querySelectorAll(".fullscreen-modal").forEach(el => {
+  el.addEventListener("mouseenter", () => cursor.classList.add("slide-gallery"));
+  el.addEventListener("mouseleave", () => cursor.classList.remove("slide-gallery"));
+});
+
+
+// Hide cursor when hovering over expand iconsll
 document.addEventListener("mouseover", (e) => {
   if (e.target.closest('.expand-icon')) {
     cursor.classList.remove("slide");
@@ -1561,6 +1568,9 @@ class InfiniteHorizontalScroll {
     this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     this.scrollEnabled = true; // Add this to control when scrolling is allowed
     this.isFullscreenOpen = false; // Add this to track fullscreen state
+    this.originallyClickedImage = null; // Track the originally clicked image
+    this.hasNavigatedAway = false; // Track if user has navigated away from original image
+    this.currentCycle = 0; // Track current cycle for infinite scroll positioning
     this.animationFrameId = null; // To hold the animation frame ID
     this.originalItemCount = this.items.length;
     // Remove all snapping logic for true infinite scroll
@@ -1609,15 +1619,37 @@ class InfiniteHorizontalScroll {
       this.modal = modal;
       this.currentAnimation = null;
       this.originalImage = null;
+      
+          // Add sync method to modal for external access
+    modal.syncThumbnailsWithMainGallery = this.syncThumbnailsWithMainGallery.bind(this);
 
-      // Handle modal click to close
-      const closeModal = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.closeFullscreen();
-      };
-      modal.addEventListener('click', closeModal);
-      modal.addEventListener('touchend', closeModal);
+    // Handle modal click to close
+    const closeModal = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.closeFullscreen();
+    };
+    modal.addEventListener('click', closeModal);
+    modal.addEventListener('touchend', closeModal);
+    
+    // Add cursor events for fullscreen modal
+    modal.addEventListener('mouseenter', () => {
+      if (window.cursor) {
+        window.cursor.classList.add("slide-gallery");
+      }
+    });
+    modal.addEventListener('mouseleave', () => {
+      if (window.cursor) {
+        window.cursor.classList.remove("slide-gallery");
+      }
+    });
+    
+    // Also add cursor events to document when fullscreen is active
+    document.addEventListener('mouseenter', () => {
+      if (this.isFullscreenOpen && window.cursor) {
+        window.cursor.classList.add("slide-gallery");
+      }
+    });
       
       // Prevent any touch events on the modal from propagating
       modal.addEventListener('touchstart', (e) => {
@@ -1672,6 +1704,35 @@ class InfiniteHorizontalScroll {
     this.disableScroll();
     document.body.classList.add('fullscreen-active');
     
+    // Activate cursor for fullscreen gallery
+    if (window.cursor) {
+      window.cursor.classList.add("slide-gallery");
+    }
+    
+    // Add document-level cursor activation for fullscreen
+    this.fullscreenMouseMoveHandler = () => {
+      if (this.isFullscreenOpen && window.cursor) {
+        window.cursor.classList.add("slide-gallery");
+      }
+    };
+    document.addEventListener('mousemove', this.fullscreenMouseMoveHandler);
+    
+    // Store current image index for navigation
+    const allImages = Array.from(this.container.querySelectorAll('.slider-item img'));
+    this.currentFullscreenIndex = allImages.indexOf(img);
+    this.allFullscreenImages = allImages;
+    
+    // Calculate the real index in the original gallery (without clones)
+    const originalItems = this.items.slice(0, this.originalItemCount);
+    const originalImages = originalItems.map(item => item.querySelector('img'));
+    this.currentOriginalIndex = originalImages.indexOf(img);
+    this.originalImages = originalImages;
+    
+    // Store the originally clicked image and reset navigation flag
+    this.originallyClickedImage = img;
+    this.hasNavigatedAway = false;
+    this.currentCycle = 0; // Reset cycle when opening fullscreen
+    
     // Create a clone of the image
     const clone = img.cloneNode(true);
     this.originalImage = img;
@@ -1690,7 +1751,7 @@ class InfiniteHorizontalScroll {
       left: rect.left,
       width: rect.width,
       height: rect.height,
-      zIndex: 999999999999,
+      zIndex: 999999999,
       objectFit: 'cover',
       borderRadius: 0,
       transformOrigin: 'center center',
@@ -1710,18 +1771,19 @@ class InfiniteHorizontalScroll {
       }
     });
 
-    // Fade out gallery and icon
+    // Fade out gallery items only (keep toggle icon visible)
     const parentItem = img.closest('.slider-item');
     if (parentItem) {
       const icon = parentItem.querySelector('.expand-icon');
       if (icon) {
-        tl.to(icon, { opacity: 0, duration: 0.6, ease: "power2.out" }, 0);
+        // Don't fade out the toggle icon - keep it as is
+        // tl.to(icon, { opacity: 0, duration: 0.6, ease: "power2.out" }, 0);
       }
     }
 
     tl.to(this.container.querySelectorAll('.slider-item'), { 
       opacity: 0, 
-      duration: 0.8,
+      duration: 0.5,
       ease: "power2.out"
     }, 0.3);
 
@@ -1729,11 +1791,11 @@ class InfiniteHorizontalScroll {
     tl.to(this.modal, {
       backgroundColor: 'rgba(0, 0, 0, 1)',
       
-      duration: 0.6,
+      duration: 0.5,
       ease: "power2.out"
     }, 0);
 
-    // STEP 2: Move to center and change size (continuous flow)
+    // STEP 2: Move to center and change size with elegant perspective clip-path
     tl.to(clone, {
       top: '50%',
       left: '50%',
@@ -1742,10 +1804,12 @@ class InfiniteHorizontalScroll {
       width: '90vw',
       height: '90vh',
       objectFit: 'cover',
-      clipPath: 'polygon(10% 3%, 92% 13%, 100% 100%, 0% 100%)',
+      clipPath: 'polygon(0 0, 87% 9%, 86% 88%, 15% 87%)', // Elegant perspective effect
       duration: 0.8,
       ease: "power4.in"
     }, 0);
+
+
 
 
     // STEP 3: Move to fullscreen with final clip-path (seamless continuation)
@@ -1759,16 +1823,45 @@ class InfiniteHorizontalScroll {
       objectFit: 'cover',
       clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Final normal state
       duration: 0.8,
-      ease: "power4.out"
+      ease: "power4.out",
+      onComplete: () => {
+        // Add mousewheel navigation after animation completes
+        this.addFullscreenNavigation();
+      }
     }, 0.7); // Overlap with previous step
+    
+    // Add thumbnails immediately when animation starts
+    tl.call(() => {
+      this.addFullscreenNavigation();
+    }, [], 0.1); // Start very early in the animation
+    
+    // Ensure indicator is centered after animation completes
+    tl.call(() => {
+      setTimeout(() => {
+        this.ensureIndicatorCentered();
+      }, 500);
+    }, [], 1.5);
 
 
 
     this.currentAnimation = tl;
   }
 
+
+
   closeFullscreen() {
     if (!this.modal || !this.originalImage) return;
+
+    // Remove cursor immediately when closing
+    if (window.cursor) {
+      window.cursor.classList.remove("slide-gallery");
+    }
+    
+    // Remove document-level mousemove handler immediately
+    if (this.fullscreenMouseMoveHandler) {
+      document.removeEventListener('mousemove', this.fullscreenMouseMoveHandler);
+      this.fullscreenMouseMoveHandler = null;
+    }
 
     if (this.currentAnimation) {
       this.currentAnimation.kill();
@@ -1777,10 +1870,36 @@ class InfiniteHorizontalScroll {
     const img = this.modal.querySelector('img');
     if (!img) return;
 
-    // Get the original image position and size
-    const rect = this.originalImage.getBoundingClientRect();
+    // Check if user has navigated away from originally clicked image
+    const currentImage = this.originalImages[this.currentOriginalIndex];
+    const useFadeOut = this.hasNavigatedAway || currentImage !== this.originallyClickedImage;
 
-    // Super simple reverse animation
+    // Ensure expand icon is visible when navigating away
+    if (useFadeOut && this.originalImage) {
+      const closeParentItem = this.originalImage.closest('.slider-item');
+      if (closeParentItem) {
+        const icon = closeParentItem.querySelector('.expand-icon');
+        if (icon) {
+          icon.style.opacity = '1';
+          icon.style.visibility = 'visible';
+          icon.style.display = 'block';
+        }
+      }
+    }
+
+    if (useFadeOut) {
+      // Simple fade out animation for navigated images
+      this.performFadeOutClose();
+    } else {
+      // Original complex animation for same image
+      this.performOriginalClose();
+    }
+  }
+
+  performFadeOutClose() {
+    const img = this.modal.querySelector('img');
+    if (!img) return;
+
     const closeTl = gsap.timeline({
       onComplete: () => {
         this.modal.style.display = 'none';
@@ -1792,6 +1911,128 @@ class InfiniteHorizontalScroll {
         this.currentAnimation = null;
       }
     });
+    
+    // Animate thumbnails exit simultaneously with fullscreen
+    const thumbnailsContainer = this.modal.querySelector('.fullscreen-thumbnails');
+    if (thumbnailsContainer) {
+      closeTl.to(thumbnailsContainer, {
+        yPercent: 100,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.out",
+        onComplete: () => {
+          thumbnailsContainer.remove();
+        }
+      }, 0);
+    }
+    
+    // Remove event listeners
+    closeTl.call(() => {
+      this.removeFullscreenNavigation();
+    }, [], 0.1);
+
+    // Fade out modal background
+    closeTl.to(this.modal, {
+      backgroundColor: 'rgba(0, 0, 0, 0)',
+      duration: 0.6,
+      ease: "power2.out",
+    }, 0);
+    
+    // Fade out and scale down the fullscreen image
+    closeTl.fromTo(img, 
+      {
+        clipPath: 'inset(0% 0% 0% 0%)',
+        opacity: 1,
+        scale: 1
+      },
+      {
+        clipPath: 'inset(10% 10% 10% 10%)',
+        opacity: 0,
+        scale: 0.8,
+        duration: 0.8,
+        ease: "power2.inOut"
+      }, 0);
+    
+    // Fade in gallery items
+    closeTl.to(this.container.querySelectorAll('.slider-item'), { 
+      opacity: 1, 
+      duration: 0.8,
+      ease: "power2.out"
+    }, 0.3);
+    
+    // Fade in expand icon
+    const closeParentItem = this.originalImage.closest('.slider-item');
+    if (closeParentItem) {
+      const icon = closeParentItem.querySelector('.expand-icon');
+      if (icon) {
+        closeTl.to(icon, { 
+          opacity: 1, 
+          duration: 0.6,
+          ease: "power2.out"
+        }, 0.3);
+        
+        // Force ensure icon is visible after animation
+        closeTl.call(() => {
+          if (icon) {
+            icon.style.opacity = '1';
+            icon.style.visibility = 'visible';
+            icon.style.display = 'block';
+          }
+        }, [], 0.9);
+        
+        // Additional fallback for navigated images
+        if (this.hasNavigatedAway) {
+          closeTl.call(() => {
+            if (icon) {
+              icon.style.opacity = '1';
+              icon.style.visibility = 'visible';
+              icon.style.display = 'block';
+            }
+          }, [], 1.0);
+        }
+      }
+    }
+
+    this.currentAnimation = closeTl;
+  }
+
+  performOriginalClose() {
+    const img = this.modal.querySelector('img');
+    if (!img) return;
+
+    // Get the original image position and size
+    const rect = this.originalImage.getBoundingClientRect();
+
+    const closeTl = gsap.timeline({
+      onComplete: () => {
+        this.modal.style.display = 'none';
+        
+        // Reset fullscreen state and re-enable scrolling
+        this.isFullscreenOpen = false;
+        this.enableScroll();
+        document.body.classList.remove('fullscreen-active');
+        this.currentAnimation = null;
+      }
+    });
+    
+    // Animate thumbnails exit simultaneously with fullscreen
+    const thumbnailsContainer = this.modal.querySelector('.fullscreen-thumbnails');
+    if (thumbnailsContainer) {
+      closeTl.to(thumbnailsContainer, {
+        yPercent: 100,
+        opacity: 0,
+        duration: 1.2,
+        ease: "power4.inOut",
+        onComplete: () => {
+          thumbnailsContainer.remove();
+        }
+      }, 0);
+    }
+    
+    // Remove event listeners
+    closeTl.call(() => {
+      this.removeFullscreenNavigation();
+    }, [], 0.3);
 
     // Fade out modal background
     closeTl.to(this.modal, {
@@ -1817,18 +2058,27 @@ class InfiniteHorizontalScroll {
           duration: 0.6,
           ease: "power2.out"
         }, 0);
+        
+        // Force ensure icon is visible after animation
+        closeTl.call(() => {
+          if (icon) {
+            icon.style.opacity = '1';
+            icon.style.visibility = 'visible';
+            icon.style.display = 'block';
+          }
+        }, [], 1.5);
       }
     }
 
-    // STEP 3 → STEP 2: Scale down to center with clip-path transition
+    // STEP 3 → STEP 2.5: Scale down to center with elegant perspective transition
     closeTl.to(img, {
       top: '50%',
       left: '50%',
       xPercent: -50,
       yPercent: -50,
-      width: '80vw',
-      height: '80vh',
-      clipPath: 'polygon(10% 3%, 92% 13%, 100% 100%, 0% 100%)', // Match your step 2 distortion
+      width: '90vw',
+      height: '90vh',
+      clipPath: 'polygon(16% 11%, 87% 9%, 100% 100%, 15% 87%)', // Match the refined elegant perspective from open
       duration: 0.8,
       ease: "power4.in"
     }, 0);
@@ -1843,11 +2093,712 @@ class InfiniteHorizontalScroll {
       height: rect.height,
       clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', // Final normal state
       objectFit: 'cover',
-      duration: 0.8,
+      duration: 0.7,
       ease: "power4.out"
     }, 0.8); // Overlap with previous step
 
     this.currentAnimation = closeTl;
+  }
+
+  createMobileNavigationArrows() {
+    // Remove existing arrows if they exist
+    const existingArrows = this.modal.querySelectorAll('.mobile-nav-arrow');
+    existingArrows.forEach(arrow => arrow.remove());
+
+    // Create left arrow
+    const leftArrow = document.createElement('div');
+    leftArrow.className = 'mobile-nav-arrow mobile-nav-arrow-left';
+    leftArrow.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+    
+    // Create right arrow
+    const rightArrow = document.createElement('div');
+    rightArrow.className = 'mobile-nav-arrow mobile-nav-arrow-right';
+    rightArrow.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 18L15 12L9 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    // Add click handlers
+    leftArrow.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.prevFullscreenImage();
+    });
+
+    rightArrow.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.nextFullscreenImage();
+    });
+
+    // Add touch handlers for better mobile experience
+    leftArrow.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.prevFullscreenImage();
+    });
+
+    rightArrow.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.nextFullscreenImage();
+    });
+
+    // Add to modal
+    this.modal.appendChild(leftArrow);
+    this.modal.appendChild(rightArrow);
+
+    // Animate arrows in
+    gsap.fromTo([leftArrow, rightArrow], 
+      { opacity: 0, scale: 0.8 },
+      { 
+        opacity: 1, 
+        scale: 1, 
+        duration: 0.4, 
+        ease: "power2.out",
+        stagger: 0.1
+      }
+    );
+  }
+
+  addFullscreenNavigation() {
+    // Create thumbnails container only if not already created
+    if (!this.modal.querySelector('.fullscreen-thumbnails')) {
+      this.createThumbnails();
+    }
+    
+    // Add navigation arrows for mobile screens (under 650px)
+    if (window.innerWidth < 650) {
+      this.createMobileNavigationArrows();
+    }
+    
+    // Add mousewheel event listener for fullscreen navigation
+    this.fullscreenWheelHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent main gallery wheel handler from interfering
+      
+      // Add debounce to prevent rapid scrolling
+      if (this.wheelTimeout) return;
+      
+      this.wheelTimeout = setTimeout(() => {
+        this.wheelTimeout = null;
+      }, 100); // 100ms debounce
+      
+      if (e.deltaY > 0) {
+        // Scroll down - next image
+        this.nextFullscreenImage();
+      } else {
+        // Scroll up - previous image
+        this.prevFullscreenImage();
+      }
+    };
+
+    // Add touch events for mobile
+    this.fullscreenTouchStartY = 0;
+    this.fullscreenTouchHandler = (e) => {
+      if (e.type === 'touchstart') {
+        this.fullscreenTouchStartY = e.touches[0].clientY;
+      } else if (e.type === 'touchend') {
+        const touchEndY = e.changedTouches[0].clientY;
+        const deltaY = touchEndY - this.fullscreenTouchStartY;
+        
+        if (Math.abs(deltaY) > 50) {
+          if (deltaY > 0) {
+            this.prevFullscreenImage();
+          } else {
+            this.nextFullscreenImage();
+          }
+        }
+      }
+    };
+
+    // Add keyboard events
+    this.fullscreenKeyHandler = (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          e.preventDefault();
+          this.prevFullscreenImage();
+          break;
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault();
+          this.nextFullscreenImage();
+          break;
+      }
+    };
+
+    // Add event listeners
+    this.modal.addEventListener('wheel', this.fullscreenWheelHandler, { passive: false });
+    this.modal.addEventListener('touchstart', this.fullscreenTouchHandler, { passive: true });
+    this.modal.addEventListener('touchend', this.fullscreenTouchHandler, { passive: true });
+    document.addEventListener('keydown', this.fullscreenKeyHandler);
+  }
+
+  removeFullscreenNavigation() {
+    // Clear wheel timeout
+    if (this.wheelTimeout) {
+      clearTimeout(this.wheelTimeout);
+      this.wheelTimeout = null;
+    }
+    
+    // Remove event listeners
+    if (this.fullscreenWheelHandler) {
+      this.modal.removeEventListener('wheel', this.fullscreenWheelHandler);
+    }
+    if (this.fullscreenTouchHandler) {
+      this.modal.removeEventListener('touchstart', this.fullscreenTouchHandler);
+      this.modal.removeEventListener('touchend', this.fullscreenTouchHandler);
+    }
+    if (this.fullscreenKeyHandler) {
+      document.removeEventListener('keydown', this.fullscreenKeyHandler);
+    }
+    
+    // Remove mobile navigation arrows
+    const mobileArrows = this.modal.querySelectorAll('.mobile-nav-arrow');
+    mobileArrows.forEach(arrow => arrow.remove());
+    
+    // Remove cursor for fullscreen gallery
+    if (window.cursor) {
+      window.cursor.classList.remove("slide-gallery");
+    }
+    
+    // Remove document-level mousemove handler
+    if (this.fullscreenMouseMoveHandler) {
+      document.removeEventListener('mousemove', this.fullscreenMouseMoveHandler);
+      this.fullscreenMouseMoveHandler = null;
+    }
+    
+    // Force remove cursor class to ensure it's gone
+    setTimeout(() => {
+      if (window.cursor) {
+        window.cursor.classList.remove("slide-gallery");
+      }
+    }, 100);
+    
+    // Ensure expand icon is visible
+    if (this.originalImage) {
+      const closeParentItem = this.originalImage.closest('.slider-item');
+      if (closeParentItem) {
+        const icon = closeParentItem.querySelector('.expand-icon');
+        if (icon) {
+          icon.style.opacity = '1';
+          icon.style.visibility = 'visible';
+          icon.style.display = 'block';
+        }
+      }
+    }
+  }
+
+  nextFullscreenImage() {
+    if (!this.originalImages || this.originalImages.length === 0) return;
+    
+    // Track cycle for infinite scroll positioning
+    if (this.currentOriginalIndex === this.originalImages.length - 1) {
+      this.currentCycle++;
+    }
+    
+    this.currentOriginalIndex = (this.currentOriginalIndex + 1) % this.originalImages.length;
+    this.currentFullscreenIndex = this.allFullscreenImages.indexOf(this.originalImages[this.currentOriginalIndex]);
+    
+    // Mark that user has navigated away from originally clicked image
+    const currentImage = this.originalImages[this.currentOriginalIndex];
+    if (currentImage !== this.originallyClickedImage) {
+      this.hasNavigatedAway = true;
+    }
+    
+    this.updateFullscreenImage();
+    this.updateThumbnails(); // Ensure thumbnails are updated
+    
+    // Ensure indicator is centered after a short delay
+    setTimeout(() => {
+      this.ensureIndicatorCentered();
+    }, 100);
+  }
+
+  prevFullscreenImage() {
+    if (!this.originalImages || this.originalImages.length === 0) return;
+    
+    // Track cycle for infinite scroll positioning
+    if (this.currentOriginalIndex === 0) {
+      this.currentCycle--;
+    }
+    
+    this.currentOriginalIndex = this.currentOriginalIndex === 0 
+      ? this.originalImages.length - 1 
+      : this.currentOriginalIndex - 1;
+    this.currentFullscreenIndex = this.allFullscreenImages.indexOf(this.originalImages[this.currentOriginalIndex]);
+    
+    // Mark that user has navigated away from originally clicked image
+    const currentImage = this.originalImages[this.currentOriginalIndex];
+    if (currentImage !== this.originallyClickedImage) {
+      this.hasNavigatedAway = true;
+    }
+    
+    this.updateFullscreenImage();
+    this.updateThumbnails(); // Ensure thumbnails are updated
+    
+    // Ensure indicator is centered after a short delay
+    setTimeout(() => {
+      this.ensureIndicatorCentered();
+    }, 100);
+  }
+
+  createThumbnails() {
+    if (!this.originalImages || this.originalImages.length === 0) return;
+    
+    // Create thumbnails container
+    const thumbnailsContainer = document.createElement('div');
+    thumbnailsContainer.className = 'fullscreen-thumbnails entering';
+    
+    // Set initial position for animation
+    gsap.set(thumbnailsContainer, {
+      yPercent: 100,
+      opacity: 0
+    });
+    
+    // Prevent clicks on container from closing modal
+    thumbnailsContainer.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+    
+    // Create thumbnails for each original image (3x for infinite scroll)
+    for (let clone = 0; clone < 3; clone++) {
+      this.originalImages.forEach((img, index) => {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = `fullscreen-thumbnail ${index === this.currentOriginalIndex ? 'active' : ''}`;
+        thumbnail.dataset.originalIndex = index; // Store original index for click handling
+        
+        const thumbnailImg = document.createElement('img');
+        thumbnailImg.src = img.src;
+        thumbnailImg.alt = img.alt;
+        
+        thumbnail.appendChild(thumbnailImg);
+        
+        // Add click event
+        thumbnail.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.goToOriginalImage(index);
+        });
+        
+        thumbnailsContainer.appendChild(thumbnail);
+      });
+    }
+    
+    this.modal.appendChild(thumbnailsContainer);
+    
+    // Add drag functionality to thumbnails container
+    this.addDragToScroll(thumbnailsContainer);
+    
+    // Animate container entrance - simultaneous with fullscreen
+    gsap.to(thumbnailsContainer, {
+      yPercent: 0,
+      opacity: 1,
+      duration: 1.2,
+      ease: "power4.inOut"
+    });
+  }
+
+    updateThumbnails() {
+    const thumbnails = this.modal.querySelectorAll('.fullscreen-thumbnail');
+    const thumbnailsContainer = this.modal.querySelector('.fullscreen-thumbnails');
+    
+    // Update all thumbnails with the same original index
+    thumbnails.forEach((thumbnail) => {
+      const originalIndex = parseInt(thumbnail.dataset.originalIndex);
+      if (originalIndex === this.currentOriginalIndex) {
+        thumbnail.classList.add('active');
+      } else {
+        thumbnail.classList.remove('active');
+      }
+    });
+    
+    // Center the active thumbnail to show it as an indicator
+    if (thumbnailsContainer && thumbnails.length > 0) {
+      // Find all active thumbnails
+      const activeThumbnails = Array.from(thumbnails).filter(thumb => 
+        parseInt(thumb.dataset.originalIndex) === this.currentOriginalIndex
+      );
+      
+      if (activeThumbnails.length > 0) {
+        // Always use the middle section thumbnail for centering
+        const middleSectionIndex = Math.floor(thumbnails.length / 3);
+        const activeThumbnail = activeThumbnails.find(thumb => 
+          Array.from(thumbnails).indexOf(thumb) >= middleSectionIndex && 
+          Array.from(thumbnails).indexOf(thumb) < middleSectionIndex * 2
+        ) || activeThumbnails[0];
+        
+        // Calculate the center position for the active thumbnail
+        let scrollLeft = activeThumbnail.offsetLeft - (thumbnailsContainer.clientWidth / 2) + (activeThumbnail.offsetWidth / 2);
+        
+        // Handle infinite scroll wrapping for auto-scroll
+        const thumbnailWidth = thumbnails[0].offsetWidth + 24;
+        const totalWidth = thumbnails.length * thumbnailWidth;
+        const sectionWidth = totalWidth / 3; // Width of one complete set of thumbnails
+        
+        // Simple cycle-based positioning
+        scrollLeft += (this.currentCycle * sectionWidth);
+        
+        // Keep within bounds
+        if (scrollLeft > sectionWidth * 2) {
+          scrollLeft -= sectionWidth;
+        } else if (scrollLeft < sectionWidth) {
+          scrollLeft += sectionWidth;
+        }
+        
+        // Update scroll position
+        this.thumbnailsScrollX = scrollLeft;
+      }
+    }
+  }
+
+  goToOriginalImage(index) {
+    if (index === this.currentOriginalIndex || !this.originalImages[index]) return;
+    
+    // Calculate cycle change for infinite scroll positioning
+    const cycleChange = Math.floor(index / this.originalImages.length) - Math.floor(this.currentOriginalIndex / this.originalImages.length);
+    this.currentCycle += cycleChange;
+    
+    this.currentOriginalIndex = index;
+    this.currentFullscreenIndex = this.allFullscreenImages.indexOf(this.originalImages[index]);
+    
+    // Mark that user has navigated away from originally clicked image
+    const currentImage = this.originalImages[index];
+    if (currentImage !== this.originallyClickedImage) {
+      this.hasNavigatedAway = true;
+    }
+    
+    this.updateFullscreenImage();
+    this.updateThumbnails();
+    
+    // Ensure indicator is centered after a short delay
+    setTimeout(() => {
+      this.ensureIndicatorCentered();
+    }, 100);
+  }
+
+  addDragToScroll(container) {
+    // Use the exact same pattern as the infinity gallery
+    let isDragging = false;
+    let dragStartX = 0;
+    let scrollX = 0;
+    let smoothScrollX = 0;
+    let dragStartTime = 0;
+    let animationFrameId = null;
+    
+    // Calculate container dimensions for infinite scroll
+    const thumbnails = container.querySelectorAll('.fullscreen-thumbnail');
+    const thumbnailWidth = thumbnails.length > 0 ? thumbnails[0].offsetWidth + 24 : 0; // 24px for gap
+    const containerWidth = container.clientWidth;
+    const totalWidth = thumbnails.length * thumbnailWidth;
+    
+    // Use the same settings as the infinity gallery
+    const isMobile = window.innerWidth < 650;
+    const isIPad = /iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
+    
+    // Core settings matching the infinity gallery
+    const lerp = isMobile ? 0.1 : 0.05; // Same as infinity gallery
+    const dragMultiplier = isMobile ? 3 : 3; // Same as infinity gallery
+    
+    // Adjust for iPad specifically (same as infinity gallery)
+    const finalLerp = isIPad ? 0.06 : lerp;
+    const finalDragMultiplier = isIPad ? 2.5 : dragMultiplier;
+
+    const handleInfiniteScroll = () => {
+      const sectionWidth = totalWidth / 3; // Width of one complete set of thumbnails
+      
+      // If scrolled too far right, wrap to the left
+      if (scrollX > sectionWidth * 2) {
+        scrollX -= sectionWidth;
+        smoothScrollX -= sectionWidth;
+      }
+      // If scrolled too far left, wrap to the right
+      else if (scrollX < sectionWidth) {
+        scrollX += sectionWidth;
+        smoothScrollX += sectionWidth;
+      }
+    };
+
+    const animate = () => {
+      if (!isDragging) {
+        // Use external scrollX if available (for sync), otherwise use local
+        const targetScrollX = this.thumbnailsScrollX !== undefined ? this.thumbnailsScrollX : scrollX;
+        smoothScrollX += (targetScrollX - smoothScrollX) * finalLerp;
+        container.scrollLeft = smoothScrollX;
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    // Store animation function for external control
+    this.thumbnailsAnimate = animate;
+    this.thumbnailsIsDragging = () => isDragging;
+    this.thumbnailsScrollX = scrollX;
+    this.thumbnailsSmoothScrollX = smoothScrollX;
+
+    const handleMouseDown = (e) => {
+      isDragging = true;
+      dragStartX = e.clientX;
+      scrollX = container.scrollLeft;
+      smoothScrollX = container.scrollLeft;
+      // Update external variables
+      this.thumbnailsScrollX = scrollX;
+      this.thumbnailsSmoothScrollX = smoothScrollX;
+      dragStartTime = Date.now();
+      container.style.cursor = 'grabbing';
+      container.style.userSelect = 'none';
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const deltaX = e.clientX - dragStartX;
+      dragStartX = e.clientX;
+      scrollX -= deltaX * finalDragMultiplier;
+      handleInfiniteScroll(); // Handle infinite scroll wrapping
+      // Update external variables
+      this.thumbnailsScrollX = scrollX;
+      this.thumbnailsSmoothScrollX = smoothScrollX;
+      container.scrollLeft = scrollX; // Direct response during drag
+    };
+
+    const handleMouseUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      container.style.cursor = 'grab';
+      container.style.userSelect = 'auto';
+      
+      // Check if it was a quick drag (potential click)
+      const dragDuration = Date.now() - dragStartTime;
+      const dragDistance = Math.abs(e.clientX - dragStartX);
+      
+      // If it was a very short drag with minimal movement, treat as click
+      if (dragDuration < 200 && dragDistance < 10) {
+        // Find the clicked thumbnail
+        const clickedThumbnail = e.target.closest('.fullscreen-thumbnail');
+        if (clickedThumbnail) {
+          const thumbnails = container.querySelectorAll('.fullscreen-thumbnail');
+          const index = Array.from(thumbnails).indexOf(clickedThumbnail);
+          if (index !== -1) {
+            this.goToOriginalImage(index);
+          }
+        }
+      }
+      
+      // Ensure indicator is centered after drag ends
+      setTimeout(() => {
+        this.ensureIndicatorCentered();
+      }, 200);
+    };
+
+    const handleMouseLeave = () => {
+      if (isDragging) {
+        isDragging = false;
+        container.style.cursor = 'grab';
+        container.style.userSelect = 'auto';
+      }
+    };
+
+    // Start the animation loop
+    animate();
+
+    // Add event listeners
+    container.addEventListener('mousedown', handleMouseDown);
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mouseup', handleMouseUp);
+    container.addEventListener('mouseleave', handleMouseLeave);
+    
+    // Add touch events for mobile
+    container.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleMouseDown({ clientX: touch.clientX });
+    }, { passive: false });
+    
+    container.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleMouseMove({ clientX: touch.clientX, preventDefault: () => {} });
+    }, { passive: false });
+    
+    container.addEventListener('touchend', (e) => {
+      const touch = e.changedTouches[0];
+      handleMouseUp({ clientX: touch.clientX });
+    });
+    
+    // Set initial cursor style
+    container.style.cursor = 'grab';
+    
+    // Store reference to this container for external updates
+    this.thumbnailsContainer = container;
+    this.thumbnailsScrollX = scrollX;
+    this.thumbnailsSmoothScrollX = smoothScrollX;
+    
+    // Set initial position to middle section for infinite scroll
+    const sectionWidth = totalWidth / 3;
+    scrollX = sectionWidth;
+    smoothScrollX = sectionWidth;
+    container.scrollLeft = sectionWidth;
+    
+    // Store section width for infinite scroll calculations
+    this.thumbnailsSectionWidth = sectionWidth;
+    
+    // Store initial position for external access
+    this.thumbnailsScrollX = scrollX;
+    this.thumbnailsSmoothScrollX = smoothScrollX;
+  }
+
+  // Method to sync main gallery position to current fullscreen image
+  syncMainGalleryToFullscreen() {
+    if (!this.originalImages || this.originalImages.length === 0) return;
+    
+    // Find the current fullscreen image in the main gallery
+    const currentFullscreenImage = this.originalImages[this.currentOriginalIndex];
+    if (!currentFullscreenImage) return;
+    
+    // Find the slider item containing this image
+    const sliderItems = this.container.querySelectorAll('.slider-item');
+    let targetItem = null;
+    let targetIndex = -1;
+    
+    sliderItems.forEach((item, index) => {
+      const img = item.querySelector('img');
+      if (img && img.src === currentFullscreenImage.src) {
+        targetItem = item;
+        targetIndex = index;
+      }
+    });
+    
+    if (targetItem) {
+      // Calculate the position to center this item in the main gallery
+      const containerRect = this.container.parentElement.getBoundingClientRect();
+      const itemRect = targetItem.getBoundingClientRect();
+      const viewportCenter = containerRect.width / 2;
+      const itemCenter = itemRect.left - containerRect.left + itemRect.width / 2;
+      
+      // Calculate how much we need to scroll to center this item
+      const scrollAdjustment = itemCenter - viewportCenter;
+      const targetScrollX = this.scrollX + scrollAdjustment;
+      
+      // INSTANTLY set the main gallery position without animation
+      this.scrollX = targetScrollX;
+      this.smoothScrollX = targetScrollX;
+      this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
+      this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
+      
+      // Handle infinite scroll to ensure we're in the correct range
+      this.handleInfiniteScroll();
+    }
+  }
+
+  // Method to finalize main gallery position after close animation
+  finalizeMainGalleryPosition() {
+    if (!this.originalImages || this.originalImages.length === 0) return;
+    
+    // Find the current fullscreen image in the main gallery
+    const currentFullscreenImage = this.originalImages[this.currentOriginalIndex];
+    if (!currentFullscreenImage) return;
+    
+    // Find the slider item containing this image
+    const sliderItems = this.container.querySelectorAll('.slider-item');
+    let targetItem = null;
+    
+    sliderItems.forEach((item) => {
+      const img = item.querySelector('img');
+      if (img && img.src === currentFullscreenImage.src) {
+        targetItem = item;
+      }
+    });
+    
+    if (targetItem) {
+      // Calculate the position to center this item in the main gallery
+      const containerRect = this.container.parentElement.getBoundingClientRect();
+      const itemRect = targetItem.getBoundingClientRect();
+      const viewportCenter = containerRect.width / 2;
+      const itemCenter = itemRect.left - containerRect.left + itemRect.width / 2;
+      
+      // Check if the image is already centered (within 50px tolerance)
+      const isCentered = Math.abs(itemCenter - viewportCenter) < 50;
+      
+      if (!isCentered) {
+        // Calculate how much we need to scroll to center this item
+        const scrollAdjustment = itemCenter - viewportCenter;
+        const targetScrollX = this.scrollX + scrollAdjustment;
+        
+        // INSTANTLY set the main gallery position without animation
+        this.scrollX = targetScrollX;
+        this.smoothScrollX = targetScrollX;
+        this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
+        this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
+        
+        // Handle infinite scroll to ensure we're in the correct range
+        this.handleInfiniteScroll();
+      }
+    }
+  }
+
+  // Method to sync thumbnail gallery with main gallery movement - Centered Infinite Indicator
+  syncThumbnailsWithMainGallery(mainGalleryScrollX, mainGallerySmoothScrollX) {
+    if (!this.thumbnailsContainer) return;
+    
+    // Don't sync if user is dragging the thumbnail gallery
+    if (this.thumbnailsIsDragging && this.thumbnailsIsDragging()) return;
+    
+    const thumbnails = this.thumbnailsContainer.querySelectorAll('.fullscreen-thumbnail');
+    if (thumbnails.length === 0) return;
+    
+    // Get the main gallery container to calculate proper ratios
+    const mainGalleryContainer = document.querySelector('.slider-wrapper');
+    const mainGalleryItems = mainGalleryContainer.children;
+    const mainGalleryItemWidth = mainGalleryItems.length > 0 ? mainGalleryItems[0].offsetWidth : 300;
+    const mainGalleryTotalWidth = mainGalleryItems.length * mainGalleryItemWidth;
+    
+    const thumbnailWidth = thumbnails[0].offsetWidth + 24; // Thumbnail width + gap
+    const thumbnailGalleryWidth = thumbnails.length * thumbnailWidth;
+    
+    // Map main gallery position to thumbnail gallery position
+    // Use the smooth scroll position for smooth following
+    const ratio = thumbnailGalleryWidth / mainGalleryTotalWidth;
+    let targetScrollX = mainGallerySmoothScrollX * ratio;
+    
+    // Handle infinite scroll wrapping for sync
+    const sectionWidth = thumbnailGalleryWidth / 3; // Width of one complete set of thumbnails
+    
+    // If scrolling would go beyond bounds, wrap to the other side
+    if (targetScrollX > sectionWidth * 2) {
+      targetScrollX -= sectionWidth;
+    } else if (targetScrollX < sectionWidth) {
+      targetScrollX += sectionWidth;
+    }
+    
+    // Update the scrollX target for the thumbnail animation system
+    if (this.thumbnailsScrollX !== undefined) {
+      this.thumbnailsScrollX = targetScrollX;
+    }
+  }
+
+  updateFullscreenImage() {
+    if (!this.allFullscreenImages || !this.allFullscreenImages[this.currentFullscreenIndex]) return;
+    
+    const newImage = this.allFullscreenImages[this.currentFullscreenIndex];
+    const modalImg = this.modal.querySelector('img');
+    
+    if (modalImg && newImage) {
+      // Direct image replacement without fade animation
+      modalImg.src = newImage.src;
+      modalImg.alt = newImage.alt;
+      
+      // Update originalImage reference to current image
+      this.originalImage = newImage;
+      
+      // Update thumbnails immediately
+      this.updateThumbnails();
+    }
   }
 
   updateOriginalPosition() {
@@ -1922,10 +2873,14 @@ class InfiniteHorizontalScroll {
       // Position scrollX so the first slide center aligns with viewport center
       this.scrollX = firstSlideCenter - viewportCenter;
       this.smoothScrollX = this.scrollX;
+      
+      // Store the center position for infinite scroll logic
+      this.centerPosition = this.scrollX;
     } else {
       // Fallback to original behavior if no slides found
       this.scrollX = this.originalWidth;
       this.smoothScrollX = this.originalWidth;
+      this.centerPosition = this.originalWidth;
     }
     
     // Use smoothScrollX for the initial transform to ensure smooth animation
@@ -1936,6 +2891,10 @@ class InfiniteHorizontalScroll {
 
   init() {
     this.bindEvents();
+    
+    // Ensure we start at the correct position
+    this.handleInfiniteScroll();
+    
     this.animate();
     // Resize handling disabled to prevent gallery interference
     // window.addEventListener("resize", () => {
@@ -1979,6 +2938,17 @@ class InfiniteHorizontalScroll {
 
   handleKeydown(e) {
     if (e.key === "Escape" && this.isFullscreenOpen) {
+      // Remove cursor immediately when closing with Escape
+      if (window.cursor) {
+        window.cursor.classList.remove("slide-gallery");
+      }
+      
+      // Remove document-level mousemove handler immediately
+      if (this.fullscreenMouseMoveHandler) {
+        document.removeEventListener('mousemove', this.fullscreenMouseMoveHandler);
+        this.fullscreenMouseMoveHandler = null;
+      }
+      
       this.closeFullscreen();
     }
   }
@@ -2070,18 +3040,31 @@ class InfiniteHorizontalScroll {
   }
 
   handleInfiniteScroll() {
-    // Only wrap when we're deep enough into the clone sections to avoid visible jumps
-    const buffer = this.originalWidth * 0.1; // 10% buffer to ensure smooth transition
+    // Use the stored center position for consistent infinite scroll behavior
+    const buffer = this.originalWidth * 0.3; // 30% buffer to ensure smoother transition
+    
+    // Ensure we're always within the valid range before checking for wrapping
+    const minPosition = this.centerPosition - this.originalWidth * 0.5;
+    const maxPosition = this.centerPosition + this.originalWidth * 1.5;
     
     // If scrolled too far right (well into the "after" clones)
-    if (this.scrollX > this.originalWidth * 2 + buffer) {
+    if (this.scrollX > this.centerPosition + this.originalWidth + buffer) {
       this.scrollX -= this.originalWidth;
       this.smoothScrollX -= this.originalWidth;
     }
     // If scrolled too far left (well into the "before" clones)  
-    else if (this.scrollX < this.originalWidth - buffer) {
+    else if (this.scrollX < this.centerPosition - buffer) {
       this.scrollX += this.originalWidth;
       this.smoothScrollX += this.originalWidth;
+    }
+    
+    // Additional safety check to ensure we stay within bounds
+    if (this.scrollX < minPosition) {
+      this.scrollX = minPosition;
+      this.smoothScrollX = minPosition;
+    } else if (this.scrollX > maxPosition) {
+      this.scrollX = maxPosition;
+      this.smoothScrollX = maxPosition;
     }
   }
 
@@ -2089,12 +3072,13 @@ class InfiniteHorizontalScroll {
   scrollToSlide(direction) {
     if (!this.scrollEnabled || this.isFullscreenOpen) return;
     
-    // Get the middle section items (original items)
-    const startIndex = Math.floor(this.items.length / 3);
-    const endIndex = startIndex + this.originalItemCount;
-    const originalItems = this.items.slice(startIndex, endIndex);
+    // Ensure we're in the correct range before navigation
+    this.handleInfiniteScroll();
     
-    if (originalItems.length === 0) return;
+    // Get all items (including clones)
+    const allItems = Array.from(this.container.children);
+    
+    if (allItems.length === 0) return;
     
     // Get viewport center
     const containerRect = this.container.parentElement.getBoundingClientRect();
@@ -2104,7 +3088,7 @@ class InfiniteHorizontalScroll {
     let currentCenteredIndex = 0;
     let closestDistance = Infinity;
     
-    originalItems.forEach((slide, index) => {
+    allItems.forEach((slide, index) => {
       const slideRect = slide.getBoundingClientRect();
       const containerRect = this.container.parentElement.getBoundingClientRect();
       
@@ -2118,16 +3102,23 @@ class InfiniteHorizontalScroll {
       }
     });
     
-    // Calculate target slide index
+    // Calculate target slide index - always go to next/previous slide
     let targetIndex;
     if (direction === 'left') {
-      targetIndex = Math.max(0, currentCenteredIndex - 1);
+      targetIndex = currentCenteredIndex - 1;
     } else {
-      targetIndex = Math.min(originalItems.length - 1, currentCenteredIndex + 1);
+      targetIndex = currentCenteredIndex + 1;
+    }
+    
+    // Handle infinite loop by wrapping around
+    if (targetIndex < 0) {
+      targetIndex = allItems.length - 1;
+    } else if (targetIndex >= allItems.length) {
+      targetIndex = 0;
     }
     
     // Get target slide
-    const targetSlide = originalItems[targetIndex];
+    const targetSlide = allItems[targetIndex];
     if (!targetSlide) return;
     
     // Calculate exact position to center the target slide
@@ -2152,6 +3143,13 @@ class InfiniteHorizontalScroll {
       onComplete: () => {
         // Ensure we're exactly at the target position for pixel-perfect accuracy
         this.scrollX = targetPosition;
+        // Final check to ensure infinite scroll is properly applied
+        this.handleInfiniteScroll();
+        
+        // Additional safety check to ensure we're in the correct range
+        setTimeout(() => {
+          this.handleInfiniteScroll();
+        }, 50);
       }
     });
   }
@@ -2164,6 +3162,17 @@ class InfiniteHorizontalScroll {
       this.smoothScrollX += (this.scrollX - this.smoothScrollX) * this.lerp;
       this.container.style.transform = `translateX(${-this.smoothScrollX}px)`;
       this.container.style.webkitTransform = `translateX(${-this.smoothScrollX}px)`;
+
+      // Sync thumbnail gallery with main gallery movement
+      if (window.infinitySliderInstance && window.infinitySliderInstance.syncThumbnailsWithMainGallery) {
+        window.infinitySliderInstance.syncThumbnailsWithMainGallery(this.scrollX, this.smoothScrollX);
+      }
+      
+      // Also try to sync with any open fullscreen modal
+      const fullscreenModal = document.querySelector('.fullscreen-modal');
+      if (fullscreenModal && fullscreenModal.syncThumbnailsWithMainGallery) {
+        fullscreenModal.syncThumbnailsWithMainGallery(this.scrollX, this.smoothScrollX);
+      }
 
       // Remove snapping behavior for true infinite scroll
       // if (this.snapOnSettle && !this.isDragging && Math.abs(this.scrollX - this.smoothScrollX) < 0.5) {
