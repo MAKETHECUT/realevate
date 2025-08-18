@@ -1822,6 +1822,13 @@ video {
     height: 11vw;
     font-size: 6vw;
   }
+  
+  /* Hide expand icons on mobile */
+  .slider-item .expand-icon {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
 }
 
 
@@ -2001,7 +2008,7 @@ video {
 }
   
   .slider-item {
-    	height: 65vw;
+    	height: 95vw;
     min-width:80vw;
     max-width:80vw;
   }
