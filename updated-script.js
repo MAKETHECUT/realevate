@@ -775,7 +775,7 @@ if (typeof SplitText === 'undefined') return;
 const isMobile = window.innerWidth < 650;
 
 // If mobile, only select h1 elements, otherwise select all text elements
-const selector = isMobile ? "h1" : "h1, h2, h3, h4, h5, h6, p";
+const selector = isMobile ? "h1" : "h1, h2, h3, h4, h5, h6, p, .wg-list";
 const elements = scope.querySelectorAll(selector);
 
 elements.forEach((element) => {
