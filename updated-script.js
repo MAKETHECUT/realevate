@@ -677,11 +677,25 @@ function initPageTransitions() {
   });
 
   window.addEventListener('popstate', () => {
+      // Clean up any existing pending navigation
+      if (window.pendingNavigation) {
+          window.pendingNavigation = null;
+      }
+      
       if (window.transitioning) {
           pendingNavigation = { url: location.href, isPopState: true };
           return;
       }
-      handleNavigation(location.href, true);
+      
+      // Prevent double navigation for popstate
+      if (window.lastPopStateUrl === location.href) {
+          return;
+      }
+      
+      // Make sure we're navigating to the correct URL
+      const targetUrl = location.href;
+      window.lastPopStateUrl = targetUrl;
+      handleNavigation(targetUrl, true);
   });
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -4308,6 +4322,11 @@ if (radioButton) {
 
 
 function globalPageTransition(url, isPopState = false) {
+  // Clean up any existing pending navigation
+  if (window.pendingNavigation) {
+    window.pendingNavigation = null;
+  }
+  
   if (window.transitioning) {
     window.pendingNavigation = { url, isPopState };
     return;
@@ -4318,6 +4337,7 @@ function globalPageTransition(url, isPopState = false) {
   window.isInitializing = false;
   window.functionsInitialized = false;
   window.screenFullyCovered = false;
+  window.lastPopStateUrl = null;
 
   window.transitioning = true;
   window.isPageTransition = true;
@@ -4393,6 +4413,11 @@ const transitionPromise = new Promise((resolve) => {
       // Update URL to match the new page (important for Webflow forms)
       if (!isPopState) {
         window.history.pushState({ title: document.title }, '', url);
+      } else {
+        // For popstate, make sure we're on the correct URL
+        if (window.location.href !== url) {
+          window.history.replaceState({ title: document.title }, '', url);
+        }
       }
 
       // Load the new content
@@ -4499,6 +4524,11 @@ const transitionPromise = new Promise((resolve) => {
           }
         }
         
+        // Ensure URL is correct after transition
+        if (window.location.href !== url) {
+          window.history.replaceState({ title: document.title }, '', url);
+        }
+        
         // Reset cursor
         gsap.set(cursor, { scale: 0, visibility: "visible" });
         gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
@@ -4568,6 +4598,7 @@ const transitionPromise = new Promise((resolve) => {
         }
         window.functionsInitialized = false;
         window.screenFullyCovered = false;
+        window.lastPopStateUrl = null;
         
 
 
