@@ -15,6 +15,7 @@ async function loadAllLibraries() {
   await loadScript("https://gsapfiles.netlify.app/scrolltrigger.min.js");
   await loadScript("https://gsapfiles.netlify.app/splittext.min.js");
   await loadScript("https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.7.8/lottie.min.js");
+  await loadScript("https://cdn.weglot.com/weglot.min.js");
 }
 
 
@@ -35,6 +36,13 @@ async function startApp() {
       s.setAttribute("src", "https://cdn.userway.org/widget.js");
       (d.body || d.head).appendChild(s);
     })(document);
+
+    // Initialize Weglot translation
+    if (typeof Weglot !== 'undefined') {
+      Weglot.initialize({
+        api_key: 'wg_1c3038e9f31f27c8adf1e1979a62aea89'
+      });
+    }
 
     // Start the loader animation
     animateLoaderCounter(() => {
@@ -4750,7 +4758,6 @@ function replaceWebflowForms() {
     webflowForm.parentNode.replaceChild(customForm, webflowForm);
   });
 }
-
 
 
 
