@@ -75,6 +75,13 @@ document.addEventListener("DOMContentLoaded", startApp);
 
 // פונקציה לאתחול כל הפונקציות
 function initializeAllFunctions() {
+  // Prevent multiple simultaneous initializations
+  if (window.isInitializing) {
+    return;
+  }
+  
+  window.isInitializing = true;
+  
   INIT_FUNCTIONS.forEach(funcName => {
     try {
       if (funcName === 'initHomeVideo') {
@@ -107,7 +114,8 @@ function initializeAllFunctions() {
     ScrollTrigger.refresh(true);
   }
   
-
+  // Mark initialization as complete
+  window.isInitializing = false;
 
 }
 
@@ -838,6 +846,12 @@ Page GSAP Animations
 
 
 function initGsapAnimations() {
+  // Prevent multiple initializations
+  if (window.gsapAnimationsInitialized) {
+    return;
+  }
+  
+  window.gsapAnimationsInitialized = true;
 
 // Common animations for all pages
 gsap.fromTo(".clipping-video", 
@@ -1196,7 +1210,15 @@ homeContainers.forEach((container, index) => {
 
 }
 
-
+// Verify ScrollTriggers were created
+if (typeof ScrollTrigger !== 'undefined') {
+  setTimeout(() => {
+    const createdTriggers = ScrollTrigger.getAll();
+    if (createdTriggers.length === 0) {
+      // No ScrollTriggers created in initGsapAnimations
+    }
+  }, 100);
+}
 
 }
 
@@ -4291,6 +4313,12 @@ function globalPageTransition(url, isPopState = false) {
     return;
   }
 
+  // Reset initialization flags
+  window.gsapAnimationsInitialized = false;
+  window.isInitializing = false;
+  window.functionsInitialized = false;
+  window.screenFullyCovered = false;
+
   window.transitioning = true;
   window.isPageTransition = true;
 
@@ -4308,6 +4336,8 @@ const transitionPromise = new Promise((resolve) => {
   tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
   tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
   tl.set(cursor, { visibility: "hidden" }, 0.2);
+  
+
 });
 
 
@@ -4328,6 +4358,11 @@ const transitionPromise = new Promise((resolve) => {
     .then(([_, nextPage]) => {
       const container = document.querySelector('.page-wrapper');
       if (!container) return;
+
+
+
+      // Store the new page data for later use (after transition animation completes)
+      window.pendingPageData = nextPage;
 
       const newTitle = nextPage.doc.querySelector('title');
       if (newTitle) document.title = newTitle.textContent;
@@ -4360,7 +4395,8 @@ const transitionPromise = new Promise((resolve) => {
         window.history.pushState({ title: document.title }, '', url);
       }
 
-              container.innerHTML = nextPage.nextWrapper.innerHTML;
+      // Load the new content
+      container.innerHTML = nextPage.nextWrapper.innerHTML;
 
       const scripts = container.querySelectorAll('script');
       scripts.forEach(old => {
@@ -4370,44 +4406,52 @@ const transitionPromise = new Promise((resolve) => {
         old.replaceWith(s);
       });
 
-      // Initialize functions immediately to prevent delay
-      if (typeof initializeAllFunctions === 'function') {
-        initializeAllFunctions();
+      // Force DOM update
+      document.documentElement.offsetHeight; // Force reflow
+      
+      // Refresh ScrollTriggers immediately with multiple attempts
+      if (typeof ScrollTrigger !== 'undefined') {
+        // First refresh
+        setTimeout(() => {
+          ScrollTrigger.refresh(true);
+          
+          // Second refresh after a bit more time to ensure everything is loaded
+          setTimeout(() => {
+            ScrollTrigger.refresh(true);
+            
+            // Check if ScrollTriggers are working
+            const activeTriggers = ScrollTrigger.getAll();
+            
+            // If no triggers found, try one more time
+            if (activeTriggers.length === 0) {
+              setTimeout(() => {
+                ScrollTrigger.refresh(true);
+              }, 200);
+            }
+          }, 100);
+        }, 50);
       }
       
-      // Force Webflow to recognize the new page immediately
-      if (window.Webflow) {
-        try {
-          window.Webflow.ready();
-        } catch (e) {
-          console.log('Webflow re-initialized');
-        }
-      }
-      
-      // Replace Webflow forms with custom ones - with delay
-      setTimeout(() => {
-        console.log('Replacing Webflow forms...');
-        replaceWebflowForms();
-        
-        // Test if forms are working
-        const forms = document.querySelectorAll('form[data-wf-form]');
-        console.log('Found', forms.length, 'Webflow forms');
-        
-        const customForms = document.querySelectorAll('form[id*="wf-form"], form[id*="footer-form"]');
-        console.log('Found', customForms.length, 'custom forms');
-        
-        customForms.forEach(form => {
-          const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
-          if (submitButton) {
-            console.log('Submit button found:', submitButton);
-            // Force button to be clickable
-            submitButton.style.pointerEvents = 'auto';
-            submitButton.style.cursor = 'pointer';
-            submitButton.disabled = false;
-            submitButton.removeAttribute('disabled');
-          }
-        });
-      }, 500);
+              // Replace Webflow forms with custom ones - with delay
+        setTimeout(() => {
+          replaceWebflowForms();
+          
+          // Test if forms are working
+          const forms = document.querySelectorAll('form[data-wf-form]');
+          
+          const customForms = document.querySelectorAll('form[id*="wf-form"], form[id*="footer-form"]');
+          
+          customForms.forEach(form => {
+            const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+            if (submitButton) {
+              // Force button to be clickable
+              submitButton.style.pointerEvents = 'auto';
+              submitButton.style.cursor = 'pointer';
+              submitButton.disabled = false;
+              submitButton.removeAttribute('disabled');
+            }
+          });
+        }, 500);
 
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
@@ -4422,6 +4466,18 @@ const transitionPromise = new Promise((resolve) => {
 
 
       const tl = gsap.timeline();
+      
+      // Initialize functions at the start of the reverse animation (1 second earlier)
+      tl.call(() => {
+        if (typeof initializeAllFunctions === 'function') {
+          initializeAllFunctions();
+        }
+        
+        if (typeof ScrollTrigger !== 'undefined') {
+          ScrollTrigger.refresh(true);
+        }
+      }, null, null, 0);
+      
     tl.to(swipeup, {
       duration: 0.6,
       ease: 'power4.in',
@@ -4433,6 +4489,16 @@ const transitionPromise = new Promise((resolve) => {
       ease: 'power2',
       attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' },
       onComplete: () => {
+        
+        // Force Webflow to recognize the new page
+        if (window.Webflow) {
+          try {
+            window.Webflow.ready();
+          } catch (e) {
+            // Webflow re-initialized
+          }
+        }
+        
         // Reset cursor
         gsap.set(cursor, { scale: 0, visibility: "visible" });
         gsap.set(".header .logo img, .header .menu a", { yPercent: 130 });
@@ -4454,40 +4520,38 @@ const transitionPromise = new Promise((resolve) => {
           setTimeout(() => initHomeVideo(true), 100);
         }
 
+        // Final GSAP refresh to ensure all animations are properly initialized
+        if (typeof ScrollTrigger !== 'undefined') {
+          setTimeout(() => {
+            ScrollTrigger.refresh(true);
+          }, 100);
+        }
+
         // Final Webflow re-initialization to ensure forms work
         if (window.Webflow) {
           try {
             window.Webflow.ready();
           } catch (e) {
-            console.log('Final Webflow re-initialization');
+            // Final Webflow re-initialization
           }
         }
         
         // Replace any remaining Webflow forms with delay
         setTimeout(() => {
-          console.log('Final form replacement...');
           replaceWebflowForms();
           
           // Final test of forms
           setTimeout(() => {
             const allForms = document.querySelectorAll('form');
-            console.log('All forms found:', allForms.length);
             
             allForms.forEach((form, index) => {
-              console.log('Form', index, ':', form.id, form.className);
               const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
               if (submitButton) {
-                console.log('Form', index, 'submit button:', submitButton);
                 // Force button to be clickable
                 submitButton.style.pointerEvents = 'auto';
                 submitButton.style.cursor = 'pointer';
                 submitButton.disabled = false;
                 submitButton.removeAttribute('disabled');
-                
-                // Add click test
-                submitButton.addEventListener('click', function(e) {
-                  console.log('Button clicked! Form:', form.id);
-                });
               }
             });
           }, 200);
@@ -4497,6 +4561,15 @@ const transitionPromise = new Promise((resolve) => {
         transition.style.visibility = 'hidden';
         window.transitioning = false;
         window.isPageTransition = false;
+        
+        // Clear pending page data and reset flags
+        if (window.pendingPageData) {
+          delete window.pendingPageData;
+        }
+        window.functionsInitialized = false;
+        window.screenFullyCovered = false;
+        
+
 
         if (window.pendingNavigation) {
           const { url, isPopState } = window.pendingNavigation;
@@ -4713,7 +4786,6 @@ function replaceWebflowForms() {
     webflowForm.parentNode.replaceChild(customForm, webflowForm);
   });
 }
-
 
 
 
