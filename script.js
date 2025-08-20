@@ -689,6 +689,39 @@ window.pageTransition = async function(url, isPopState = false) {
       container.innerHTML = newContent;
       document.title = newTitle;
 
+      // Re-execute scripts in the new content
+      const scripts = container.querySelectorAll('script');
+      scripts.forEach(old => {
+        const s = document.createElement('script');
+        for (const a of old.attributes) s.setAttribute(a.name, a.value);
+        s.textContent = old.textContent;
+        old.replaceWith(s);
+      });
+
+      // Update Webflow data attributes
+      const wfPage = doc.documentElement.getAttribute('data-wf-page');
+      if (wfPage) {
+        document.documentElement.setAttribute('data-wf-page', wfPage);
+      }
+
+      // Update all data attributes from the new page
+      const newHtmlElement = doc.documentElement;
+      const currentHtmlElement = document.documentElement;
+      Array.from(newHtmlElement.attributes).forEach(attr => {
+        if (attr.name.startsWith('data-')) {
+          currentHtmlElement.setAttribute(attr.name, attr.value);
+        }
+      });
+
+      // Update body attributes as well
+      const newBody = doc.body;
+      const currentBody = document.body;
+      Array.from(newBody.attributes).forEach(attr => {
+        if (attr.name.startsWith('data-') || attr.name === 'class') {
+          currentBody.setAttribute(attr.name, attr.value);
+        }
+      });
+
       // Update URL if not popstate
       if (!isPopState) {
         window.history.pushState({ path: url }, newTitle, url);
@@ -701,6 +734,81 @@ window.pageTransition = async function(url, isPopState = false) {
       if (typeof initializeAllFunctions === 'function') {
         initializeAllFunctions();
       }
+
+      // Force Webflow to recognize the new page
+      if (window.Webflow) {
+        try {
+          window.Webflow.ready();
+        } catch (e) {
+          // Webflow re-initialized
+        }
+      }
+
+      // Final Webflow re-initialization to ensure forms work
+      setTimeout(() => {
+        if (window.Webflow) {
+          try {
+            window.Webflow.ready();
+          } catch (e) {
+            // Final Webflow re-initialization
+          }
+        }
+        
+        // Replace any remaining Webflow forms with delay
+        setTimeout(() => {
+          if (typeof replaceWebflowForms === 'function') {
+            replaceWebflowForms();
+          }
+          
+          // Final test of forms
+          setTimeout(() => {
+            const allForms = document.querySelectorAll('form');
+            
+            allForms.forEach((form, index) => {
+              const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+              if (submitButton) {
+                submitButton.style.pointerEvents = 'auto';
+                submitButton.style.cursor = 'pointer';
+                submitButton.disabled = false;
+                submitButton.removeAttribute('disabled');
+              }
+            });
+          }, 200);
+        }, 200);
+      }, 200);
+
+      // Refresh ScrollTriggers
+      if (typeof ScrollTrigger !== 'undefined') {
+        setTimeout(() => {
+          ScrollTrigger.refresh(true);
+          
+          // Second refresh after a bit more time to ensure everything is loaded
+          setTimeout(() => {
+            ScrollTrigger.refresh(true);
+          }, 100);
+        }, 50);
+      }
+
+      // Replace Webflow forms with custom ones
+      setTimeout(() => {
+        if (typeof replaceWebflowForms === 'function') {
+          replaceWebflowForms();
+        }
+        
+        // Test if forms are working
+        const forms = document.querySelectorAll('form[data-wf-form]');
+        const customForms = document.querySelectorAll('form[id*="wf-form"], form[id*="footer-form"]');
+        
+        customForms.forEach(form => {
+          const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
+          if (submitButton) {
+            submitButton.style.pointerEvents = 'auto';
+            submitButton.style.cursor = 'pointer';
+            submitButton.disabled = false;
+            submitButton.removeAttribute('disabled');
+          }
+        });
+      }, 100);
 
     } catch (error) {
       window.transitioning = false;
