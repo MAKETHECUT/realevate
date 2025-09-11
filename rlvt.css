@@ -3276,6 +3276,7 @@ body.en-page .w-dyn-item * {
 }
 
 body.en-page p,
-body.en-page h3 {
-    direction: ltr;
+body.en-page h3,
+body.en-page footer * {
+    direction: ltr!important;
 }
