@@ -1446,7 +1446,7 @@ video {
   margin: auto;
   display: grid;
   grid-gap: 6vw;
-  margin-bottom: 10vw;
+  padding: 10vw 0;
 }
 
 
@@ -2657,6 +2657,37 @@ body .uwy.userway_p3 .userway_buttons_wrapper {
 	font-size: 3.183vw;
   line-height: 1.1;
   letter-spacing: -0.12vw;
+}
+
+.our-partners {
+    top: 0vw;
+    left: 0vw;
+    width: var(--global-th-desktop);
+    background-color: var(--lightgrey);
+    z-index: 2;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 100vw;
+    padding: 3.819vw;
+}
+
+.footer {
+    width: var(--global-th-desktop);
+    background-color: var(--lightgrey);
+    z-index:99;
+}
+
+section:has(.bottom-cta) {
+    width: var(--global-th-desktop);
+    background-color: var(--lightgrey);
+    z-index:99;
+}
+
+section:has(.footer) {
+  margin:0;
+  padding:0;
+  margin-top: -15vw;
 }
 
 .partners-block {
