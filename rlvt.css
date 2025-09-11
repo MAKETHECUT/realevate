@@ -2687,7 +2687,7 @@ body .uwy.userway_p3 .userway_buttons_wrapper {
 section:has(.bottom-cta) {
     width: var(--global-th-desktop);
     background-color: var(--lightgrey);
-    z-index:99;
+    /*z-index:99;*/
 }
 
 
