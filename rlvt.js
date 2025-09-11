@@ -745,9 +745,16 @@ function loadScript(src) {
             setTimeout(() => {
               ScrollTrigger.refresh(true);
               
-              // Reinitialize sticky cards if they exist on the new page
+              // Reinitialize sticky cards if they exist on the new page with debounce
               if (document.querySelectorAll('.home-container').length > 1 && typeof initStickyCards === 'function') {
-                initStickyCards();
+                // Clear any existing timeout
+                if (window.stickyCardsTimeout) {
+                  clearTimeout(window.stickyCardsTimeout);
+                }
+                // Debounce the initialization
+                window.stickyCardsTimeout = setTimeout(() => {
+                  initStickyCards();
+                }, 150);
               }
             }, 100);
           }, 50);
@@ -821,9 +828,22 @@ function loadScript(src) {
   // Cleanup function (global)
   window.cleanupPage = function() {
       if (gsap && gsap.ScrollTrigger) {
+        // Kill all tweens first
         gsap.killTweensOf("*");
-        gsap.ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+        
+        // Kill all ScrollTriggers with more aggressive cleanup
+        ScrollTrigger.getAll().forEach(trigger => {
+          try {
+            trigger.kill();
+          } catch (e) {
+            // Ignore errors during cleanup
+          }
+        });
+        
+        // Clear GSAP and force ScrollTrigger batch update
         gsap.clear();
+        ScrollTrigger.batch([]);
+        ScrollTrigger.clearMatchMedia();
       }
   
       // Reset flags
@@ -839,6 +859,12 @@ function loadScript(src) {
       if (window.currentTransition) {
         window.currentTransition.kill();
         window.currentTransition = null;
+      }
+      
+      // Clear sticky cards timeout
+      if (window.stickyCardsTimeout) {
+        clearTimeout(window.stickyCardsTimeout);
+        window.stickyCardsTimeout = null;
       }
       
       // Clean up interactive elements
@@ -1054,15 +1080,18 @@ Sticky Cards Animation
 ============================================== */
 
 function initStickyCards() {
-  // Prevent multiple initializations
-  if (window.stickyCardsInitialized) {
-    return;
+  // Kill any existing sticky card ScrollTriggers first
+  if (typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.getAll().forEach(trigger => {
+      if (trigger.vars && trigger.vars.trigger && trigger.vars.trigger.classList.contains('home-container')) {
+        trigger.kill();
+      }
+    });
   }
   
   // Sticky stacking cards effect
   const homeContainers = document.querySelectorAll('.home-container');
   if (homeContainers.length > 1) {
-    window.stickyCardsInitialized = true;
     homeContainers.forEach((container, index) => {
       gsap.set(container, { zIndex: index + 1 });
       
@@ -1073,21 +1102,29 @@ function initStickyCards() {
         pin: true,
         pinSpacing: index <= 3 ? false : true,
         invalidateOnRefresh: true,
+        refreshPriority: -1,
+        id: `sticky-card-${index}`,
         onUpdate: index <= 3 ? (self) => {
-          gsap.set(container, {
-            '--after-opacity': self.progress * 0.2
-          });
-          
-          // Animate content and image during exit
-          const content = container.querySelector('.content');
-          const image = container.querySelector('.image');
-          if (content && image) {
-            gsap.to([content, image], {
-              y: self.progress * 200,
-              scale: 1 - (self.progress * 0.2),
-              ease: "power2.out",
-              duration: 0.5
+          // Throttle updates during fast scrolling
+          if (!container._lastUpdate || Date.now() - container._lastUpdate > 16) {
+            container._lastUpdate = Date.now();
+            
+            gsap.set(container, {
+              '--after-opacity': self.progress * 0.2
             });
+            
+            // Animate content and image during exit
+            const content = container.querySelector('.content');
+            const image = container.querySelector('.image');
+            if (content && image) {
+              gsap.to([content, image], {
+                y: self.progress * 200,
+                scale: 1 - (self.progress * 0.2),
+                ease: "power2.out",
+                duration: 0.5,
+                overwrite: true
+              });
+            }
           }
         } : null
       });
@@ -1095,7 +1132,7 @@ function initStickyCards() {
     
     const homeImages = document.querySelectorAll('.home-container .image');
     
-    homeImages.forEach(image => {
+    homeImages.forEach((image, index) => {
       gsap.from(image, {
         clipPath: "inset(10% 10% 10% 10%)",
         duration: 1.2,
@@ -1106,10 +1143,17 @@ function initStickyCards() {
           end: "bottom 0%",
           scrub: 1.2,
           toggleActions: "play none none none",
-          invalidateOnRefresh: true
+          invalidateOnRefresh: true,
+          id: `sticky-image-${index}`,
+          refreshPriority: -1
         }
       });
     });
+    
+    // Force a ScrollTrigger refresh after all are created
+    if (typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.refresh();
+    }
   }
 }
 
