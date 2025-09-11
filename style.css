@@ -2043,7 +2043,8 @@ video {
   justify-content: center;
   overflow: hidden;
   position: relative;
-  height: 35vw;
+  min-height: 40vw;
+  max-height: 40vw;
   width: 100%;
   margin-bottom:4vw;
 }
@@ -2147,7 +2148,8 @@ video {
 @media (max-width: 650px) {
 
   .footer-image {
-    height:45vw;
+    min-height: 50vw;
+    max-height: 50vw;
   }
 
   .footer-sitemap {
