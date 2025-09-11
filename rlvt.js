@@ -1715,7 +1715,7 @@ function initGsapAnimations() {
         window.navbarShowHide = null;
     }
   
-    const navElements = document.querySelectorAll(".header");
+    const navElements = document.querySelectorAll(".header, .language-switcher");
     let lastScrollTop = 0;
     const isMobile = window.innerWidth < 650;
     const hideY = isMobile ? "-20vw" : "-8vw";
