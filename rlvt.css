@@ -3245,3 +3245,22 @@ Display Toggle and Gallery View Styles
   border: 0.05vw solid var(--darkgrey);
   border-radius: 0.5vw;
 }
+
+@media (max-width: 650px) {
+    .langauge-switcher {
+        position: fixed;
+        top: 6vw;
+        right: 26vw;
+        z-index:10;
+    }
+    .wg-list.country-selector .wgcurrent {
+        padding: 1vw 1vw;
+    }
+    .counter-selector {
+        display: flex;
+        grid-gap: 2.5vw;
+    }
+    .country-selector .wg-li {
+        font-size: 4vw;
+      }
+}
