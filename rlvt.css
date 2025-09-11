@@ -3277,6 +3277,11 @@ body.en-page .w-dyn-item * {
 
 body.en-page p,
 body.en-page h3,
-body.en-page footer * {
+body.en-page footer *,
+body.en-page .contact-grid * {
     direction: ltr!important;
+}
+
+body.en-page .w-select {
+    background-position: right center!important;
 }
