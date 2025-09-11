@@ -130,21 +130,21 @@ function loadScript(src) {
   function initLanguageSwitcherMobile() {
     const languageSwitcher = document.querySelector('.langauge-switcher');
     const menu = document.querySelector('.header .menu');
-    const header = document.querySelector('.header .grid');
+    const body = document.body;
     
-    if (!languageSwitcher || !menu || !header) return;
+    if (!languageSwitcher || !menu || !body) return;
     
     function handleLanguageSwitcherPosition() {
       const isMobile = window.innerWidth <= 650;
       
       if (isMobile) {
-        // Move language switcher directly to header on mobile (outside menu)
+        // Move language switcher directly to body on mobile (outside menu)
         if (languageSwitcher.parentElement === menu) {
-          header.appendChild(languageSwitcher);
+          body.appendChild(languageSwitcher);
         }
       } else {
         // Move language switcher back inside menu on desktop
-        if (languageSwitcher.parentElement === header) {
+        if (languageSwitcher.parentElement === body) {
           menu.appendChild(languageSwitcher);
         }
       }
