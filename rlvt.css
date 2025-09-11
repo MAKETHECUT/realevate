@@ -3268,3 +3268,12 @@ Display Toggle and Gallery View Styles
         font-size: 4vw;
       }
 }
+
+/* English language styles - only for /en URLs */
+body.en-page .w-dyn-item * {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+
+
