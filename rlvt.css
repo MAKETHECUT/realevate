@@ -3257,8 +3257,8 @@ Display Toggle and Gallery View Styles
         padding: 1vw 1vw;
     }
     .counter-selector {
-        display: flex;
-        grid-gap: 2.5vw;
+        display: flex!important;
+        grid-gap: 2.5vw!important;
     }
     .country-selector .wg-li {
         font-size: 4vw;
