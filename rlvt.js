@@ -65,6 +65,7 @@ function loadScript(src) {
       'initInfinityGallery',
       'initDisplayToggle',
       'initGsapAnimations',
+      'initStickyCards',
       'initSplitTextAnimations',
       'initCustomSmoothScrolling',
       'initTypeListRadioHandler',
@@ -743,6 +744,11 @@ function loadScript(src) {
             // Second refresh after a bit more time to ensure everything is loaded
             setTimeout(() => {
               ScrollTrigger.refresh(true);
+              
+              // Reinitialize sticky cards if they exist on the new page
+              if (document.querySelectorAll('.home-container').length > 1 && typeof initStickyCards === 'function') {
+                initStickyCards();
+              }
             }, 100);
           }, 50);
         }
@@ -822,6 +828,7 @@ function loadScript(src) {
   
       // Reset flags
       window.gsapAnimationsInitialized = false;
+      window.stickyCardsInitialized = false;
       window.isInitializing = false;
       window.functionsInitialized = false;
       window.screenFullyCovered = false;
@@ -1042,12 +1049,76 @@ function loadScript(src) {
   
   
   
-  /* ==============================================
-  Page GSAP Animations
-  ============================================== */
+/* ==============================================
+Sticky Cards Animation
+============================================== */
+
+function initStickyCards() {
+  // Prevent multiple initializations
+  if (window.stickyCardsInitialized) {
+    return;
+  }
   
-  
-  function initGsapAnimations() {
+  // Sticky stacking cards effect
+  const homeContainers = document.querySelectorAll('.home-container');
+  if (homeContainers.length > 1) {
+    window.stickyCardsInitialized = true;
+    homeContainers.forEach((container, index) => {
+      gsap.set(container, { zIndex: index + 1 });
+      
+      ScrollTrigger.create({
+        trigger: container,
+        start: "top top", 
+        end: index <= 3 ? `+=${window.innerHeight * 2}` : "bottom bottom",
+        pin: true,
+        pinSpacing: index <= 3 ? false : true,
+        invalidateOnRefresh: true,
+        onUpdate: index <= 3 ? (self) => {
+          gsap.set(container, {
+            '--after-opacity': self.progress * 0.2
+          });
+          
+          // Animate content and image during exit
+          const content = container.querySelector('.content');
+          const image = container.querySelector('.image');
+          if (content && image) {
+            gsap.to([content, image], {
+              y: self.progress * 200,
+              scale: 1 - (self.progress * 0.2),
+              ease: "power2.out",
+              duration: 0.5
+            });
+          }
+        } : null
+      });
+    });
+    
+    const homeImages = document.querySelectorAll('.home-container .image');
+    
+    homeImages.forEach(image => {
+      gsap.from(image, {
+        clipPath: "inset(10% 10% 10% 10%)",
+        duration: 1.2,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: image,
+          start: "top 100%",
+          end: "bottom 0%",
+          scrub: 1.2,
+          toggleActions: "play none none none",
+          invalidateOnRefresh: true
+        }
+      });
+    });
+  }
+}
+
+/* ==============================================
+Page GSAP Animations
+============================================== */
+
+
+function initGsapAnimations() {
     // Prevent multiple initializations
     if (window.gsapAnimationsInitialized) {
       return;
@@ -1361,56 +1432,8 @@ function loadScript(src) {
   });
   
   
-  // Sticky stacking cards effect
-  const homeContainers = document.querySelectorAll('.home-container');
-  if (homeContainers.length > 1) {
-  homeContainers.forEach((container, index) => {
-    gsap.set(container, { zIndex: index + 1 });
-    
-    ScrollTrigger.create({
-      trigger: container,
-      start: "top top", 
-      end: index <= 3 ? `+=${window.innerHeight * 2}` : "bottom bottom",
-      pin: true,
-      pinSpacing: index <= 3 ? false : true,
-      onUpdate: index <= 3 ? (self) => {
-        gsap.set(container, {
-          '--after-opacity': self.progress * 0.2
-        });
-        
-        // Animate content and image during exit
-        const content = container.querySelector('.content');
-        const image = container.querySelector('.image');
-        if (content && image) {
-          gsap.to([content, image], {
-            y: self.progress * 200,
-            scale: 1 - (self.progress * 0.2),
-            ease: "power2.out",
-            duration: 0.5
-          });
-        }
-      } : null
-    });
-  });
-    const homeImages = document.querySelectorAll('.home-container .image');
-    
-    homeImages.forEach(image => {
-      gsap.from(image, {
-        clipPath: "inset(10% 10% 10% 10%)",
-        duration: 1.2,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: image,
-          start: "top 100%",
-          end: "bottom 0%",
-          scrub: 1.2,
-          toggleActions: "play none none none"
-        }
-      });
-    });
-  
-  
-  }
+  // Initialize sticky cards functionality
+  initStickyCards();
   
   // Verify ScrollTriggers were created
   if (typeof ScrollTrigger !== 'undefined') {
