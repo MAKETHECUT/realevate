@@ -73,7 +73,8 @@ function loadScript(src) {
       'initHomeVideo',
       'moveShowAllIntoCollectionList',
       'reloadFinsweetCMS',
-      'handleProjectsPageFilterChanges'
+      'handleProjectsPageFilterChanges',
+      'initLanguageSwitcherMobile'
     ];
   
   // פונקציה לאתחול כל הפונקציות
@@ -124,6 +125,37 @@ function loadScript(src) {
   
   // Make function globally available for debugging
   window.initializeAllFunctions = initializeAllFunctions;
+  
+  // Function to handle language switcher positioning on mobile
+  function initLanguageSwitcherMobile() {
+    const languageSwitcher = document.querySelector('.langauge-switcher');
+    const menu = document.querySelector('.header .menu');
+    const header = document.querySelector('.header .grid');
+    
+    if (!languageSwitcher || !menu || !header) return;
+    
+    function handleLanguageSwitcherPosition() {
+      const isMobile = window.innerWidth <= 650;
+      
+      if (isMobile) {
+        // Move language switcher directly to header on mobile (outside menu)
+        if (languageSwitcher.parentElement === menu) {
+          header.appendChild(languageSwitcher);
+        }
+      } else {
+        // Move language switcher back inside menu on desktop
+        if (languageSwitcher.parentElement === header) {
+          menu.appendChild(languageSwitcher);
+        }
+      }
+    }
+    
+    // Initial positioning
+    handleLanguageSwitcherPosition();
+    
+    // Handle resize
+    window.addEventListener('resize', handleLanguageSwitcherPosition);
+  }
   
   window.history.scrollRestoration = "manual";
   
@@ -619,10 +651,10 @@ function loadScript(src) {
       
       tl.set(transition, { display: 'block', visibility: 'visible', opacity: 1 });
       tl.set(swipeup, { autoAlpha: 1, attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-      tl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
-      tl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
-      tl.to(".header .logo img, .header .menu a, .country-selector", { yPercent: -130, duration: 0.5, stagger: 0.06, ease: "power1.out" }, 0);
-      tl.to(".menu-toggle", { opacity: 0, duration: 0.5, ease: "power1.out" }, 0);
+      tl.to(swipeup, { duration: 0.4, ease: 'power3.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 0 1 0.5 V 1 z' } });
+      tl.to(swipeup, { duration: 0.33, ease: 'power3.out', attr: { d: 'M 0 1 V 0 Q 0.5 0 1 0 V 1 z' } });
+      tl.to(".header .logo img, .header .menu a, .country-selector", { yPercent: -130, duration: 0.4, stagger: 0.06, ease: "power1.out" }, 0);
+      tl.to(".menu-toggle", { opacity: 0, duration: 0.4, ease: "power1.out" }, 0);
       tl.to(cursor, { scale: 0, duration: 0.2, ease: "power2.out" }, 0);
       tl.set(cursor, { visibility: "hidden" }, 0.2);
   
@@ -745,16 +777,9 @@ function loadScript(src) {
             setTimeout(() => {
               ScrollTrigger.refresh(true);
               
-              // Reinitialize sticky cards if they exist on the new page with debounce
+              // Reinitialize sticky cards if they exist on the new page
               if (document.querySelectorAll('.home-container').length > 1 && typeof initStickyCards === 'function') {
-                // Clear any existing timeout
-                if (window.stickyCardsTimeout) {
-                  clearTimeout(window.stickyCardsTimeout);
-                }
-                // Debounce the initialization
-                window.stickyCardsTimeout = setTimeout(() => {
-                  initStickyCards();
-                }, 150);
+                initStickyCards();
               }
             }, 100);
           }, 50);
@@ -801,9 +826,9 @@ function loadScript(src) {
       const outTl = gsap.timeline();
       window.currentTransition = outTl; // Update reference for interruption
       
-      outTl.to(swipeup, { duration: 0.6, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' } });
-      outTl.to(swipeup, { duration: 0.4, ease: 'power2', attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
-      outTl.to(".header .logo img, .header .menu a, .country-selector", { yPercent: 0, duration: 0.6, ease: "power1.out" }, 0);
+      outTl.to(swipeup, { duration: 0.5, ease: 'power4.in', attr: { d: 'M 0 1 V 0.5 Q 0.5 1 1 0.5 V 1 z' } });
+      outTl.to(swipeup, { duration: 0.3, ease: 'power2', attr: { d: 'M 0 1 V 1 Q 0.5 1 1 1 V 1 z' } });
+      outTl.to(".header .logo img, .header .menu a, .country-selector", { yPercent: 0, duration: 0.5, ease: "power1.out" }, 0);
       outTl.to(".menu-toggle", { opacity: 1, duration: 1.5, ease: "power2.out" }, 0);
       outTl.to(cursor, { scale: 1, duration: 0.4, ease: "power2.out" }, 0);
       outTl.set(cursor, { visibility: "visible" }, 0);
@@ -828,22 +853,9 @@ function loadScript(src) {
   // Cleanup function (global)
   window.cleanupPage = function() {
       if (gsap && gsap.ScrollTrigger) {
-        // Kill all tweens first
         gsap.killTweensOf("*");
-        
-        // Kill all ScrollTriggers with more aggressive cleanup
-        ScrollTrigger.getAll().forEach(trigger => {
-          try {
-            trigger.kill();
-          } catch (e) {
-            // Ignore errors during cleanup
-          }
-        });
-        
-        // Clear GSAP and force ScrollTrigger batch update
+        gsap.ScrollTrigger.getAll().forEach(trigger => trigger.kill());
         gsap.clear();
-        ScrollTrigger.batch([]);
-        ScrollTrigger.clearMatchMedia();
       }
   
       // Reset flags
@@ -859,12 +871,6 @@ function loadScript(src) {
       if (window.currentTransition) {
         window.currentTransition.kill();
         window.currentTransition = null;
-      }
-      
-      // Clear sticky cards timeout
-      if (window.stickyCardsTimeout) {
-        clearTimeout(window.stickyCardsTimeout);
-        window.stickyCardsTimeout = null;
       }
       
       // Clean up interactive elements
@@ -1080,51 +1086,49 @@ Sticky Cards Animation
 ============================================== */
 
 function initStickyCards() {
-  // Kill any existing sticky card ScrollTriggers first
-  if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.getAll().forEach(trigger => {
-      if (trigger.vars && trigger.vars.trigger && trigger.vars.trigger.classList.contains('home-container')) {
-        trigger.kill();
-      }
-    });
+  // Prevent multiple initializations
+  if (window.stickyCardsInitialized) {
+    return;
   }
   
   // Sticky stacking cards effect
   const homeContainers = document.querySelectorAll('.home-container');
   if (homeContainers.length > 1) {
+    window.stickyCardsInitialized = true;
+    
     homeContainers.forEach((container, index) => {
       gsap.set(container, { zIndex: index + 1 });
+      
+      // Use mobile-friendly scroll distances
+      const isMobile = window.innerWidth < 650;
+      const scrollDistance = isMobile ? window.innerHeight * 1.5 : window.innerHeight * 2;
       
       ScrollTrigger.create({
         trigger: container,
         start: "top top", 
-        end: index <= 3 ? `+=${window.innerHeight * 2}` : "bottom bottom",
+        end: index <= 3 ? `+=${scrollDistance}` : "bottom bottom",
         pin: true,
         pinSpacing: index <= 3 ? false : true,
         invalidateOnRefresh: true,
-        refreshPriority: -1,
-        id: `sticky-card-${index}`,
         onUpdate: index <= 3 ? (self) => {
-          // Throttle updates during fast scrolling
-          if (!container._lastUpdate || Date.now() - container._lastUpdate > 16) {
-            container._lastUpdate = Date.now();
+          gsap.set(container, {
+            '--after-opacity': self.progress * 0.2
+          });
+          
+          // Animate content and image during exit - works on both desktop and mobile
+          const content = container.querySelector('.content');
+          const image = container.querySelector('.image');
+          if (content && image) {
+            // Adjust animation values for mobile
+            const yDistance = isMobile ? self.progress * 100 : self.progress * 200;
+            const scaleReduction = isMobile ? self.progress * 0.1 : self.progress * 0.2;
             
-            gsap.set(container, {
-              '--after-opacity': self.progress * 0.2
+            gsap.to([content, image], {
+              y: yDistance,
+              scale: 1 - scaleReduction,
+              ease: "power2.out",
+              duration: 0.5
             });
-            
-            // Animate content and image during exit
-            const content = container.querySelector('.content');
-            const image = container.querySelector('.image');
-            if (content && image) {
-              gsap.to([content, image], {
-                y: self.progress * 200,
-                scale: 1 - (self.progress * 0.2),
-                ease: "power2.out",
-                duration: 0.5,
-                overwrite: true
-              });
-            }
           }
         } : null
       });
@@ -1132,7 +1136,7 @@ function initStickyCards() {
     
     const homeImages = document.querySelectorAll('.home-container .image');
     
-    homeImages.forEach((image, index) => {
+    homeImages.forEach(image => {
       gsap.from(image, {
         clipPath: "inset(10% 10% 10% 10%)",
         duration: 1.2,
@@ -1143,17 +1147,10 @@ function initStickyCards() {
           end: "bottom 0%",
           scrub: 1.2,
           toggleActions: "play none none none",
-          invalidateOnRefresh: true,
-          id: `sticky-image-${index}`,
-          refreshPriority: -1
+          invalidateOnRefresh: true
         }
       });
     });
-    
-    // Force a ScrollTrigger refresh after all are created
-    if (typeof ScrollTrigger !== 'undefined') {
-      ScrollTrigger.refresh();
-    }
   }
 }
 
@@ -1382,6 +1379,23 @@ function initGsapAnimations() {
     );
   });
   
+  // Cyprus map animation
+  gsap.utils.toArray(".cyprus-map").forEach(map => {
+    gsap.fromTo(map, 
+      { clipPath: "circle(0% at 50% 50%)" }, 
+      {
+        clipPath: "circle(100% at 50% 50%)",
+        duration: 4,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: map,
+          start: "top 80%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+  });
+  
   // Line fill animation
   gsap.to(".line-fill", {
     y: "0%",
@@ -1488,6 +1502,13 @@ function initGsapAnimations() {
       }
     }, 100);
   }
+
+
+
+
+
+
+  
   
   }
   
