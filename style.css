@@ -142,10 +142,10 @@ body {
 	background: var(--lightgrey);
 	color: var(--darkgrey);
 	cursor: default;
-  
+  	/*
 	user-select: none;
 	-webkit-user-select: none;
-  
+  	*/
 	transition: background-color 0.3s ease, color 0.3s ease;
 	width: 100%;
 	padding: 0;
