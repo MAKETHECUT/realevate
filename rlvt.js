@@ -74,7 +74,8 @@ function loadScript(src) {
       'moveShowAllIntoCollectionList',
       'reloadFinsweetCMS',
       'handleProjectsPageFilterChanges',
-      'initLanguageSwitcherMobile'
+      'initLanguageSwitcherMobile',
+      'initEnglishPageDetection'
     ];
   
   // פונקציה לאתחול כל הפונקציות
@@ -155,6 +156,16 @@ function loadScript(src) {
     
     // Handle resize
     window.addEventListener('resize', handleLanguageSwitcherPosition);
+  }
+
+  // Function to detect English URL and add body class
+  function initEnglishPageDetection() {
+    // Check if current URL contains '/en'
+    if (window.location.pathname.includes('/en')) {
+      document.body.classList.add('en-page');
+    } else {
+      document.body.classList.remove('en-page');
+    }
   }
   
   window.history.scrollRestoration = "manual";
