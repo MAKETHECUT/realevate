@@ -70,6 +70,7 @@ function loadScript(src) {
       'initCustomSmoothScrolling',
       'initTypeListRadioHandler',
       'setupGlobalGsapProtection',
+      'initWhatsAppComponent',
       'initHomeVideo',
       'moveShowAllIntoCollectionList',
       'reloadFinsweetCMS',
@@ -91,9 +92,12 @@ function loadScript(src) {
       try {
         if (funcName === 'initHomeVideo') {
           // אתחול וידאו רק בדף הבית
-          const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+          const isHomepage = window.location.pathname === '/' || 
+                             window.location.pathname === '/index.html' || 
+                             window.location.pathname.endsWith('/') ||
+                             document.getElementById('video-container');
           if (isHomepage && typeof initHomeVideo === 'function') {
-            initHomeVideo();
+            initHomeVideo(true); // Force reinit after page transition
           }
         } else if (funcName === 'webflowReinitialize') {
           // Skip webflowReinitialize in initializeAllFunctions as it should be called with HTML content
@@ -644,9 +648,6 @@ function loadScript(src) {
         return;
       }
   
-      if (url === window.location.href && !isPopState) {
-        return;
-      }
   
       window.transitioning = true;
       window.processingQueue = true;
@@ -909,11 +910,6 @@ function loadScript(src) {
         const currentUrl = window.location.href;
         const targetUrl = target.href;
         
-        // Don't navigate if it's the same page
-        if (currentUrl === targetUrl) {
-          event.preventDefault();
-          return;
-        }
         
         event.preventDefault();
         if (typeof window.pageTransition === 'function') {
@@ -1034,8 +1030,8 @@ function loadScript(src) {
   // Check if screen width is under 650px
   const isMobile = window.innerWidth < 650;
   
-  // If mobile, only select h1 elements, otherwise select all text elements
-  const selector = isMobile ? "h1" : "h1, h2, h3, h4, h5, h6, p";
+  // Only select .header and h1 elements for split text animation
+  const selector = "h1";
   const elements = scope.querySelectorAll(selector);
   
   elements.forEach((element) => {
@@ -3988,12 +3984,13 @@ function initGsapAnimations() {
             if (existingVideo) {
                 existingVideo.remove();
             }
+            window.videoInitialized = false;
         }
   
         const isMobile = window.innerWidth < 650;
   
         const videoSrc = isMobile
-          ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je"
+          ? "https://dl.dropboxusercontent.com/scl/fi/gm583t9zyvgvod17q6hdo/new-compress-realevate-video.mp4?rlkey=5f7yah6abdw86sbwtcggur9ss&st=1sak29je&raw=1"
           : "https://dl.dropboxusercontent.com/scl/fi/eho27k48508vch2mbv8zq/realevate-video-home.mp4?rlkey=4myqzpdvlo4n51iqs5fwebxg6&st=eimahbyc&raw=1";
   
         const video = document.createElement("video");
@@ -4031,6 +4028,16 @@ function initGsapAnimations() {
                 // Fallback for when GSAP is not available
                 video.style.transition = "opacity 0.2s ease-out";
                 video.style.opacity = "1";
+            }
+        });
+
+        // Handle video load error
+        video.addEventListener('error', () => {
+            // If video fails to load, keep the thumbnail visible
+            const thumbnail = videoContainer.parentElement.querySelector('.vimeo-thumbnail');
+            if (thumbnail) {
+                thumbnail.style.opacity = "1";
+                thumbnail.style.zIndex = "1";
             }
         });
         
@@ -4807,5 +4814,105 @@ function initGsapAnimations() {
       webflowForm.parentNode.replaceChild(customForm, webflowForm);
     });
   }
+  
+  /* ==============================================
+  WhatsApp Sticky Component
+  ============================================== */
+  
+  function initWhatsAppComponent() {
+    const whatsappButton = document.getElementById('whatsapp-button');
+    const whatsappPopup = document.getElementById('whatsapp-popup');
+    const whatsappClose = document.getElementById('whatsapp-close');
+    const callOption = document.getElementById('call-option');
+    const whatsappMessageOption = document.getElementById('whatsapp-message-option');
+    
+    if (!whatsappButton || !whatsappPopup) return;
+    
+    // Clean up any existing event listeners first
+    if (window.whatsappEventListeners) {
+      window.whatsappEventListeners.forEach(({ element, event, handler }) => {
+        element.removeEventListener(event, handler);
+      });
+    }
+    window.whatsappEventListeners = [];
+    
+    const phoneNumber = '972546020690'; // Phone number
+    
+    // Helper function to add tracked event listener
+    const addTrackedListener = (element, event, handler) => {
+      if (element) {
+        element.addEventListener(event, handler);
+        window.whatsappEventListeners.push({ element, event, handler });
+      }
+    };
+    
+    // Toggle popup
+    const togglePopup = (e) => {
+      e.stopPropagation();
+      whatsappPopup.classList.toggle('active');
+    };
+    addTrackedListener(whatsappButton, 'click', togglePopup);
+    
+    // Close popup
+    const closePopup = (e) => {
+      e.stopPropagation();
+      whatsappPopup.classList.remove('active');
+    };
+    addTrackedListener(whatsappClose, 'click', closePopup);
+    
+    // Close popup when clicking outside
+    const closeOnOutsideClick = (e) => {
+      if (!e.target.closest('.whatsapp-sticky')) {
+        whatsappPopup.classList.remove('active');
+      }
+    };
+    addTrackedListener(document, 'click', closeOnOutsideClick);
+    
+    // Handle call option
+    const handleCall = () => {
+      const telUrl = `tel:+${phoneNumber}`;
+      window.location.href = telUrl;
+      whatsappPopup.classList.remove('active');
+    };
+    addTrackedListener(callOption, 'click', handleCall);
+    
+    // Handle WhatsApp message option
+    const handleWhatsAppMessage = () => {
+      const message = 'שלום, אני מעוניין לקבל מידע נוסף על הנכסים שלכם';
+      sendWhatsAppMessage(message);
+    };
+    addTrackedListener(whatsappMessageOption, 'click', handleWhatsAppMessage);
+    
+    // Send WhatsApp message
+    function sendWhatsAppMessage(message) {
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+      window.open(whatsappUrl, '_blank');
+      whatsappPopup.classList.remove('active');
+    }
+    
+    // Show component with animation after page load
+    setTimeout(() => {
+      const whatsappSticky = document.getElementById('whatsapp-sticky');
+      if (whatsappSticky) {
+        whatsappSticky.style.opacity = '0';
+        whatsappSticky.style.transform = 'translateY(20px)';
+        whatsappSticky.style.transition = 'all 0.5s ease';
+        
+        // Animate in
+        requestAnimationFrame(() => {
+          whatsappSticky.style.opacity = '1';
+          whatsappSticky.style.transform = 'translateY(0)';
+        });
+      }
+    }, 2000); // Show after 2 seconds
+  }
+  
+  // Initialize video when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('video-container')) {
+      initHomeVideo();
+    }
+  });
   
   
